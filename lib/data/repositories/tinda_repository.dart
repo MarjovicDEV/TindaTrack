@@ -8,8 +8,14 @@ class TindaRepository {
   Stream<List<Product>> watchProducts() => db.watchProducts();
   Stream<List<Sale>> watchSales() => db.watchSales();
   Stream<List<Customer>> watchCustomers() => db.watchCustomers();
-  Stream<List<Expense>> watchExpenses() => db.watchExpenses();
+  Stream<List<ExpenseWithCategory>> watchExpenses() => db.watchExpenses();
   Stream<List<GroceryItem>> watchGroceryItems() => db.watchGroceryItems();
+  Stream<List<ExpenseCategory>> watchExpenseCategories() => db.watchExpenseCategories();
+  Stream<List<CustomerBalance>> watchCustomerBalances() => db.watchCustomerBalances();
+  Stream<List<UtangEntry>> watchUtangEntriesByCustomer(int customerId) =>
+      db.watchUtangEntriesByCustomer(customerId);
+  Stream<List<UtangEntryItemDetail>> watchUtangEntryItems(int entryId) =>
+      db.watchUtangEntryItems(entryId);
 
   Stream<double> watchTotalSales() => db.watchTotalSales();
   Stream<double> watchTotalExpenses() => db.watchTotalExpenses();
@@ -22,40 +28,148 @@ class TindaRepository {
   Future<int> addProduct({
     required String name,
     required double price,
-    required int stockQty,
-    required int threshold,
+    required double stockQty,
+    required double threshold,
+    required double weight,
+    required String unitType,
   }) =>
       db.addProduct(
         name: name,
         price: price,
         stockQty: stockQty,
         threshold: threshold,
+        weight: weight,
+        unitType: unitType,
       );
 
-  Future<void> recordSale(List<SaleItemsCompanion> items) => db.recordSale(items);
+  Future<void> updateProduct({
+    required int id,
+    required String name,
+    required double price,
+    required double stockQty,
+    required double threshold,
+    required double weight,
+    required String unitType,
+  }) => db.updateProduct(
+        id: id,
+        name: name,
+        price: price,
+        stockQty: stockQty,
+        threshold: threshold,
+        weight: weight,
+        unitType: unitType,
+      );
+
+  Future<void> deleteProduct(int id) => db.deleteProduct(id);
+
+  Future<void> createSale({
+    required int productId,
+    required double quantity,
+  }) => db.createSale(productId: productId, quantity: quantity);
+  Future<void> updateSale({
+    required int saleId,
+    required int productId,
+    required double quantity,
+  }) => db.updateSale(saleId: saleId, productId: productId, quantity: quantity);
+  Future<void> deleteSaleAndRestoreStock(int saleId) => db.deleteSaleAndRestoreStock(saleId);
+  Future<List<SaleItem>> getSaleItems(int saleId) => db.getSaleItems(saleId);
   Future<int> addCustomer(String name) => db.addCustomer(name);
+  Future<void> updateCustomer(int id, String name) => db.updateCustomer(id, name);
+  Future<void> deleteCustomer(int id) => db.deleteCustomer(id);
   Future<int> addUtang({
     required int customerId,
     required double amount,
     required bool isPayment,
+    DateTime? dueDate,
+    String? itemName,
     String? note,
   }) =>
       db.addUtang(
         customerId: customerId,
         amount: amount,
         isPayment: isPayment,
+        dueDate: dueDate,
+        itemName: itemName,
         note: note,
       );
+  Future<int> addUtangWithItems({
+    required int customerId,
+    required List<UtangLineInput> lines,
+    DateTime? dueDate,
+    String? note,
+  }) => db.addUtangWithItems(customerId: customerId, lines: lines, dueDate: dueDate, note: note);
+  Future<void> updateUtangEntry({
+    required int entryId,
+    required double amount,
+    required bool isPayment,
+    DateTime? dueDate,
+    String? itemName,
+    String? note,
+  }) => db.updateUtangEntry(
+        entryId: entryId,
+        amount: amount,
+        isPayment: isPayment,
+        dueDate: dueDate,
+        itemName: itemName,
+        note: note,
+      );
+  Future<void> deleteUtangEntry(int entryId) => db.deleteUtangEntry(entryId);
+  Future<int> addExpenseCategory(String name) => db.addExpenseCategory(name);
 
   Future<int> addExpense({
-    required String category,
+    required int categoryId,
+    required String expenseName,
+    required String reason,
     required double amount,
-    String? note,
   }) =>
-      db.addExpense(category: category, amount: amount, note: note);
+      db.addExpense(
+        categoryId: categoryId,
+        expenseName: expenseName,
+        reason: reason,
+        amount: amount,
+      );
 
-  Future<int> addGroceryItem(String name, {int qty = 1}) =>
-      db.addGroceryItem(name, qty: qty);
+  Future<void> updateExpense({
+    required int expenseId,
+    required int categoryId,
+    required String expenseName,
+    required String reason,
+    required double amount,
+  }) => db.updateExpense(
+        expenseId: expenseId,
+        categoryId: categoryId,
+        expenseName: expenseName,
+        reason: reason,
+        amount: amount,
+      );
+
+  Future<void> deleteExpense(int expenseId) => db.deleteExpense(expenseId);
+
+  Future<int> addGroceryItem(
+    String name, {
+    double qty = 1,
+    String unitType = 'pcs',
+    DateTime? plannedDate,
+  }) => db.addGroceryItem(
+        name,
+        qty: qty,
+        unitType: unitType,
+        plannedDate: plannedDate,
+      );
+  Future<void> updateGroceryItem({
+    required int id,
+    required String name,
+    required double qty,
+    required String unitType,
+    DateTime? plannedDate,
+  }) => db.updateGroceryItem(
+        id: id,
+        name: name,
+        qty: qty,
+        unitType: unitType,
+        plannedDate: plannedDate,
+      );
+  Future<void> deleteGroceryItem(int id) => db.deleteGroceryItem(id);
   Future<void> toggleGrocery(int id, bool done) => db.toggleGrocery(id, done);
 
   Future<List<int>> exportSimpleSnapshot() => db.exportSimpleSnapshot();
