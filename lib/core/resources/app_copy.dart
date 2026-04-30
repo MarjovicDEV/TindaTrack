@@ -6,7 +6,7 @@ class AppCopy {
   static const navSales = 'Benta';
   static const navUtang = 'Utang';
   static const navExpenses = 'Gastos';
-  static const navGrocery = 'Grocery';
+  static const navGrocery = 'Bilihin';
 
   static const summaryTitle = 'Buod ng Tindahan';
   static const totalSales = 'Kabuuang Benta';
@@ -15,6 +15,10 @@ class AppCopy {
   static const lowStockAlerts = 'Mababang Stock';
 
   static const backupRestoreTitle = 'Backup at Restore';
+  static const reportFilterDaily = 'Araw-araw';
+  static const reportFilterWeekly = 'Lingguhan';
+  static const reportFilterMonthly = 'Buwanan';
+  static const noDataRange = 'Walang datos sa napiling saklaw.';
   static const exportJson = 'I-export JSON';
   static const importJson = 'I-import JSON';
   static const exportDb = 'I-export DB';
