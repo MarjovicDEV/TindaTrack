@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/layout/adaptive_scaffold.dart';
+import '../../../core/resources/app_copy.dart';
 import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
 import '../../expenses/presentation/expenses_page.dart';
@@ -47,16 +48,33 @@ class _HomeShellPageState extends State<HomeShellPage> {
     ];
 
     return AdaptiveScaffold(
-      title: 'TindaTrack',
+      title: AppCopy.appTitle,
+      titleWidget: RichText(
+        text: TextSpan(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          children: [
+            const TextSpan(text: 'Tinda'),
+            TextSpan(
+              text: 'Track',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
       selectedIndex: _index,
       onDestinationSelected: (value) => setState(() => _index = value),
       destinations: const [
-        NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: 'Dashboard'),
-        NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: 'Inventory'),
-        NavigationDestination(icon: Icon(Icons.point_of_sale_outlined), label: 'Sales'),
-        NavigationDestination(icon: Icon(Icons.people_outline), label: 'Utang'),
-        NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'Expenses'),
-        NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: 'Grocery'),
+        NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: AppCopy.navDashboard),
+        NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: AppCopy.navInventory),
+        NavigationDestination(icon: Icon(Icons.point_of_sale_outlined), label: AppCopy.navSales),
+        NavigationDestination(icon: Icon(Icons.people_outline), label: AppCopy.navUtang),
+        NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: AppCopy.navExpenses),
+        NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: AppCopy.navGrocery),
       ],
       body: Padding(
         padding: const EdgeInsets.all(16),
