@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/resources/app_copy.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
@@ -49,17 +51,22 @@ class _ReportsPageState extends State<ReportsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(AppCopy.summaryTitle, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           SegmentedButton<ReportFilter>(
             segments: const [
-              ButtonSegment(value: ReportFilter.daily, label: Text('Araw-araw')),
-              ButtonSegment(value: ReportFilter.weekly, label: Text('Lingguhan')),
-              ButtonSegment(value: ReportFilter.monthly, label: Text('Buwanan')),
+              ButtonSegment(value: ReportFilter.daily, label: Text(AppCopy.reportFilterDaily)),
+              ButtonSegment(value: ReportFilter.weekly, label: Text(AppCopy.reportFilterWeekly)),
+              ButtonSegment(value: ReportFilter.monthly, label: Text(AppCopy.reportFilterMonthly)),
             ],
             selected: {_filter},
             onSelectionChanged: (value) => setState(() => _filter = value.first),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Saklaw (PH UTC+8): ${formatPhilippineDateTime(range.from)} - ${formatPhilippineDateTime(range.to)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
           StreamBuilder<List<Sale>>(
             stream: widget.repo.watchSalesInRange(range.from, range.to),
             builder: (context, salesSnap) {
@@ -87,8 +94,8 @@ class _ReportsPageState extends State<ReportsPage> {
                   return Column(
                     children: [
                   Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
                       SizedBox(
                         width: 250,
@@ -116,14 +123,14 @@ class _ReportsPageState extends State<ReportsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: AppSpacing.card,
                       child: SizedBox(
                         height: 220,
                         child: spots.isEmpty
-                            ? const Center(child: Text('Walang datos sa napiling saklaw.'))
+                            ? const Center(child: Text(AppCopy.noDataRange))
                             : LineChart(
                                 LineChartData(
                                   gridData: const FlGridData(show: true),
@@ -149,19 +156,19 @@ class _ReportsPageState extends State<ReportsPage> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.lg),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.card,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(AppCopy.backupRestoreTitle, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.xs),
                   const Text(
                     'Pumili ng export/import type. May preview at babala bago i-restore.',
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -175,11 +182,11 @@ class _ReportsPageState extends State<ReportsPage> {
                         child: Text(AppCopy.importJson),
                       ),
                       OutlinedButton(
-                        onPressed: _exportDb,
+                        onPressed: kIsWeb ? null : _exportDb,
                         child: Text(AppCopy.exportDb),
                       ),
                       OutlinedButton(
-                        onPressed: _importDbDialog,
+                        onPressed: kIsWeb ? null : _importDbDialog,
                         child: Text(AppCopy.importDb),
                       ),
                     ],
@@ -194,11 +201,16 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _exportJson() async {
-    final path = await _backupService.exportJsonFile();
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Na-export ang JSON backup: $path')));
+    try {
+      final path = await _backupService.exportJsonFile();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Na-export ang JSON backup: $path')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Future<void> _exportDb() async {
@@ -217,14 +229,26 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _importJsonDialog() async {
     final mode = await _askMode();
     if (mode == null) return;
-    await _backupService.importPickedJson(replaceAll: mode);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mode ? 'Na-restore (replace).' : 'Na-restore (merge).')),
-    );
+    try {
+      await _backupService.importPickedJson(replaceAll: mode);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mode ? 'Na-restore (replace).' : 'Na-restore (merge).')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Future<void> _importDbDialog() async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('DB import/export ay hindi supported sa web. JSON ang gamitin.')),
+      );
+      return;
+    }
+
     final mode = await _askMode();
     if (mode == null) return;
     try {
