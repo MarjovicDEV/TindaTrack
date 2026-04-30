@@ -15,12 +15,32 @@ class BackupService {
 
   Future<String> exportJsonFile() async {
     final payload = await repo.exportJsonBackup();
-    final dir = await getApplicationDocumentsDirectory();
     final fileName =
         'tindatrack_backup_${DateTime.now().millisecondsSinceEpoch}.json';
-    final file = File(p.join(dir.path, fileName));
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(payload));
-    return file.path;
+    final jsonBytes = Uint8List.fromList(
+      utf8.encode(const JsonEncoder.withIndent('  ').convert(payload)),
+    );
+
+    final savedPath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save JSON backup',
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      bytes: jsonBytes,
+    );
+
+    if (savedPath != null) {
+      return savedPath;
+    }
+
+    if (!kIsWeb) {
+      final dir = await getApplicationDocumentsDirectory();
+      final fallback = File(p.join(dir.path, fileName));
+      await fallback.writeAsBytes(jsonBytes);
+      return fallback.path;
+    }
+
+    return fileName;
   }
 
   Future<Map<String, dynamic>?> pickAndReadJson() async {
@@ -56,19 +76,42 @@ class BackupService {
   }
 
   Future<String> exportDatabaseFile() async {
+    if (kIsWeb) {
+      throw Exception('DB file export is not supported on web. Use JSON export.');
+    }
+
     final dir = await getApplicationDocumentsDirectory();
     final sourcePath = p.join(dir.path, 'tinda_track.sqlite');
     final source = File(sourcePath);
     if (!await source.exists()) {
       throw Exception('Database file not found: $sourcePath');
     }
-    final backupName = 'tindatrack_db_${DateTime.now().millisecondsSinceEpoch}.sqlite';
+    final backupName =
+        'tindatrack_db_${DateTime.now().millisecondsSinceEpoch}.sqlite';
+    final bytes = await source.readAsBytes();
+
+    final savedPath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save DB backup',
+      fileName: backupName,
+      type: FileType.custom,
+      allowedExtensions: ['sqlite', 'db'],
+      bytes: bytes,
+    );
+
+    if (savedPath != null) {
+      return savedPath;
+    }
+
     final target = File(p.join(dir.path, backupName));
-    await source.copy(target.path);
+    await target.writeAsBytes(bytes);
     return target.path;
   }
 
   Future<void> importDatabaseFile({required bool replaceAll}) async {
+    if (kIsWeb) {
+      throw Exception('DB file import is not supported on web. Use JSON import.');
+    }
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['sqlite', 'db'],
@@ -85,9 +128,6 @@ class BackupService {
     if (picked.path != null) {
       await File(picked.path!).copy(target.path);
       return;
-    }
-    if (kIsWeb) {
-      throw Exception('Raw DB import is not supported on web.');
     }
     final bytes = picked.bytes;
     if (bytes == null) return;
