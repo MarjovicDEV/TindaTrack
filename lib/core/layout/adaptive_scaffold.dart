@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class AdaptiveScaffold extends StatelessWidget {
   const AdaptiveScaffold({
     required this.title,
+    this.titleWidget,
     required this.destinations,
     required this.selectedIndex,
     required this.onDestinationSelected,
@@ -11,6 +12,7 @@ class AdaptiveScaffold extends StatelessWidget {
   });
 
   final String title;
+  final Widget? titleWidget;
   final List<NavigationDestination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -22,7 +24,7 @@ class AdaptiveScaffold extends StatelessWidget {
     final isWide = width >= 900;
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: titleWidget ?? Text(title)),
       body: isWide
           ? Row(
               children: [
