@@ -23,12 +23,12 @@ class _SalesPageState extends State<SalesPage> {
       children: [
         Row(
           children: [
-            Text('Sales', style: Theme.of(context).textTheme.titleLarge),
+            Text('Benta (Sales)', style: Theme.of(context).textTheme.titleLarge),
             const Spacer(),
             FilledButton.icon(
               onPressed: _selectedProductId == null ? null : _recordSimpleSale,
               icon: const Icon(Icons.save_outlined),
-              label: const Text('Record Sale'),
+              label: const Text('I-save ang benta'),
             ),
           ],
         ),
@@ -41,7 +41,7 @@ class _SalesPageState extends State<SalesPage> {
               return const Card(
                 child: Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text('Add inventory first before recording sales.'),
+                  child: Text('Maglagay muna ng produkto bago mag-record ng benta.'),
                 ),
               );
             }
@@ -50,7 +50,7 @@ class _SalesPageState extends State<SalesPage> {
                 Expanded(
                   child: DropdownButtonFormField<int>(
                     initialValue: _selectedProductId,
-                    hint: const Text('Select product'),
+                    hint: const Text('Pumili ng produkto'),
                     items: products
                         .map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (stock: ${p.stockQty})')))
                         .toList(),
@@ -63,7 +63,7 @@ class _SalesPageState extends State<SalesPage> {
                   child: TextField(
                     controller: _qtyCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Qty'),
+                    decoration: const InputDecoration(labelText: 'Dami (Qty)'),
                   ),
                 ),
               ],
@@ -77,7 +77,7 @@ class _SalesPageState extends State<SalesPage> {
             builder: (context, snapshot) {
               final sales = snapshot.data ?? [];
               if (sales.isEmpty) {
-                return const Center(child: Text('No sales recorded yet.'));
+                return const Center(child: Text('Wala pang naitalang benta.'));
               }
               return ListView.builder(
                 itemCount: sales.length,
@@ -85,7 +85,7 @@ class _SalesPageState extends State<SalesPage> {
                   final item = sales[index];
                   return Card(
                     child: ListTile(
-                      title: Text('Sale #${item.id}'),
+                      title: Text('Benta #${item.id}'),
                       subtitle: Text(item.createdAt.toString()),
                       trailing: Text('PHP ${item.totalAmount.toStringAsFixed(2)}'),
                     ),
