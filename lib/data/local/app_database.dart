@@ -8,27 +8,36 @@ class Products extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   RealColumn get price => real()();
-  IntColumn get stockQty => integer()();
-  IntColumn get lowStockThreshold => integer().withDefault(const Constant(5))();
+  RealColumn get stockQty => real()();
+  RealColumn get lowStockThreshold => real().withDefault(const Constant(5))();
+  RealColumn get weight => real().withDefault(const Constant(1))();
+  TextColumn get unitType => text().withDefault(const Constant('pcs'))();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 class Sales extends Table {
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get createdAt => dateTime()();
   RealColumn get totalAmount => real()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 class SaleItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get saleId => integer().references(Sales, #id)();
   IntColumn get productId => integer().references(Products, #id)();
-  IntColumn get qty => integer()();
+  RealColumn get qty => real()();
   RealColumn get unitPrice => real()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 class Customers extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 class UtangEntries extends Table {
@@ -37,22 +46,95 @@ class UtangEntries extends Table {
   RealColumn get amount => real()();
   BoolColumn get isPayment => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get dueDate => dateTime().nullable()();
+  TextColumn get itemName => text().nullable()();
   TextColumn get note => text().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+}
+
+class UtangEntryItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get utangEntryId =>
+      integer().references(UtangEntries, #id, onDelete: KeyAction.cascade)();
+  IntColumn get productId => integer().references(Products, #id)();
+  RealColumn get qty => real()();
+  RealColumn get unitPrice => real()();
+  RealColumn get lineTotal => real()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+}
+
+class ExpenseCategories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().unique()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 class Expenses extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get category => text()();
+  IntColumn get categoryId => integer().references(ExpenseCategories, #id)();
+  TextColumn get expenseName => text()();
+  TextColumn get reason => text()();
   RealColumn get amount => real()();
   DateTimeColumn get createdAt => dateTime()();
-  TextColumn get note => text().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
 class GroceryItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
-  IntColumn get qty => integer().withDefault(const Constant(1))();
+  RealColumn get qty => real().withDefault(const Constant(1))();
+  TextColumn get unitType => text().withDefault(const Constant('pcs'))();
+  DateTimeColumn get plannedDate => dateTime().nullable()();
   BoolColumn get isDone => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+}
+
+class ExpenseWithCategory {
+  ExpenseWithCategory({
+    required this.expense,
+    required this.categoryName,
+  });
+
+  final Expense expense;
+  final String categoryName;
+}
+
+class CustomerBalance {
+  CustomerBalance({
+    required this.customerId,
+    required this.name,
+    required this.balance,
+  });
+
+  final int customerId;
+  final String name;
+  final double balance;
+}
+
+class UtangLineInput {
+  UtangLineInput({required this.productId, required this.qty});
+
+  final int productId;
+  final double qty;
+}
+
+class UtangEntryItemDetail {
+  UtangEntryItemDetail({
+    required this.productName,
+    required this.qty,
+    required this.unitPrice,
+    required this.lineTotal,
+    required this.unitType,
+  });
+
+  final String productName;
+  final double qty;
+  final double unitPrice;
+  final double lineTotal;
+  final String unitType;
 }
 
 @DriftDatabase(
@@ -62,6 +144,8 @@ class GroceryItems extends Table {
     SaleItems,
     Customers,
     UtangEntries,
+    UtangEntryItems,
+    ExpenseCategories,
     Expenses,
     GroceryItems,
   ],
@@ -70,7 +154,84 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 5;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await customStatement(
+              'ALTER TABLE products ADD COLUMN weight REAL NOT NULL DEFAULT 1',
+            );
+            await customStatement(
+              "ALTER TABLE products ADD COLUMN unit_type TEXT NOT NULL DEFAULT 'pcs'",
+            );
+            await customStatement(
+              'ALTER TABLE products ADD COLUMN stock_qty_tmp REAL',
+            );
+            await customStatement(
+              'UPDATE products SET stock_qty_tmp = stock_qty',
+            );
+            await customStatement(
+              'ALTER TABLE products ADD COLUMN low_stock_threshold_tmp REAL',
+            );
+            await customStatement(
+              'UPDATE products SET low_stock_threshold_tmp = low_stock_threshold',
+            );
+            await customStatement(
+              'ALTER TABLE utang_entries ADD COLUMN item_name TEXT',
+            );
+            await m.createTable(expenseCategories);
+            await customStatement(
+              'ALTER TABLE expenses ADD COLUMN category_id INTEGER REFERENCES expense_categories(id)',
+            );
+            await customStatement(
+              "ALTER TABLE expenses ADD COLUMN expense_name TEXT NOT NULL DEFAULT ''",
+            );
+            await customStatement(
+              "ALTER TABLE expenses ADD COLUMN reason TEXT NOT NULL DEFAULT ''",
+            );
+            await customStatement(
+              'ALTER TABLE grocery_items ADD COLUMN unit_type TEXT NOT NULL DEFAULT \'pcs\'',
+            );
+            await customStatement(
+              'ALTER TABLE grocery_items ADD COLUMN planned_date INTEGER',
+            );
+          }
+          if (from < 3) {
+            await m.createTable(utangEntryItems);
+          }
+          if (from < 4) {
+            await customStatement('ALTER TABLE utang_entries ADD COLUMN due_date INTEGER');
+          }
+          if (from < 5) {
+            await customStatement('ALTER TABLE products ADD COLUMN created_at INTEGER');
+            await customStatement('ALTER TABLE products ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE sales ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE sale_items ADD COLUMN created_at INTEGER');
+            await customStatement('ALTER TABLE sale_items ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE customers ADD COLUMN created_at INTEGER');
+            await customStatement('ALTER TABLE customers ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE utang_entries ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE utang_entry_items ADD COLUMN created_at INTEGER');
+            await customStatement('ALTER TABLE utang_entry_items ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE expense_categories ADD COLUMN created_at INTEGER');
+            await customStatement('ALTER TABLE expense_categories ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE expenses ADD COLUMN deleted_at INTEGER');
+            await customStatement('ALTER TABLE grocery_items ADD COLUMN created_at INTEGER');
+            await customStatement('ALTER TABLE grocery_items ADD COLUMN deleted_at INTEGER');
+          }
+        },
+        beforeOpen: (details) async {
+          final hasDueDate = await customSelect(
+            "SELECT 1 FROM pragma_table_info('utang_entries') WHERE name='due_date'",
+          ).getSingleOrNull();
+          if (hasDueDate == null) {
+            await customStatement('ALTER TABLE utang_entries ADD COLUMN due_date INTEGER');
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
@@ -86,8 +247,10 @@ class AppDatabase extends _$AppDatabase {
   Future<int> addProduct({
     required String name,
     required double price,
-    required int stockQty,
-    required int threshold,
+    required double stockQty,
+    required double threshold,
+    required double weight,
+    required String unitType,
   }) {
     return into(products).insert(
       ProductsCompanion.insert(
@@ -95,8 +258,36 @@ class AppDatabase extends _$AppDatabase {
         price: price,
         stockQty: stockQty,
         lowStockThreshold: Value(threshold),
+        weight: Value(weight),
+        unitType: Value(unitType),
+        createdAt: Value(DateTime.now()),
       ),
     );
+  }
+
+  Future<void> updateProduct({
+    required int id,
+    required String name,
+    required double price,
+    required double stockQty,
+    required double threshold,
+    required double weight,
+    required String unitType,
+  }) {
+    return (update(products)..where((t) => t.id.equals(id))).write(
+      ProductsCompanion(
+        name: Value(name),
+        price: Value(price),
+        stockQty: Value(stockQty),
+        lowStockThreshold: Value(threshold),
+        weight: Value(weight),
+        unitType: Value(unitType),
+      ),
+    );
+  }
+
+  Future<void> deleteProduct(int id) {
+    return (delete(products)..where((t) => t.id.equals(id))).go();
   }
 
   Stream<List<Product>> watchProducts() => select(products).watch();
@@ -104,73 +295,467 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Sale>> watchSales() =>
       (select(sales)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
 
-  Future<void> recordSale(List<SaleItemsCompanion> items) async {
+  Future<void> createSale({
+    required int productId,
+    required double quantity,
+  }) async {
     await transaction(() async {
-      var total = 0.0;
-      for (final i in items) {
-        total += i.unitPrice.value * i.qty.value;
+      final product = await (select(products)..where((p) => p.id.equals(productId)))
+          .getSingle();
+      if (quantity <= 0) {
+        throw Exception('Invalid quantity.');
       }
+      if (quantity > product.stockQty) {
+        throw Exception('Insufficient stock.');
+      }
+
+      final total = quantity * product.price;
       final saleId = await into(sales).insert(
         SalesCompanion.insert(createdAt: DateTime.now(), totalAmount: total),
       );
-      for (final i in items) {
-        await into(saleItems).insert(i.copyWith(saleId: Value(saleId)));
-        final id = i.productId.value;
-        await customStatement(
-          'UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?',
-          [i.qty.value, id],
-        );
-      }
+      await into(saleItems).insert(
+        SaleItemsCompanion.insert(
+          saleId: saleId,
+          productId: productId,
+          qty: quantity,
+          unitPrice: product.price,
+        ),
+      );
+      await customStatement(
+        'UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?',
+        [quantity, productId],
+      );
     });
   }
 
+  Future<void> updateSale({
+    required int saleId,
+    required int productId,
+    required double quantity,
+  }) async {
+    await transaction(() async {
+      final existingItems =
+          await (select(saleItems)..where((i) => i.saleId.equals(saleId))).get();
+      for (final item in existingItems) {
+        await customStatement(
+          'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
+          [item.qty, item.productId],
+        );
+      }
+
+      final product = await (select(products)..where((p) => p.id.equals(productId)))
+          .getSingle();
+      if (quantity <= 0 || quantity > product.stockQty) {
+        throw Exception('Invalid quantity or insufficient stock.');
+      }
+
+      final total = quantity * product.price;
+      await (update(sales)..where((s) => s.id.equals(saleId))).write(
+        SalesCompanion(totalAmount: Value(total)),
+      );
+      await (delete(saleItems)..where((i) => i.saleId.equals(saleId))).go();
+      await into(saleItems).insert(
+        SaleItemsCompanion.insert(
+          saleId: saleId,
+          productId: productId,
+          qty: quantity,
+          unitPrice: product.price,
+        ),
+      );
+      await customStatement(
+        'UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?',
+        [quantity, productId],
+      );
+    });
+  }
+
+  Future<void> deleteSaleAndRestoreStock(int saleId) async {
+    await transaction(() async {
+      final items =
+          await (select(saleItems)..where((i) => i.saleId.equals(saleId))).get();
+      for (final item in items) {
+        await customStatement(
+          'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
+          [item.qty, item.productId],
+        );
+      }
+      await (delete(saleItems)..where((i) => i.saleId.equals(saleId))).go();
+      await (delete(sales)..where((s) => s.id.equals(saleId))).go();
+    });
+  }
+
+  Future<List<SaleItem>> getSaleItems(int saleId) {
+    return (select(saleItems)..where((i) => i.saleId.equals(saleId))).get();
+  }
+
   Future<int> addCustomer(String name) {
-    return into(customers).insert(CustomersCompanion.insert(name: name));
+    return into(customers).insert(
+      CustomersCompanion.insert(name: name, createdAt: Value(DateTime.now())),
+    );
+  }
+
+  Future<void> updateCustomer(int id, String name) {
+    return (update(customers)..where((c) => c.id.equals(id))).write(
+      CustomersCompanion(name: Value(name)),
+    );
+  }
+
+  Future<void> deleteCustomer(int id) async {
+    await transaction(() async {
+      final entries = await (select(utangEntries)
+            ..where((u) => u.customerId.equals(id) & u.isPayment.equals(false)))
+          .get();
+
+      for (final entry in entries) {
+        final lines = await (select(utangEntryItems)
+              ..where((i) => i.utangEntryId.equals(entry.id)))
+            .get();
+        for (final line in lines) {
+          await customStatement(
+            'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
+            [line.qty, line.productId],
+          );
+        }
+      }
+
+      await (delete(customers)..where((c) => c.id.equals(id))).go();
+    });
   }
 
   Stream<List<Customer>> watchCustomers() => select(customers).watch();
+
+  Stream<List<CustomerBalance>> watchCustomerBalances() {
+    final q = customSelect(
+      '''
+      SELECT c.id as customer_id, c.name as name,
+      COALESCE(SUM(CASE WHEN u.is_payment = 1 THEN -u.amount ELSE u.amount END), 0) as balance
+      FROM customers c
+      LEFT JOIN utang_entries u ON u.customer_id = c.id
+      GROUP BY c.id, c.name
+      ORDER BY c.name ASC
+      ''',
+      readsFrom: {customers, utangEntries},
+    );
+    return q.watch().map(
+      (rows) => rows
+          .map(
+            (r) => CustomerBalance(
+              customerId: r.read<int>('customer_id'),
+              name: r.read<String>('name'),
+              balance: r.read<double>('balance'),
+            ),
+          )
+          .toList(),
+    );
+  }
 
   Future<int> addUtang({
     required int customerId,
     required double amount,
     required bool isPayment,
+    DateTime? dueDate,
+    String? itemName,
     String? note,
   }) {
+    if (!isPayment && dueDate != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final selected = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      if (selected.isBefore(today)) {
+        throw Exception('Due date dapat today o future lang.');
+      }
+    }
     return into(utangEntries).insert(
       UtangEntriesCompanion.insert(
         customerId: customerId,
         amount: amount,
         isPayment: Value(isPayment),
         createdAt: DateTime.now(),
+        dueDate: Value(dueDate),
+        itemName: Value(itemName),
         note: Value(note),
       ),
     );
+  }
+
+  Future<int> addUtangWithItems({
+    required int customerId,
+    required List<UtangLineInput> lines,
+    DateTime? dueDate,
+    String? note,
+  }) async {
+    if (lines.isEmpty) {
+      throw Exception('Pumili ng kahit isang item.');
+    }
+
+    return transaction(() async {
+      if (dueDate != null) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final selected = DateTime(dueDate.year, dueDate.month, dueDate.day);
+        if (selected.isBefore(today)) {
+          throw Exception('Due date dapat today o future lang.');
+        }
+      }
+      final ids = lines.map((e) => e.productId).toSet().toList();
+      final dbProducts = await (select(products)..where((p) => p.id.isIn(ids))).get();
+      if (dbProducts.length != ids.length) {
+        throw Exception('May napiling produktong hindi nahanap.');
+      }
+
+      final productById = {for (final p in dbProducts) p.id: p};
+      final lineRows = <UtangEntryItemsCompanion>[];
+      final summaryParts = <String>[];
+      var total = 0.0;
+
+      for (final line in lines) {
+        final product = productById[line.productId];
+        if (product == null) throw Exception('Invalid product.');
+
+        if (line.qty <= 0) throw Exception('Invalid qty.');
+        if (product.unitType == 'pcs') {
+          if (line.qty % 1 != 0) {
+            throw Exception('Whole numbers lang para sa pcs.');
+          }
+        }
+        if (line.qty > product.stockQty) {
+          throw Exception('Kulang stock para sa ${product.name}.');
+        }
+
+        final lineTotal = line.qty * product.price;
+        total += lineTotal;
+        final qtyLabel = product.unitType == 'pcs'
+            ? line.qty.toInt().toString()
+            : line.qty.toStringAsFixed(2);
+        summaryParts.add('${product.name} x$qtyLabel ${product.unitType}');
+        lineRows.add(
+          UtangEntryItemsCompanion.insert(
+            utangEntryId: -1,
+            productId: line.productId,
+            qty: line.qty,
+            unitPrice: product.price,
+            lineTotal: lineTotal,
+            createdAt: Value(DateTime.now()),
+          ),
+        );
+      }
+
+      if (total <= 0) throw Exception('Amount dapat mas mataas sa zero.');
+
+      final entryId = await into(utangEntries).insert(
+        UtangEntriesCompanion.insert(
+          customerId: customerId,
+          amount: total,
+          isPayment: const Value(false),
+          createdAt: DateTime.now(),
+          dueDate: Value(dueDate),
+          itemName: Value(summaryParts.join(', ')),
+          note: Value(note),
+        ),
+      );
+
+      for (final row in lineRows) {
+        await into(utangEntryItems).insert(
+          row.copyWith(utangEntryId: Value(entryId)),
+        );
+      }
+
+      for (final line in lines) {
+        await customStatement(
+          'UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?',
+          [line.qty, line.productId],
+        );
+      }
+
+      return entryId;
+    });
+  }
+
+  Stream<List<UtangEntry>> watchUtangEntriesByCustomer(int customerId) {
+    return (select(utangEntries)
+          ..where((u) => u.customerId.equals(customerId))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
+  }
+
+  Future<void> updateUtangEntry({
+    required int entryId,
+    required double amount,
+    required bool isPayment,
+    DateTime? dueDate,
+    String? itemName,
+    String? note,
+  }) {
+    if (!isPayment && dueDate != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final selected = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      if (selected.isBefore(today)) {
+        throw Exception('Due date dapat today o future lang.');
+      }
+    }
+    return (update(utangEntries)..where((u) => u.id.equals(entryId))).write(
+      UtangEntriesCompanion(
+        amount: Value(amount),
+        isPayment: Value(isPayment),
+        dueDate: Value(dueDate),
+        itemName: Value(itemName),
+        note: Value(note),
+      ),
+    );
+  }
+
+  Future<void> deleteUtangEntry(int entryId) async {
+    await transaction(() async {
+      final entry = await (select(utangEntries)..where((u) => u.id.equals(entryId))).getSingleOrNull();
+      if (entry == null) return;
+
+      if (!entry.isPayment) {
+        final lines = await (select(utangEntryItems)
+              ..where((i) => i.utangEntryId.equals(entryId)))
+            .get();
+        for (final line in lines) {
+          await customStatement(
+            'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
+            [line.qty, line.productId],
+          );
+        }
+      }
+
+      await (delete(utangEntries)..where((u) => u.id.equals(entryId))).go();
+    });
+  }
+
+  Stream<List<UtangEntryItemDetail>> watchUtangEntryItems(int entryId) {
+    final q = select(utangEntryItems).join([
+      leftOuterJoin(products, products.id.equalsExp(utangEntryItems.productId)),
+    ])..where(utangEntryItems.utangEntryId.equals(entryId));
+
+    return q.watch().map(
+      (rows) => rows
+          .map(
+            (row) => UtangEntryItemDetail(
+              productName: row.readTableOrNull(products)?.name ?? 'N/A',
+              qty: row.readTable(utangEntryItems).qty,
+              unitPrice: row.readTable(utangEntryItems).unitPrice,
+              lineTotal: row.readTable(utangEntryItems).lineTotal,
+              unitType: row.readTableOrNull(products)?.unitType ?? 'pcs',
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Future<int> addExpenseCategory(String name) {
+    return into(expenseCategories).insert(
+      ExpenseCategoriesCompanion.insert(name: name, createdAt: Value(DateTime.now())),
+      mode: InsertMode.insertOrIgnore,
+    );
+  }
+
+  Stream<List<ExpenseCategory>> watchExpenseCategories() {
+    return (select(expenseCategories)..orderBy([(c) => OrderingTerm.asc(c.name)]))
+        .watch();
   }
 
   Future<int> addExpense({
-    required String category,
+    required int categoryId,
+    required String expenseName,
+    required String reason,
     required double amount,
-    String? note,
   }) {
     return into(expenses).insert(
       ExpensesCompanion.insert(
-        category: category,
+        categoryId: categoryId,
+        expenseName: expenseName,
+        reason: reason,
         amount: amount,
         createdAt: DateTime.now(),
-        note: Value(note),
       ),
     );
   }
 
-  Stream<List<Expense>> watchExpenses() =>
-      (select(expenses)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
+  Future<void> updateExpense({
+    required int expenseId,
+    required int categoryId,
+    required String expenseName,
+    required String reason,
+    required double amount,
+  }) {
+    return (update(expenses)..where((e) => e.id.equals(expenseId))).write(
+      ExpensesCompanion(
+        categoryId: Value(categoryId),
+        expenseName: Value(expenseName),
+        reason: Value(reason),
+        amount: Value(amount),
+      ),
+    );
+  }
+
+  Future<void> deleteExpense(int expenseId) {
+    return (delete(expenses)..where((e) => e.id.equals(expenseId))).go();
+  }
+
+  Stream<List<ExpenseWithCategory>> watchExpenses() {
+    final q = select(expenses).join(
+      [
+        leftOuterJoin(
+          expenseCategories,
+          expenseCategories.id.equalsExp(expenses.categoryId),
+        ),
+      ],
+    )..orderBy([OrderingTerm.desc(expenses.createdAt)]);
+
+    return q.watch().map(
+      (rows) => rows
+          .map(
+            (row) => ExpenseWithCategory(
+              expense: row.readTable(expenses),
+              categoryName: row.readTableOrNull(expenseCategories)?.name ?? 'N/A',
+            ),
+          )
+          .toList(),
+    );
+  }
 
   Stream<List<GroceryItem>> watchGroceryItems() => select(groceryItems).watch();
 
-  Future<int> addGroceryItem(String name, {int qty = 1}) {
+  Future<int> addGroceryItem(
+    String name, {
+    double qty = 1,
+    String unitType = 'pcs',
+    DateTime? plannedDate,
+  }) {
     return into(groceryItems).insert(
-      GroceryItemsCompanion.insert(name: name, qty: Value(qty)),
+      GroceryItemsCompanion.insert(
+        name: name,
+        qty: Value(qty),
+        unitType: Value(unitType),
+        plannedDate: Value(plannedDate),
+        createdAt: Value(DateTime.now()),
+      ),
     );
+  }
+
+  Future<void> updateGroceryItem({
+    required int id,
+    required String name,
+    required double qty,
+    required String unitType,
+    DateTime? plannedDate,
+  }) {
+    return (update(groceryItems)..where((g) => g.id.equals(id))).write(
+      GroceryItemsCompanion(
+        name: Value(name),
+        qty: Value(qty),
+        unitType: Value(unitType),
+        plannedDate: Value(plannedDate),
+      ),
+    );
+  }
+
+  Future<void> deleteGroceryItem(int id) {
+    return (delete(groceryItems)..where((g) => g.id.equals(id))).go();
   }
 
   Future<void> toggleGrocery(int id, bool done) {
@@ -180,18 +765,25 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<double> watchTotalSales() {
-    final q = customSelect('SELECT COALESCE(SUM(total_amount), 0) as total FROM sales');
+    final q = customSelect(
+      'SELECT COALESCE(SUM(total_amount), 0) as total FROM sales',
+      readsFrom: {sales},
+    );
     return q.watchSingle().map((row) => row.read<double>('total'));
   }
 
   Stream<double> watchTotalExpenses() {
-    final q = customSelect('SELECT COALESCE(SUM(amount), 0) as total FROM expenses');
+    final q = customSelect(
+      'SELECT COALESCE(SUM(amount), 0.0) as total FROM expenses',
+      readsFrom: {expenses},
+    );
     return q.watchSingle().map((row) => row.read<double>('total'));
   }
 
   Stream<int> watchLowStockCount() {
     final q = customSelect(
       'SELECT COUNT(*) as total FROM products WHERE stock_qty <= low_stock_threshold',
+      readsFrom: {products},
     );
     return q.watchSingle().map((row) => row.read<int>('total'));
   }
@@ -221,6 +813,8 @@ class AppDatabase extends _$AppDatabase {
       'saleItems': (await select(saleItems).get()).map((e) => e.toJson()).toList(),
       'customers': (await select(customers).get()).map((e) => e.toJson()).toList(),
       'utangEntries': (await select(utangEntries).get()).map((e) => e.toJson()).toList(),
+      'expenseCategories':
+          (await select(expenseCategories).get()).map((e) => e.toJson()).toList(),
       'expenses': (await select(expenses).get()).map((e) => e.toJson()).toList(),
       'groceryItems': (await select(groceryItems).get()).map((e) => e.toJson()).toList(),
     };
@@ -232,6 +826,8 @@ class AppDatabase extends _$AppDatabase {
       'products': (payload['products'] as List<dynamic>? ?? const []).length,
       'sales': (payload['sales'] as List<dynamic>? ?? const []).length,
       'customers': (payload['customers'] as List<dynamic>? ?? const []).length,
+      'expenseCategories':
+          (payload['expenseCategories'] as List<dynamic>? ?? const []).length,
       'expenses': (payload['expenses'] as List<dynamic>? ?? const []).length,
       'groceryItems': (payload['groceryItems'] as List<dynamic>? ?? const []).length,
     };
@@ -247,6 +843,7 @@ class AppDatabase extends _$AppDatabase {
         await delete(utangEntries).go();
         await delete(saleItems).go();
         await delete(expenses).go();
+        await delete(expenseCategories).go();
         await delete(sales).go();
         await delete(customers).go();
         await delete(products).go();
@@ -267,8 +864,11 @@ class AppDatabase extends _$AppDatabase {
             id: Value(data['id'] as int),
             name: Value(data['name'] as String),
             price: Value((data['price'] as num).toDouble()),
-            stockQty: Value(data['stock_qty'] as int),
-            lowStockThreshold: Value(data['low_stock_threshold'] as int),
+            stockQty: Value((data['stock_qty'] as num).toDouble()),
+            lowStockThreshold:
+                Value((data['low_stock_threshold'] as num).toDouble()),
+            weight: Value((data['weight'] as num?)?.toDouble() ?? 1),
+            unitType: Value(data['unit_type'] as String? ?? 'pcs'),
           ),
         );
       }
@@ -291,7 +891,7 @@ class AppDatabase extends _$AppDatabase {
             id: Value(data['id'] as int),
             saleId: Value(data['sale_id'] as int),
             productId: Value(data['product_id'] as int),
-            qty: Value(data['qty'] as int),
+            qty: Value((data['qty'] as num).toDouble()),
             unitPrice: Value((data['unit_price'] as num).toDouble()),
           ),
         );
@@ -316,7 +916,22 @@ class AppDatabase extends _$AppDatabase {
             amount: Value((data['amount'] as num).toDouble()),
             isPayment: Value(data['is_payment'] as bool),
             createdAt: Value(DateTime.parse(data['created_at'] as String)),
+            dueDate: Value(
+              data['due_date'] == null ? null : DateTime.parse(data['due_date'] as String),
+            ),
+            itemName: Value(data['item_name'] as String?),
             note: Value(data['note'] as String?),
+          ),
+        );
+      }
+      for (final row
+          in (payload['expenseCategories'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          expenseCategories,
+          ExpenseCategoriesCompanion(
+            id: Value(data['id'] as int),
+            name: Value(data['name'] as String),
           ),
         );
       }
@@ -326,10 +941,11 @@ class AppDatabase extends _$AppDatabase {
           expenses,
           ExpensesCompanion(
             id: Value(data['id'] as int),
-            category: Value(data['category'] as String),
+            categoryId: Value(data['category_id'] as int),
+            expenseName: Value(data['expense_name'] as String),
+            reason: Value(data['reason'] as String),
             amount: Value((data['amount'] as num).toDouble()),
             createdAt: Value(DateTime.parse(data['created_at'] as String)),
-            note: Value(data['note'] as String?),
           ),
         );
       }
@@ -340,7 +956,13 @@ class AppDatabase extends _$AppDatabase {
           GroceryItemsCompanion(
             id: Value(data['id'] as int),
             name: Value(data['name'] as String),
-            qty: Value(data['qty'] as int),
+            qty: Value((data['qty'] as num).toDouble()),
+            unitType: Value(data['unit_type'] as String? ?? 'pcs'),
+            plannedDate: Value(
+              data['planned_date'] == null
+                  ? null
+                  : DateTime.parse(data['planned_date'] as String),
+            ),
             isDone: Value(data['is_done'] as bool),
           ),
         );

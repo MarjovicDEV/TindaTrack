@@ -43,24 +43,69 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     'stockQty',
   );
   @override
-  late final GeneratedColumn<int> stockQty = GeneratedColumn<int>(
+  late final GeneratedColumn<double> stockQty = GeneratedColumn<double>(
     'stock_qty',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _lowStockThresholdMeta = const VerificationMeta(
     'lowStockThreshold',
   );
   @override
-  late final GeneratedColumn<int> lowStockThreshold = GeneratedColumn<int>(
-    'low_stock_threshold',
+  late final GeneratedColumn<double> lowStockThreshold =
+      GeneratedColumn<double>(
+        'low_stock_threshold',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(5),
+      );
+  static const VerificationMeta _weightMeta = const VerificationMeta('weight');
+  @override
+  late final GeneratedColumn<double> weight = GeneratedColumn<double>(
+    'weight',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
-    defaultValue: const Constant(5),
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _unitTypeMeta = const VerificationMeta(
+    'unitType',
+  );
+  @override
+  late final GeneratedColumn<String> unitType = GeneratedColumn<String>(
+    'unit_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pcs'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -69,6 +114,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     price,
     stockQty,
     lowStockThreshold,
+    weight,
+    unitType,
+    createdAt,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -118,6 +167,30 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         ),
       );
     }
+    if (data.containsKey('weight')) {
+      context.handle(
+        _weightMeta,
+        weight.isAcceptableOrUnknown(data['weight']!, _weightMeta),
+      );
+    }
+    if (data.containsKey('unit_type')) {
+      context.handle(
+        _unitTypeMeta,
+        unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -140,13 +213,29 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         data['${effectivePrefix}price'],
       )!,
       stockQty: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}stock_qty'],
       )!,
       lowStockThreshold: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}low_stock_threshold'],
       )!,
+      weight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}weight'],
+      )!,
+      unitType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit_type'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -160,14 +249,22 @@ class Product extends DataClass implements Insertable<Product> {
   final int id;
   final String name;
   final double price;
-  final int stockQty;
-  final int lowStockThreshold;
+  final double stockQty;
+  final double lowStockThreshold;
+  final double weight;
+  final String unitType;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
   const Product({
     required this.id,
     required this.name,
     required this.price,
     required this.stockQty,
     required this.lowStockThreshold,
+    required this.weight,
+    required this.unitType,
+    this.createdAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -175,8 +272,16 @@ class Product extends DataClass implements Insertable<Product> {
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['price'] = Variable<double>(price);
-    map['stock_qty'] = Variable<int>(stockQty);
-    map['low_stock_threshold'] = Variable<int>(lowStockThreshold);
+    map['stock_qty'] = Variable<double>(stockQty);
+    map['low_stock_threshold'] = Variable<double>(lowStockThreshold);
+    map['weight'] = Variable<double>(weight);
+    map['unit_type'] = Variable<String>(unitType);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -187,6 +292,14 @@ class Product extends DataClass implements Insertable<Product> {
       price: Value(price),
       stockQty: Value(stockQty),
       lowStockThreshold: Value(lowStockThreshold),
+      weight: Value(weight),
+      unitType: Value(unitType),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -199,8 +312,12 @@ class Product extends DataClass implements Insertable<Product> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       price: serializer.fromJson<double>(json['price']),
-      stockQty: serializer.fromJson<int>(json['stockQty']),
-      lowStockThreshold: serializer.fromJson<int>(json['lowStockThreshold']),
+      stockQty: serializer.fromJson<double>(json['stockQty']),
+      lowStockThreshold: serializer.fromJson<double>(json['lowStockThreshold']),
+      weight: serializer.fromJson<double>(json['weight']),
+      unitType: serializer.fromJson<String>(json['unitType']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -210,8 +327,12 @@ class Product extends DataClass implements Insertable<Product> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'price': serializer.toJson<double>(price),
-      'stockQty': serializer.toJson<int>(stockQty),
-      'lowStockThreshold': serializer.toJson<int>(lowStockThreshold),
+      'stockQty': serializer.toJson<double>(stockQty),
+      'lowStockThreshold': serializer.toJson<double>(lowStockThreshold),
+      'weight': serializer.toJson<double>(weight),
+      'unitType': serializer.toJson<String>(unitType),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -219,14 +340,22 @@ class Product extends DataClass implements Insertable<Product> {
     int? id,
     String? name,
     double? price,
-    int? stockQty,
-    int? lowStockThreshold,
+    double? stockQty,
+    double? lowStockThreshold,
+    double? weight,
+    String? unitType,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Product(
     id: id ?? this.id,
     name: name ?? this.name,
     price: price ?? this.price,
     stockQty: stockQty ?? this.stockQty,
     lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
+    weight: weight ?? this.weight,
+    unitType: unitType ?? this.unitType,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Product copyWithCompanion(ProductsCompanion data) {
     return Product(
@@ -237,6 +366,10 @@ class Product extends DataClass implements Insertable<Product> {
       lowStockThreshold: data.lowStockThreshold.present
           ? data.lowStockThreshold.value
           : this.lowStockThreshold,
+      weight: data.weight.present ? data.weight.value : this.weight,
+      unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -247,13 +380,27 @@ class Product extends DataClass implements Insertable<Product> {
           ..write('name: $name, ')
           ..write('price: $price, ')
           ..write('stockQty: $stockQty, ')
-          ..write('lowStockThreshold: $lowStockThreshold')
+          ..write('lowStockThreshold: $lowStockThreshold, ')
+          ..write('weight: $weight, ')
+          ..write('unitType: $unitType, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, price, stockQty, lowStockThreshold);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    price,
+    stockQty,
+    lowStockThreshold,
+    weight,
+    unitType,
+    createdAt,
+    deletedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -262,28 +409,44 @@ class Product extends DataClass implements Insertable<Product> {
           other.name == this.name &&
           other.price == this.price &&
           other.stockQty == this.stockQty &&
-          other.lowStockThreshold == this.lowStockThreshold);
+          other.lowStockThreshold == this.lowStockThreshold &&
+          other.weight == this.weight &&
+          other.unitType == this.unitType &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<int> id;
   final Value<String> name;
   final Value<double> price;
-  final Value<int> stockQty;
-  final Value<int> lowStockThreshold;
+  final Value<double> stockQty;
+  final Value<double> lowStockThreshold;
+  final Value<double> weight;
+  final Value<String> unitType;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
   const ProductsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.price = const Value.absent(),
     this.stockQty = const Value.absent(),
     this.lowStockThreshold = const Value.absent(),
+    this.weight = const Value.absent(),
+    this.unitType = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   ProductsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required double price,
-    required int stockQty,
+    required double stockQty,
     this.lowStockThreshold = const Value.absent(),
+    this.weight = const Value.absent(),
+    this.unitType = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   }) : name = Value(name),
        price = Value(price),
        stockQty = Value(stockQty);
@@ -291,8 +454,12 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<int>? id,
     Expression<String>? name,
     Expression<double>? price,
-    Expression<int>? stockQty,
-    Expression<int>? lowStockThreshold,
+    Expression<double>? stockQty,
+    Expression<double>? lowStockThreshold,
+    Expression<double>? weight,
+    Expression<String>? unitType,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -300,6 +467,10 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       if (price != null) 'price': price,
       if (stockQty != null) 'stock_qty': stockQty,
       if (lowStockThreshold != null) 'low_stock_threshold': lowStockThreshold,
+      if (weight != null) 'weight': weight,
+      if (unitType != null) 'unit_type': unitType,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
@@ -307,8 +478,12 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Value<int>? id,
     Value<String>? name,
     Value<double>? price,
-    Value<int>? stockQty,
-    Value<int>? lowStockThreshold,
+    Value<double>? stockQty,
+    Value<double>? lowStockThreshold,
+    Value<double>? weight,
+    Value<String>? unitType,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
   }) {
     return ProductsCompanion(
       id: id ?? this.id,
@@ -316,6 +491,10 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       price: price ?? this.price,
       stockQty: stockQty ?? this.stockQty,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
+      weight: weight ?? this.weight,
+      unitType: unitType ?? this.unitType,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -332,10 +511,22 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       map['price'] = Variable<double>(price.value);
     }
     if (stockQty.present) {
-      map['stock_qty'] = Variable<int>(stockQty.value);
+      map['stock_qty'] = Variable<double>(stockQty.value);
     }
     if (lowStockThreshold.present) {
-      map['low_stock_threshold'] = Variable<int>(lowStockThreshold.value);
+      map['low_stock_threshold'] = Variable<double>(lowStockThreshold.value);
+    }
+    if (weight.present) {
+      map['weight'] = Variable<double>(weight.value);
+    }
+    if (unitType.present) {
+      map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
     return map;
   }
@@ -347,7 +538,11 @@ class ProductsCompanion extends UpdateCompanion<Product> {
           ..write('name: $name, ')
           ..write('price: $price, ')
           ..write('stockQty: $stockQty, ')
-          ..write('lowStockThreshold: $lowStockThreshold')
+          ..write('lowStockThreshold: $lowStockThreshold, ')
+          ..write('weight: $weight, ')
+          ..write('unitType: $unitType, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -393,8 +588,19 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, createdAt, totalAmount];
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, createdAt, totalAmount, deletedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -429,6 +635,12 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
     } else if (isInserting) {
       context.missing(_totalAmountMeta);
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -450,6 +662,10 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
         DriftSqlType.double,
         data['${effectivePrefix}total_amount'],
       )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -463,10 +679,12 @@ class Sale extends DataClass implements Insertable<Sale> {
   final int id;
   final DateTime createdAt;
   final double totalAmount;
+  final DateTime? deletedAt;
   const Sale({
     required this.id,
     required this.createdAt,
     required this.totalAmount,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -474,6 +692,9 @@ class Sale extends DataClass implements Insertable<Sale> {
     map['id'] = Variable<int>(id);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['total_amount'] = Variable<double>(totalAmount);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -482,6 +703,9 @@ class Sale extends DataClass implements Insertable<Sale> {
       id: Value(id),
       createdAt: Value(createdAt),
       totalAmount: Value(totalAmount),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -494,6 +718,7 @@ class Sale extends DataClass implements Insertable<Sale> {
       id: serializer.fromJson<int>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -503,13 +728,20 @@ class Sale extends DataClass implements Insertable<Sale> {
       'id': serializer.toJson<int>(id),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'totalAmount': serializer.toJson<double>(totalAmount),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
-  Sale copyWith({int? id, DateTime? createdAt, double? totalAmount}) => Sale(
+  Sale copyWith({
+    int? id,
+    DateTime? createdAt,
+    double? totalAmount,
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => Sale(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
     totalAmount: totalAmount ?? this.totalAmount,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Sale copyWithCompanion(SalesCompanion data) {
     return Sale(
@@ -518,6 +750,7 @@ class Sale extends DataClass implements Insertable<Sale> {
       totalAmount: data.totalAmount.present
           ? data.totalAmount.value
           : this.totalAmount,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -526,46 +759,53 @@ class Sale extends DataClass implements Insertable<Sale> {
     return (StringBuffer('Sale(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
-          ..write('totalAmount: $totalAmount')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, createdAt, totalAmount);
+  int get hashCode => Object.hash(id, createdAt, totalAmount, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Sale &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
-          other.totalAmount == this.totalAmount);
+          other.totalAmount == this.totalAmount &&
+          other.deletedAt == this.deletedAt);
 }
 
 class SalesCompanion extends UpdateCompanion<Sale> {
   final Value<int> id;
   final Value<DateTime> createdAt;
   final Value<double> totalAmount;
+  final Value<DateTime?> deletedAt;
   const SalesCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.totalAmount = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   SalesCompanion.insert({
     this.id = const Value.absent(),
     required DateTime createdAt,
     required double totalAmount,
+    this.deletedAt = const Value.absent(),
   }) : createdAt = Value(createdAt),
        totalAmount = Value(totalAmount);
   static Insertable<Sale> custom({
     Expression<int>? id,
     Expression<DateTime>? createdAt,
     Expression<double>? totalAmount,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (createdAt != null) 'created_at': createdAt,
       if (totalAmount != null) 'total_amount': totalAmount,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
@@ -573,11 +813,13 @@ class SalesCompanion extends UpdateCompanion<Sale> {
     Value<int>? id,
     Value<DateTime>? createdAt,
     Value<double>? totalAmount,
+    Value<DateTime?>? deletedAt,
   }) {
     return SalesCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       totalAmount: totalAmount ?? this.totalAmount,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -593,6 +835,9 @@ class SalesCompanion extends UpdateCompanion<Sale> {
     if (totalAmount.present) {
       map['total_amount'] = Variable<double>(totalAmount.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     return map;
   }
 
@@ -601,7 +846,8 @@ class SalesCompanion extends UpdateCompanion<Sale> {
     return (StringBuffer('SalesCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
-          ..write('totalAmount: $totalAmount')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -654,11 +900,11 @@ class $SaleItemsTable extends SaleItems
   );
   static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
   @override
-  late final GeneratedColumn<int> qty = GeneratedColumn<int>(
+  late final GeneratedColumn<double> qty = GeneratedColumn<double>(
     'qty',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _unitPriceMeta = const VerificationMeta(
@@ -672,8 +918,38 @@ class $SaleItemsTable extends SaleItems
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, saleId, productId, qty, unitPrice];
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    saleId,
+    productId,
+    qty,
+    unitPrice,
+    createdAt,
+    deletedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -721,6 +997,18 @@ class $SaleItemsTable extends SaleItems
     } else if (isInserting) {
       context.missing(_unitPriceMeta);
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -743,13 +1031,21 @@ class $SaleItemsTable extends SaleItems
         data['${effectivePrefix}product_id'],
       )!,
       qty: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}qty'],
       )!,
       unitPrice: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}unit_price'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -763,14 +1059,18 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   final int id;
   final int saleId;
   final int productId;
-  final int qty;
+  final double qty;
   final double unitPrice;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
   const SaleItem({
     required this.id,
     required this.saleId,
     required this.productId,
     required this.qty,
     required this.unitPrice,
+    this.createdAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -778,8 +1078,14 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
     map['id'] = Variable<int>(id);
     map['sale_id'] = Variable<int>(saleId);
     map['product_id'] = Variable<int>(productId);
-    map['qty'] = Variable<int>(qty);
+    map['qty'] = Variable<double>(qty);
     map['unit_price'] = Variable<double>(unitPrice);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -790,6 +1096,12 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
       productId: Value(productId),
       qty: Value(qty),
       unitPrice: Value(unitPrice),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -802,8 +1114,10 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
       id: serializer.fromJson<int>(json['id']),
       saleId: serializer.fromJson<int>(json['saleId']),
       productId: serializer.fromJson<int>(json['productId']),
-      qty: serializer.fromJson<int>(json['qty']),
+      qty: serializer.fromJson<double>(json['qty']),
       unitPrice: serializer.fromJson<double>(json['unitPrice']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -813,8 +1127,10 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
       'id': serializer.toJson<int>(id),
       'saleId': serializer.toJson<int>(saleId),
       'productId': serializer.toJson<int>(productId),
-      'qty': serializer.toJson<int>(qty),
+      'qty': serializer.toJson<double>(qty),
       'unitPrice': serializer.toJson<double>(unitPrice),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -822,14 +1138,18 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
     int? id,
     int? saleId,
     int? productId,
-    int? qty,
+    double? qty,
     double? unitPrice,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => SaleItem(
     id: id ?? this.id,
     saleId: saleId ?? this.saleId,
     productId: productId ?? this.productId,
     qty: qty ?? this.qty,
     unitPrice: unitPrice ?? this.unitPrice,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   SaleItem copyWithCompanion(SaleItemsCompanion data) {
     return SaleItem(
@@ -838,6 +1158,8 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
       productId: data.productId.present ? data.productId.value : this.productId,
       qty: data.qty.present ? data.qty.value : this.qty,
       unitPrice: data.unitPrice.present ? data.unitPrice.value : this.unitPrice,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -848,13 +1170,16 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
           ..write('saleId: $saleId, ')
           ..write('productId: $productId, ')
           ..write('qty: $qty, ')
-          ..write('unitPrice: $unitPrice')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, saleId, productId, qty, unitPrice);
+  int get hashCode =>
+      Object.hash(id, saleId, productId, qty, unitPrice, createdAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -863,28 +1188,36 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
           other.saleId == this.saleId &&
           other.productId == this.productId &&
           other.qty == this.qty &&
-          other.unitPrice == this.unitPrice);
+          other.unitPrice == this.unitPrice &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
   final Value<int> id;
   final Value<int> saleId;
   final Value<int> productId;
-  final Value<int> qty;
+  final Value<double> qty;
   final Value<double> unitPrice;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
   const SaleItemsCompanion({
     this.id = const Value.absent(),
     this.saleId = const Value.absent(),
     this.productId = const Value.absent(),
     this.qty = const Value.absent(),
     this.unitPrice = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   SaleItemsCompanion.insert({
     this.id = const Value.absent(),
     required int saleId,
     required int productId,
-    required int qty,
+    required double qty,
     required double unitPrice,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   }) : saleId = Value(saleId),
        productId = Value(productId),
        qty = Value(qty),
@@ -893,8 +1226,10 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
     Expression<int>? id,
     Expression<int>? saleId,
     Expression<int>? productId,
-    Expression<int>? qty,
+    Expression<double>? qty,
     Expression<double>? unitPrice,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -902,6 +1237,8 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
       if (productId != null) 'product_id': productId,
       if (qty != null) 'qty': qty,
       if (unitPrice != null) 'unit_price': unitPrice,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
@@ -909,8 +1246,10 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
     Value<int>? id,
     Value<int>? saleId,
     Value<int>? productId,
-    Value<int>? qty,
+    Value<double>? qty,
     Value<double>? unitPrice,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
   }) {
     return SaleItemsCompanion(
       id: id ?? this.id,
@@ -918,6 +1257,8 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
       productId: productId ?? this.productId,
       qty: qty ?? this.qty,
       unitPrice: unitPrice ?? this.unitPrice,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -934,10 +1275,16 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
       map['product_id'] = Variable<int>(productId.value);
     }
     if (qty.present) {
-      map['qty'] = Variable<int>(qty.value);
+      map['qty'] = Variable<double>(qty.value);
     }
     if (unitPrice.present) {
       map['unit_price'] = Variable<double>(unitPrice.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
     return map;
   }
@@ -949,7 +1296,9 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
           ..write('saleId: $saleId, ')
           ..write('productId: $productId, ')
           ..write('qty: $qty, ')
-          ..write('unitPrice: $unitPrice')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -983,8 +1332,30 @@ class $CustomersTable extends Customers
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, name];
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt, deletedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1008,6 +1379,18 @@ class $CustomersTable extends Customers
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1025,6 +1408,14 @@ class $CustomersTable extends Customers
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -1037,17 +1428,39 @@ class $CustomersTable extends Customers
 class Customer extends DataClass implements Insertable<Customer> {
   final int id;
   final String name;
-  const Customer({required this.id, required this.name});
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  const Customer({
+    required this.id,
+    required this.name,
+    this.createdAt,
+    this.deletedAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
   CustomersCompanion toCompanion(bool nullToAbsent) {
-    return CustomersCompanion(id: Value(id), name: Value(name));
+    return CustomersCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
   }
 
   factory Customer.fromJson(
@@ -1058,6 +1471,8 @@ class Customer extends DataClass implements Insertable<Customer> {
     return Customer(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -1066,15 +1481,28 @@ class Customer extends DataClass implements Insertable<Customer> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
-  Customer copyWith({int? id, String? name}) =>
-      Customer(id: id ?? this.id, name: name ?? this.name);
+  Customer copyWith({
+    int? id,
+    String? name,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => Customer(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
   Customer copyWithCompanion(CustomersCompanion data) {
     return Customer(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -1082,42 +1510,68 @@ class Customer extends DataClass implements Insertable<Customer> {
   String toString() {
     return (StringBuffer('Customer(')
           ..write('id: $id, ')
-          ..write('name: $name')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name);
+  int get hashCode => Object.hash(id, name, createdAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Customer && other.id == this.id && other.name == this.name);
+      (other is Customer &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class CustomersCompanion extends UpdateCompanion<Customer> {
   final Value<int> id;
   final Value<String> name;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
   const CustomersCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   CustomersCompanion.insert({
     this.id = const Value.absent(),
     required String name,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   }) : name = Value(name);
   static Insertable<Customer> custom({
     Expression<int>? id,
     Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
-  CustomersCompanion copyWith({Value<int>? id, Value<String>? name}) {
-    return CustomersCompanion(id: id ?? this.id, name: name ?? this.name);
+  CustomersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return CustomersCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
   }
 
   @override
@@ -1129,6 +1583,12 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     return map;
   }
 
@@ -1136,7 +1596,9 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   String toString() {
     return (StringBuffer('CustomersCompanion(')
           ..write('id: $id, ')
-          ..write('name: $name')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -1210,6 +1672,28 @@ class $UtangEntriesTable extends UtangEntries
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _dueDateMeta = const VerificationMeta(
+    'dueDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dueDate = GeneratedColumn<DateTime>(
+    'due_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _itemNameMeta = const VerificationMeta(
+    'itemName',
+  );
+  @override
+  late final GeneratedColumn<String> itemName = GeneratedColumn<String>(
+    'item_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _noteMeta = const VerificationMeta('note');
   @override
   late final GeneratedColumn<String> note = GeneratedColumn<String>(
@@ -1219,6 +1703,17 @@ class $UtangEntriesTable extends UtangEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1226,7 +1721,10 @@ class $UtangEntriesTable extends UtangEntries
     amount,
     isPayment,
     createdAt,
+    dueDate,
+    itemName,
     note,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1273,10 +1771,28 @@ class $UtangEntriesTable extends UtangEntries
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('due_date')) {
+      context.handle(
+        _dueDateMeta,
+        dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta),
+      );
+    }
+    if (data.containsKey('item_name')) {
+      context.handle(
+        _itemNameMeta,
+        itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta),
+      );
+    }
     if (data.containsKey('note')) {
       context.handle(
         _noteMeta,
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
     return context;
@@ -1308,9 +1824,21 @@ class $UtangEntriesTable extends UtangEntries
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      dueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due_date'],
+      ),
+      itemName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_name'],
+      ),
       note: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}note'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
       ),
     );
   }
@@ -1327,14 +1855,20 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
   final double amount;
   final bool isPayment;
   final DateTime createdAt;
+  final DateTime? dueDate;
+  final String? itemName;
   final String? note;
+  final DateTime? deletedAt;
   const UtangEntry({
     required this.id,
     required this.customerId,
     required this.amount,
     required this.isPayment,
     required this.createdAt,
+    this.dueDate,
+    this.itemName,
     this.note,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1344,8 +1878,17 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
     map['amount'] = Variable<double>(amount);
     map['is_payment'] = Variable<bool>(isPayment);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || dueDate != null) {
+      map['due_date'] = Variable<DateTime>(dueDate);
+    }
+    if (!nullToAbsent || itemName != null) {
+      map['item_name'] = Variable<String>(itemName);
+    }
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     return map;
   }
@@ -1357,7 +1900,16 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
       amount: Value(amount),
       isPayment: Value(isPayment),
       createdAt: Value(createdAt),
+      dueDate: dueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueDate),
+      itemName: itemName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(itemName),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -1372,7 +1924,10 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
       amount: serializer.fromJson<double>(json['amount']),
       isPayment: serializer.fromJson<bool>(json['isPayment']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
+      itemName: serializer.fromJson<String?>(json['itemName']),
       note: serializer.fromJson<String?>(json['note']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -1384,7 +1939,10 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
       'amount': serializer.toJson<double>(amount),
       'isPayment': serializer.toJson<bool>(isPayment),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'dueDate': serializer.toJson<DateTime?>(dueDate),
+      'itemName': serializer.toJson<String?>(itemName),
       'note': serializer.toJson<String?>(note),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -1394,14 +1952,20 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
     double? amount,
     bool? isPayment,
     DateTime? createdAt,
+    Value<DateTime?> dueDate = const Value.absent(),
+    Value<String?> itemName = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => UtangEntry(
     id: id ?? this.id,
     customerId: customerId ?? this.customerId,
     amount: amount ?? this.amount,
     isPayment: isPayment ?? this.isPayment,
     createdAt: createdAt ?? this.createdAt,
+    dueDate: dueDate.present ? dueDate.value : this.dueDate,
+    itemName: itemName.present ? itemName.value : this.itemName,
     note: note.present ? note.value : this.note,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   UtangEntry copyWithCompanion(UtangEntriesCompanion data) {
     return UtangEntry(
@@ -1412,7 +1976,10 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
       amount: data.amount.present ? data.amount.value : this.amount,
       isPayment: data.isPayment.present ? data.isPayment.value : this.isPayment,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      itemName: data.itemName.present ? data.itemName.value : this.itemName,
       note: data.note.present ? data.note.value : this.note,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -1424,14 +1991,26 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
           ..write('amount: $amount, ')
           ..write('isPayment: $isPayment, ')
           ..write('createdAt: $createdAt, ')
-          ..write('note: $note')
+          ..write('dueDate: $dueDate, ')
+          ..write('itemName: $itemName, ')
+          ..write('note: $note, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, customerId, amount, isPayment, createdAt, note);
+  int get hashCode => Object.hash(
+    id,
+    customerId,
+    amount,
+    isPayment,
+    createdAt,
+    dueDate,
+    itemName,
+    note,
+    deletedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1441,7 +2020,10 @@ class UtangEntry extends DataClass implements Insertable<UtangEntry> {
           other.amount == this.amount &&
           other.isPayment == this.isPayment &&
           other.createdAt == this.createdAt &&
-          other.note == this.note);
+          other.dueDate == this.dueDate &&
+          other.itemName == this.itemName &&
+          other.note == this.note &&
+          other.deletedAt == this.deletedAt);
 }
 
 class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
@@ -1450,14 +2032,20 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
   final Value<double> amount;
   final Value<bool> isPayment;
   final Value<DateTime> createdAt;
+  final Value<DateTime?> dueDate;
+  final Value<String?> itemName;
   final Value<String?> note;
+  final Value<DateTime?> deletedAt;
   const UtangEntriesCompanion({
     this.id = const Value.absent(),
     this.customerId = const Value.absent(),
     this.amount = const Value.absent(),
     this.isPayment = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.itemName = const Value.absent(),
     this.note = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   UtangEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -1465,7 +2053,10 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
     required double amount,
     this.isPayment = const Value.absent(),
     required DateTime createdAt,
+    this.dueDate = const Value.absent(),
+    this.itemName = const Value.absent(),
     this.note = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   }) : customerId = Value(customerId),
        amount = Value(amount),
        createdAt = Value(createdAt);
@@ -1475,7 +2066,10 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
     Expression<double>? amount,
     Expression<bool>? isPayment,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? dueDate,
+    Expression<String>? itemName,
     Expression<String>? note,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1483,7 +2077,10 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
       if (amount != null) 'amount': amount,
       if (isPayment != null) 'is_payment': isPayment,
       if (createdAt != null) 'created_at': createdAt,
+      if (dueDate != null) 'due_date': dueDate,
+      if (itemName != null) 'item_name': itemName,
       if (note != null) 'note': note,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
@@ -1493,7 +2090,10 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
     Value<double>? amount,
     Value<bool>? isPayment,
     Value<DateTime>? createdAt,
+    Value<DateTime?>? dueDate,
+    Value<String?>? itemName,
     Value<String?>? note,
+    Value<DateTime?>? deletedAt,
   }) {
     return UtangEntriesCompanion(
       id: id ?? this.id,
@@ -1501,7 +2101,10 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
       amount: amount ?? this.amount,
       isPayment: isPayment ?? this.isPayment,
       createdAt: createdAt ?? this.createdAt,
+      dueDate: dueDate ?? this.dueDate,
+      itemName: itemName ?? this.itemName,
       note: note ?? this.note,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -1523,8 +2126,17 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (dueDate.present) {
+      map['due_date'] = Variable<DateTime>(dueDate.value);
+    }
+    if (itemName.present) {
+      map['item_name'] = Variable<String>(itemName.value);
+    }
     if (note.present) {
       map['note'] = Variable<String>(note.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
     return map;
   }
@@ -1537,7 +2149,824 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
           ..write('amount: $amount, ')
           ..write('isPayment: $isPayment, ')
           ..write('createdAt: $createdAt, ')
-          ..write('note: $note')
+          ..write('dueDate: $dueDate, ')
+          ..write('itemName: $itemName, ')
+          ..write('note: $note, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UtangEntryItemsTable extends UtangEntryItems
+    with TableInfo<$UtangEntryItemsTable, UtangEntryItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UtangEntryItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _utangEntryIdMeta = const VerificationMeta(
+    'utangEntryId',
+  );
+  @override
+  late final GeneratedColumn<int> utangEntryId = GeneratedColumn<int>(
+    'utang_entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES utang_entries (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES products (id)',
+    ),
+  );
+  static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
+  @override
+  late final GeneratedColumn<double> qty = GeneratedColumn<double>(
+    'qty',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitPriceMeta = const VerificationMeta(
+    'unitPrice',
+  );
+  @override
+  late final GeneratedColumn<double> unitPrice = GeneratedColumn<double>(
+    'unit_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lineTotalMeta = const VerificationMeta(
+    'lineTotal',
+  );
+  @override
+  late final GeneratedColumn<double> lineTotal = GeneratedColumn<double>(
+    'line_total',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    utangEntryId,
+    productId,
+    qty,
+    unitPrice,
+    lineTotal,
+    createdAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'utang_entry_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UtangEntryItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('utang_entry_id')) {
+      context.handle(
+        _utangEntryIdMeta,
+        utangEntryId.isAcceptableOrUnknown(
+          data['utang_entry_id']!,
+          _utangEntryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_utangEntryIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('qty')) {
+      context.handle(
+        _qtyMeta,
+        qty.isAcceptableOrUnknown(data['qty']!, _qtyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_qtyMeta);
+    }
+    if (data.containsKey('unit_price')) {
+      context.handle(
+        _unitPriceMeta,
+        unitPrice.isAcceptableOrUnknown(data['unit_price']!, _unitPriceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitPriceMeta);
+    }
+    if (data.containsKey('line_total')) {
+      context.handle(
+        _lineTotalMeta,
+        lineTotal.isAcceptableOrUnknown(data['line_total']!, _lineTotalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lineTotalMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UtangEntryItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UtangEntryItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      utangEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}utang_entry_id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}product_id'],
+      )!,
+      qty: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}qty'],
+      )!,
+      unitPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_price'],
+      )!,
+      lineTotal: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}line_total'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $UtangEntryItemsTable createAlias(String alias) {
+    return $UtangEntryItemsTable(attachedDatabase, alias);
+  }
+}
+
+class UtangEntryItem extends DataClass implements Insertable<UtangEntryItem> {
+  final int id;
+  final int utangEntryId;
+  final int productId;
+  final double qty;
+  final double unitPrice;
+  final double lineTotal;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  const UtangEntryItem({
+    required this.id,
+    required this.utangEntryId,
+    required this.productId,
+    required this.qty,
+    required this.unitPrice,
+    required this.lineTotal,
+    this.createdAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['utang_entry_id'] = Variable<int>(utangEntryId);
+    map['product_id'] = Variable<int>(productId);
+    map['qty'] = Variable<double>(qty);
+    map['unit_price'] = Variable<double>(unitPrice);
+    map['line_total'] = Variable<double>(lineTotal);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  UtangEntryItemsCompanion toCompanion(bool nullToAbsent) {
+    return UtangEntryItemsCompanion(
+      id: Value(id),
+      utangEntryId: Value(utangEntryId),
+      productId: Value(productId),
+      qty: Value(qty),
+      unitPrice: Value(unitPrice),
+      lineTotal: Value(lineTotal),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory UtangEntryItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UtangEntryItem(
+      id: serializer.fromJson<int>(json['id']),
+      utangEntryId: serializer.fromJson<int>(json['utangEntryId']),
+      productId: serializer.fromJson<int>(json['productId']),
+      qty: serializer.fromJson<double>(json['qty']),
+      unitPrice: serializer.fromJson<double>(json['unitPrice']),
+      lineTotal: serializer.fromJson<double>(json['lineTotal']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'utangEntryId': serializer.toJson<int>(utangEntryId),
+      'productId': serializer.toJson<int>(productId),
+      'qty': serializer.toJson<double>(qty),
+      'unitPrice': serializer.toJson<double>(unitPrice),
+      'lineTotal': serializer.toJson<double>(lineTotal),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  UtangEntryItem copyWith({
+    int? id,
+    int? utangEntryId,
+    int? productId,
+    double? qty,
+    double? unitPrice,
+    double? lineTotal,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => UtangEntryItem(
+    id: id ?? this.id,
+    utangEntryId: utangEntryId ?? this.utangEntryId,
+    productId: productId ?? this.productId,
+    qty: qty ?? this.qty,
+    unitPrice: unitPrice ?? this.unitPrice,
+    lineTotal: lineTotal ?? this.lineTotal,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  UtangEntryItem copyWithCompanion(UtangEntryItemsCompanion data) {
+    return UtangEntryItem(
+      id: data.id.present ? data.id.value : this.id,
+      utangEntryId: data.utangEntryId.present
+          ? data.utangEntryId.value
+          : this.utangEntryId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      qty: data.qty.present ? data.qty.value : this.qty,
+      unitPrice: data.unitPrice.present ? data.unitPrice.value : this.unitPrice,
+      lineTotal: data.lineTotal.present ? data.lineTotal.value : this.lineTotal,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UtangEntryItem(')
+          ..write('id: $id, ')
+          ..write('utangEntryId: $utangEntryId, ')
+          ..write('productId: $productId, ')
+          ..write('qty: $qty, ')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('lineTotal: $lineTotal, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    utangEntryId,
+    productId,
+    qty,
+    unitPrice,
+    lineTotal,
+    createdAt,
+    deletedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UtangEntryItem &&
+          other.id == this.id &&
+          other.utangEntryId == this.utangEntryId &&
+          other.productId == this.productId &&
+          other.qty == this.qty &&
+          other.unitPrice == this.unitPrice &&
+          other.lineTotal == this.lineTotal &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class UtangEntryItemsCompanion extends UpdateCompanion<UtangEntryItem> {
+  final Value<int> id;
+  final Value<int> utangEntryId;
+  final Value<int> productId;
+  final Value<double> qty;
+  final Value<double> unitPrice;
+  final Value<double> lineTotal;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
+  const UtangEntryItemsCompanion({
+    this.id = const Value.absent(),
+    this.utangEntryId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.qty = const Value.absent(),
+    this.unitPrice = const Value.absent(),
+    this.lineTotal = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  UtangEntryItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required int utangEntryId,
+    required int productId,
+    required double qty,
+    required double unitPrice,
+    required double lineTotal,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : utangEntryId = Value(utangEntryId),
+       productId = Value(productId),
+       qty = Value(qty),
+       unitPrice = Value(unitPrice),
+       lineTotal = Value(lineTotal);
+  static Insertable<UtangEntryItem> custom({
+    Expression<int>? id,
+    Expression<int>? utangEntryId,
+    Expression<int>? productId,
+    Expression<double>? qty,
+    Expression<double>? unitPrice,
+    Expression<double>? lineTotal,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (utangEntryId != null) 'utang_entry_id': utangEntryId,
+      if (productId != null) 'product_id': productId,
+      if (qty != null) 'qty': qty,
+      if (unitPrice != null) 'unit_price': unitPrice,
+      if (lineTotal != null) 'line_total': lineTotal,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  UtangEntryItemsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? utangEntryId,
+    Value<int>? productId,
+    Value<double>? qty,
+    Value<double>? unitPrice,
+    Value<double>? lineTotal,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return UtangEntryItemsCompanion(
+      id: id ?? this.id,
+      utangEntryId: utangEntryId ?? this.utangEntryId,
+      productId: productId ?? this.productId,
+      qty: qty ?? this.qty,
+      unitPrice: unitPrice ?? this.unitPrice,
+      lineTotal: lineTotal ?? this.lineTotal,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (utangEntryId.present) {
+      map['utang_entry_id'] = Variable<int>(utangEntryId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<int>(productId.value);
+    }
+    if (qty.present) {
+      map['qty'] = Variable<double>(qty.value);
+    }
+    if (unitPrice.present) {
+      map['unit_price'] = Variable<double>(unitPrice.value);
+    }
+    if (lineTotal.present) {
+      map['line_total'] = Variable<double>(lineTotal.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UtangEntryItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('utangEntryId: $utangEntryId, ')
+          ..write('productId: $productId, ')
+          ..write('qty: $qty, ')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('lineTotal: $lineTotal, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExpenseCategoriesTable extends ExpenseCategories
+    with TableInfo<$ExpenseCategoriesTable, ExpenseCategory> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExpenseCategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt, deletedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'expense_categories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExpenseCategory> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExpenseCategory map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExpenseCategory(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $ExpenseCategoriesTable createAlias(String alias) {
+    return $ExpenseCategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class ExpenseCategory extends DataClass implements Insertable<ExpenseCategory> {
+  final int id;
+  final String name;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  const ExpenseCategory({
+    required this.id,
+    required this.name,
+    this.createdAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  ExpenseCategoriesCompanion toCompanion(bool nullToAbsent) {
+    return ExpenseCategoriesCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory ExpenseCategory.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExpenseCategory(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  ExpenseCategory copyWith({
+    int? id,
+    String? name,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => ExpenseCategory(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  ExpenseCategory copyWithCompanion(ExpenseCategoriesCompanion data) {
+    return ExpenseCategory(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpenseCategory(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExpenseCategory &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class ExpenseCategoriesCompanion extends UpdateCompanion<ExpenseCategory> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
+  const ExpenseCategoriesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  ExpenseCategoriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<ExpenseCategory> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  ExpenseCategoriesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return ExpenseCategoriesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpenseCategoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -1561,12 +2990,35 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
-  static const VerificationMeta _categoryMeta = const VerificationMeta(
-    'category',
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
   );
   @override
-  late final GeneratedColumn<String> category = GeneratedColumn<String>(
-    'category',
+  late final GeneratedColumn<int> categoryId = GeneratedColumn<int>(
+    'category_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES expense_categories (id)',
+    ),
+  );
+  static const VerificationMeta _expenseNameMeta = const VerificationMeta(
+    'expenseName',
+  );
+  @override
+  late final GeneratedColumn<String> expenseName = GeneratedColumn<String>(
+    'expense_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -1592,17 +3044,27 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
   @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
     aliasedName,
     true,
-    type: DriftSqlType.string,
+    type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, category, amount, createdAt, note];
+  List<GeneratedColumn> get $columns => [
+    id,
+    categoryId,
+    expenseName,
+    reason,
+    amount,
+    createdAt,
+    deletedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1618,13 +3080,32 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('category')) {
+    if (data.containsKey('category_id')) {
       context.handle(
-        _categoryMeta,
-        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_categoryMeta);
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('expense_name')) {
+      context.handle(
+        _expenseNameMeta,
+        expenseName.isAcceptableOrUnknown(
+          data['expense_name']!,
+          _expenseNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expenseNameMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reasonMeta);
     }
     if (data.containsKey('amount')) {
       context.handle(
@@ -1642,10 +3123,10 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
-    if (data.containsKey('note')) {
+    if (data.containsKey('deleted_at')) {
       context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
     return context;
@@ -1661,9 +3142,17 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
-      category: attachedDatabase.typeMapping.read(
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}category_id'],
+      )!,
+      expenseName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}category'],
+        data['${effectivePrefix}expense_name'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
       )!,
       amount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -1673,9 +3162,9 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
       ),
     );
   }
@@ -1688,26 +3177,32 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
 
 class Expense extends DataClass implements Insertable<Expense> {
   final int id;
-  final String category;
+  final int categoryId;
+  final String expenseName;
+  final String reason;
   final double amount;
   final DateTime createdAt;
-  final String? note;
+  final DateTime? deletedAt;
   const Expense({
     required this.id,
-    required this.category,
+    required this.categoryId,
+    required this.expenseName,
+    required this.reason,
     required this.amount,
     required this.createdAt,
-    this.note,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['category'] = Variable<String>(category);
+    map['category_id'] = Variable<int>(categoryId);
+    map['expense_name'] = Variable<String>(expenseName);
+    map['reason'] = Variable<String>(reason);
     map['amount'] = Variable<double>(amount);
     map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     return map;
   }
@@ -1715,10 +3210,14 @@ class Expense extends DataClass implements Insertable<Expense> {
   ExpensesCompanion toCompanion(bool nullToAbsent) {
     return ExpensesCompanion(
       id: Value(id),
-      category: Value(category),
+      categoryId: Value(categoryId),
+      expenseName: Value(expenseName),
+      reason: Value(reason),
       amount: Value(amount),
       createdAt: Value(createdAt),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -1729,10 +3228,12 @@ class Expense extends DataClass implements Insertable<Expense> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Expense(
       id: serializer.fromJson<int>(json['id']),
-      category: serializer.fromJson<String>(json['category']),
+      categoryId: serializer.fromJson<int>(json['categoryId']),
+      expenseName: serializer.fromJson<String>(json['expenseName']),
+      reason: serializer.fromJson<String>(json['reason']),
       amount: serializer.fromJson<double>(json['amount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      note: serializer.fromJson<String?>(json['note']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -1740,33 +3241,45 @@ class Expense extends DataClass implements Insertable<Expense> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'category': serializer.toJson<String>(category),
+      'categoryId': serializer.toJson<int>(categoryId),
+      'expenseName': serializer.toJson<String>(expenseName),
+      'reason': serializer.toJson<String>(reason),
       'amount': serializer.toJson<double>(amount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
-      'note': serializer.toJson<String?>(note),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
   Expense copyWith({
     int? id,
-    String? category,
+    int? categoryId,
+    String? expenseName,
+    String? reason,
     double? amount,
     DateTime? createdAt,
-    Value<String?> note = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Expense(
     id: id ?? this.id,
-    category: category ?? this.category,
+    categoryId: categoryId ?? this.categoryId,
+    expenseName: expenseName ?? this.expenseName,
+    reason: reason ?? this.reason,
     amount: amount ?? this.amount,
     createdAt: createdAt ?? this.createdAt,
-    note: note.present ? note.value : this.note,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Expense copyWithCompanion(ExpensesCompanion data) {
     return Expense(
       id: data.id.present ? data.id.value : this.id,
-      category: data.category.present ? data.category.value : this.category,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
+      expenseName: data.expenseName.present
+          ? data.expenseName.value
+          : this.expenseName,
+      reason: data.reason.present ? data.reason.value : this.reason,
       amount: data.amount.present ? data.amount.value : this.amount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      note: data.note.present ? data.note.value : this.note,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -1774,78 +3287,106 @@ class Expense extends DataClass implements Insertable<Expense> {
   String toString() {
     return (StringBuffer('Expense(')
           ..write('id: $id, ')
-          ..write('category: $category, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('expenseName: $expenseName, ')
+          ..write('reason: $reason, ')
           ..write('amount: $amount, ')
           ..write('createdAt: $createdAt, ')
-          ..write('note: $note')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, category, amount, createdAt, note);
+  int get hashCode => Object.hash(
+    id,
+    categoryId,
+    expenseName,
+    reason,
+    amount,
+    createdAt,
+    deletedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Expense &&
           other.id == this.id &&
-          other.category == this.category &&
+          other.categoryId == this.categoryId &&
+          other.expenseName == this.expenseName &&
+          other.reason == this.reason &&
           other.amount == this.amount &&
           other.createdAt == this.createdAt &&
-          other.note == this.note);
+          other.deletedAt == this.deletedAt);
 }
 
 class ExpensesCompanion extends UpdateCompanion<Expense> {
   final Value<int> id;
-  final Value<String> category;
+  final Value<int> categoryId;
+  final Value<String> expenseName;
+  final Value<String> reason;
   final Value<double> amount;
   final Value<DateTime> createdAt;
-  final Value<String?> note;
+  final Value<DateTime?> deletedAt;
   const ExpensesCompanion({
     this.id = const Value.absent(),
-    this.category = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.expenseName = const Value.absent(),
+    this.reason = const Value.absent(),
     this.amount = const Value.absent(),
     this.createdAt = const Value.absent(),
-    this.note = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   ExpensesCompanion.insert({
     this.id = const Value.absent(),
-    required String category,
+    required int categoryId,
+    required String expenseName,
+    required String reason,
     required double amount,
     required DateTime createdAt,
-    this.note = const Value.absent(),
-  }) : category = Value(category),
+    this.deletedAt = const Value.absent(),
+  }) : categoryId = Value(categoryId),
+       expenseName = Value(expenseName),
+       reason = Value(reason),
        amount = Value(amount),
        createdAt = Value(createdAt);
   static Insertable<Expense> custom({
     Expression<int>? id,
-    Expression<String>? category,
+    Expression<int>? categoryId,
+    Expression<String>? expenseName,
+    Expression<String>? reason,
     Expression<double>? amount,
     Expression<DateTime>? createdAt,
-    Expression<String>? note,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (category != null) 'category': category,
+      if (categoryId != null) 'category_id': categoryId,
+      if (expenseName != null) 'expense_name': expenseName,
+      if (reason != null) 'reason': reason,
       if (amount != null) 'amount': amount,
       if (createdAt != null) 'created_at': createdAt,
-      if (note != null) 'note': note,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
   ExpensesCompanion copyWith({
     Value<int>? id,
-    Value<String>? category,
+    Value<int>? categoryId,
+    Value<String>? expenseName,
+    Value<String>? reason,
     Value<double>? amount,
     Value<DateTime>? createdAt,
-    Value<String?>? note,
+    Value<DateTime?>? deletedAt,
   }) {
     return ExpensesCompanion(
       id: id ?? this.id,
-      category: category ?? this.category,
+      categoryId: categoryId ?? this.categoryId,
+      expenseName: expenseName ?? this.expenseName,
+      reason: reason ?? this.reason,
       amount: amount ?? this.amount,
       createdAt: createdAt ?? this.createdAt,
-      note: note ?? this.note,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -1855,8 +3396,14 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (category.present) {
-      map['category'] = Variable<String>(category.value);
+    if (categoryId.present) {
+      map['category_id'] = Variable<int>(categoryId.value);
+    }
+    if (expenseName.present) {
+      map['expense_name'] = Variable<String>(expenseName.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
     }
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
@@ -1864,8 +3411,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
     return map;
   }
@@ -1874,10 +3421,12 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   String toString() {
     return (StringBuffer('ExpensesCompanion(')
           ..write('id: $id, ')
-          ..write('category: $category, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('expenseName: $expenseName, ')
+          ..write('reason: $reason, ')
           ..write('amount: $amount, ')
           ..write('createdAt: $createdAt, ')
-          ..write('note: $note')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -1913,13 +3462,36 @@ class $GroceryItemsTable extends GroceryItems
   );
   static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
   @override
-  late final GeneratedColumn<int> qty = GeneratedColumn<int>(
+  late final GeneratedColumn<double> qty = GeneratedColumn<double>(
     'qty',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _unitTypeMeta = const VerificationMeta(
+    'unitType',
+  );
+  @override
+  late final GeneratedColumn<String> unitType = GeneratedColumn<String>(
+    'unit_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pcs'),
+  );
+  static const VerificationMeta _plannedDateMeta = const VerificationMeta(
+    'plannedDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> plannedDate = GeneratedColumn<DateTime>(
+    'planned_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _isDoneMeta = const VerificationMeta('isDone');
   @override
@@ -1934,8 +3506,39 @@ class $GroceryItemsTable extends GroceryItems
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, name, qty, isDone];
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    qty,
+    unitType,
+    plannedDate,
+    isDone,
+    createdAt,
+    deletedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1965,10 +3568,37 @@ class $GroceryItemsTable extends GroceryItems
         qty.isAcceptableOrUnknown(data['qty']!, _qtyMeta),
       );
     }
+    if (data.containsKey('unit_type')) {
+      context.handle(
+        _unitTypeMeta,
+        unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    }
+    if (data.containsKey('planned_date')) {
+      context.handle(
+        _plannedDateMeta,
+        plannedDate.isAcceptableOrUnknown(
+          data['planned_date']!,
+          _plannedDateMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_done')) {
       context.handle(
         _isDoneMeta,
         isDone.isAcceptableOrUnknown(data['is_done']!, _isDoneMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
     return context;
@@ -1989,13 +3619,29 @@ class $GroceryItemsTable extends GroceryItems
         data['${effectivePrefix}name'],
       )!,
       qty: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.double,
         data['${effectivePrefix}qty'],
       )!,
+      unitType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit_type'],
+      )!,
+      plannedDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}planned_date'],
+      ),
       isDone: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_done'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -2008,21 +3654,39 @@ class $GroceryItemsTable extends GroceryItems
 class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   final int id;
   final String name;
-  final int qty;
+  final double qty;
+  final String unitType;
+  final DateTime? plannedDate;
   final bool isDone;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
   const GroceryItem({
     required this.id,
     required this.name,
     required this.qty,
+    required this.unitType,
+    this.plannedDate,
     required this.isDone,
+    this.createdAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    map['qty'] = Variable<int>(qty);
+    map['qty'] = Variable<double>(qty);
+    map['unit_type'] = Variable<String>(unitType);
+    if (!nullToAbsent || plannedDate != null) {
+      map['planned_date'] = Variable<DateTime>(plannedDate);
+    }
     map['is_done'] = Variable<bool>(isDone);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -2031,7 +3695,17 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
       id: Value(id),
       name: Value(name),
       qty: Value(qty),
+      unitType: Value(unitType),
+      plannedDate: plannedDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plannedDate),
       isDone: Value(isDone),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -2043,8 +3717,12 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
     return GroceryItem(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      qty: serializer.fromJson<int>(json['qty']),
+      qty: serializer.fromJson<double>(json['qty']),
+      unitType: serializer.fromJson<String>(json['unitType']),
+      plannedDate: serializer.fromJson<DateTime?>(json['plannedDate']),
       isDone: serializer.fromJson<bool>(json['isDone']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -2053,24 +3731,46 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'qty': serializer.toJson<int>(qty),
+      'qty': serializer.toJson<double>(qty),
+      'unitType': serializer.toJson<String>(unitType),
+      'plannedDate': serializer.toJson<DateTime?>(plannedDate),
       'isDone': serializer.toJson<bool>(isDone),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
-  GroceryItem copyWith({int? id, String? name, int? qty, bool? isDone}) =>
-      GroceryItem(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        qty: qty ?? this.qty,
-        isDone: isDone ?? this.isDone,
-      );
+  GroceryItem copyWith({
+    int? id,
+    String? name,
+    double? qty,
+    String? unitType,
+    Value<DateTime?> plannedDate = const Value.absent(),
+    bool? isDone,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => GroceryItem(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    qty: qty ?? this.qty,
+    unitType: unitType ?? this.unitType,
+    plannedDate: plannedDate.present ? plannedDate.value : this.plannedDate,
+    isDone: isDone ?? this.isDone,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
   GroceryItem copyWithCompanion(GroceryItemsCompanion data) {
     return GroceryItem(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       qty: data.qty.present ? data.qty.value : this.qty,
+      unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      plannedDate: data.plannedDate.present
+          ? data.plannedDate.value
+          : this.plannedDate,
       isDone: data.isDone.present ? data.isDone.value : this.isDone,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -2080,13 +3780,26 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('qty: $qty, ')
-          ..write('isDone: $isDone')
+          ..write('unitType: $unitType, ')
+          ..write('plannedDate: $plannedDate, ')
+          ..write('isDone: $isDone, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, qty, isDone);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    qty,
+    unitType,
+    plannedDate,
+    isDone,
+    createdAt,
+    deletedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2094,51 +3807,83 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
           other.id == this.id &&
           other.name == this.name &&
           other.qty == this.qty &&
-          other.isDone == this.isDone);
+          other.unitType == this.unitType &&
+          other.plannedDate == this.plannedDate &&
+          other.isDone == this.isDone &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   final Value<int> id;
   final Value<String> name;
-  final Value<int> qty;
+  final Value<double> qty;
+  final Value<String> unitType;
+  final Value<DateTime?> plannedDate;
   final Value<bool> isDone;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
   const GroceryItemsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.qty = const Value.absent(),
+    this.unitType = const Value.absent(),
+    this.plannedDate = const Value.absent(),
     this.isDone = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   });
   GroceryItemsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     this.qty = const Value.absent(),
+    this.unitType = const Value.absent(),
+    this.plannedDate = const Value.absent(),
     this.isDone = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
   }) : name = Value(name);
   static Insertable<GroceryItem> custom({
     Expression<int>? id,
     Expression<String>? name,
-    Expression<int>? qty,
+    Expression<double>? qty,
+    Expression<String>? unitType,
+    Expression<DateTime>? plannedDate,
     Expression<bool>? isDone,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (qty != null) 'qty': qty,
+      if (unitType != null) 'unit_type': unitType,
+      if (plannedDate != null) 'planned_date': plannedDate,
       if (isDone != null) 'is_done': isDone,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
     });
   }
 
   GroceryItemsCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
-    Value<int>? qty,
+    Value<double>? qty,
+    Value<String>? unitType,
+    Value<DateTime?>? plannedDate,
     Value<bool>? isDone,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
   }) {
     return GroceryItemsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       qty: qty ?? this.qty,
+      unitType: unitType ?? this.unitType,
+      plannedDate: plannedDate ?? this.plannedDate,
       isDone: isDone ?? this.isDone,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -2152,10 +3897,22 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
       map['name'] = Variable<String>(name.value);
     }
     if (qty.present) {
-      map['qty'] = Variable<int>(qty.value);
+      map['qty'] = Variable<double>(qty.value);
+    }
+    if (unitType.present) {
+      map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (plannedDate.present) {
+      map['planned_date'] = Variable<DateTime>(plannedDate.value);
     }
     if (isDone.present) {
       map['is_done'] = Variable<bool>(isDone.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
     return map;
   }
@@ -2166,7 +3923,11 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('qty: $qty, ')
-          ..write('isDone: $isDone')
+          ..write('unitType: $unitType, ')
+          ..write('plannedDate: $plannedDate, ')
+          ..write('isDone: $isDone, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -2180,6 +3941,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SaleItemsTable saleItems = $SaleItemsTable(this);
   late final $CustomersTable customers = $CustomersTable(this);
   late final $UtangEntriesTable utangEntries = $UtangEntriesTable(this);
+  late final $UtangEntryItemsTable utangEntryItems = $UtangEntryItemsTable(
+    this,
+  );
+  late final $ExpenseCategoriesTable expenseCategories =
+      $ExpenseCategoriesTable(this);
   late final $ExpensesTable expenses = $ExpensesTable(this);
   late final $GroceryItemsTable groceryItems = $GroceryItemsTable(this);
   @override
@@ -2192,9 +3958,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     saleItems,
     customers,
     utangEntries,
+    utangEntryItems,
+    expenseCategories,
     expenses,
     groceryItems,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'utang_entries',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('utang_entry_items', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$ProductsTableCreateCompanionBuilder =
@@ -2202,16 +3980,24 @@ typedef $$ProductsTableCreateCompanionBuilder =
       Value<int> id,
       required String name,
       required double price,
-      required int stockQty,
-      Value<int> lowStockThreshold,
+      required double stockQty,
+      Value<double> lowStockThreshold,
+      Value<double> weight,
+      Value<String> unitType,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
     });
 typedef $$ProductsTableUpdateCompanionBuilder =
     ProductsCompanion Function({
       Value<int> id,
       Value<String> name,
       Value<double> price,
-      Value<int> stockQty,
-      Value<int> lowStockThreshold,
+      Value<double> stockQty,
+      Value<double> lowStockThreshold,
+      Value<double> weight,
+      Value<String> unitType,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
     });
 
 final class $$ProductsTableReferences
@@ -2231,6 +4017,29 @@ final class $$ProductsTableReferences
     ).filter((f) => f.productId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_saleItemsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$UtangEntryItemsTable, List<UtangEntryItem>>
+  _utangEntryItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.utangEntryItems,
+    aliasName: $_aliasNameGenerator(
+      db.products.id,
+      db.utangEntryItems.productId,
+    ),
+  );
+
+  $$UtangEntryItemsTableProcessedTableManager get utangEntryItemsRefs {
+    final manager = $$UtangEntryItemsTableTableManager(
+      $_db,
+      $_db.utangEntryItems,
+    ).filter((f) => f.productId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _utangEntryItemsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2261,13 +4070,33 @@ class $$ProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get stockQty => $composableBuilder(
+  ColumnFilters<double> get stockQty => $composableBuilder(
     column: $table.stockQty,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get lowStockThreshold => $composableBuilder(
+  ColumnFilters<double> get lowStockThreshold => $composableBuilder(
     column: $table.lowStockThreshold,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get weight => $composableBuilder(
+    column: $table.weight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2287,6 +4116,31 @@ class $$ProductsTableFilterComposer
           }) => $$SaleItemsTableFilterComposer(
             $db: $db,
             $table: $db.saleItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> utangEntryItemsRefs(
+    Expression<bool> Function($$UtangEntryItemsTableFilterComposer f) f,
+  ) {
+    final $$UtangEntryItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntryItems,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntryItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.utangEntryItems,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2321,13 +4175,33 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get stockQty => $composableBuilder(
+  ColumnOrderings<double> get stockQty => $composableBuilder(
     column: $table.stockQty,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get lowStockThreshold => $composableBuilder(
+  ColumnOrderings<double> get lowStockThreshold => $composableBuilder(
     column: $table.lowStockThreshold,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get weight => $composableBuilder(
+    column: $table.weight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -2350,13 +4224,25 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<double> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
 
-  GeneratedColumn<int> get stockQty =>
+  GeneratedColumn<double> get stockQty =>
       $composableBuilder(column: $table.stockQty, builder: (column) => column);
 
-  GeneratedColumn<int> get lowStockThreshold => $composableBuilder(
+  GeneratedColumn<double> get lowStockThreshold => $composableBuilder(
     column: $table.lowStockThreshold,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get weight =>
+      $composableBuilder(column: $table.weight, builder: (column) => column);
+
+  GeneratedColumn<String> get unitType =>
+      $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   Expression<T> saleItemsRefs<T extends Object>(
     Expression<T> Function($$SaleItemsTableAnnotationComposer a) f,
@@ -2382,6 +4268,31 @@ class $$ProductsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> utangEntryItemsRefs<T extends Object>(
+    Expression<T> Function($$UtangEntryItemsTableAnnotationComposer a) f,
+  ) {
+    final $$UtangEntryItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntryItems,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntryItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.utangEntryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProductsTableTableManager
@@ -2397,7 +4308,7 @@ class $$ProductsTableTableManager
           $$ProductsTableUpdateCompanionBuilder,
           (Product, $$ProductsTableReferences),
           Product,
-          PrefetchHooks Function({bool saleItemsRefs})
+          PrefetchHooks Function({bool saleItemsRefs, bool utangEntryItemsRefs})
         > {
   $$ProductsTableTableManager(_$AppDatabase db, $ProductsTable table)
     : super(
@@ -2415,28 +4326,44 @@ class $$ProductsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<double> price = const Value.absent(),
-                Value<int> stockQty = const Value.absent(),
-                Value<int> lowStockThreshold = const Value.absent(),
+                Value<double> stockQty = const Value.absent(),
+                Value<double> lowStockThreshold = const Value.absent(),
+                Value<double> weight = const Value.absent(),
+                Value<String> unitType = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => ProductsCompanion(
                 id: id,
                 name: name,
                 price: price,
                 stockQty: stockQty,
                 lowStockThreshold: lowStockThreshold,
+                weight: weight,
+                unitType: unitType,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
                 required double price,
-                required int stockQty,
-                Value<int> lowStockThreshold = const Value.absent(),
+                required double stockQty,
+                Value<double> lowStockThreshold = const Value.absent(),
+                Value<double> weight = const Value.absent(),
+                Value<String> unitType = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => ProductsCompanion.insert(
                 id: id,
                 name: name,
                 price: price,
                 stockQty: stockQty,
                 lowStockThreshold: lowStockThreshold,
+                weight: weight,
+                unitType: unitType,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -2446,35 +4373,63 @@ class $$ProductsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({saleItemsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (saleItemsRefs) db.saleItems],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (saleItemsRefs)
-                    await $_getPrefetchedData<
-                      Product,
-                      $ProductsTable,
-                      SaleItem
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ProductsTableReferences
-                          ._saleItemsRefsTable(db),
-                      managerFromTypedResult: (p0) => $$ProductsTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).saleItemsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.productId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({saleItemsRefs = false, utangEntryItemsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (saleItemsRefs) db.saleItems,
+                    if (utangEntryItemsRefs) db.utangEntryItems,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (saleItemsRefs)
+                        await $_getPrefetchedData<
+                          Product,
+                          $ProductsTable,
+                          SaleItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProductsTableReferences
+                              ._saleItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProductsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).saleItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.productId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (utangEntryItemsRefs)
+                        await $_getPrefetchedData<
+                          Product,
+                          $ProductsTable,
+                          UtangEntryItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProductsTableReferences
+                              ._utangEntryItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProductsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).utangEntryItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.productId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -2491,19 +4446,21 @@ typedef $$ProductsTableProcessedTableManager =
       $$ProductsTableUpdateCompanionBuilder,
       (Product, $$ProductsTableReferences),
       Product,
-      PrefetchHooks Function({bool saleItemsRefs})
+      PrefetchHooks Function({bool saleItemsRefs, bool utangEntryItemsRefs})
     >;
 typedef $$SalesTableCreateCompanionBuilder =
     SalesCompanion Function({
       Value<int> id,
       required DateTime createdAt,
       required double totalAmount,
+      Value<DateTime?> deletedAt,
     });
 typedef $$SalesTableUpdateCompanionBuilder =
     SalesCompanion Function({
       Value<int> id,
       Value<DateTime> createdAt,
       Value<double> totalAmount,
+      Value<DateTime?> deletedAt,
     });
 
 final class $$SalesTableReferences
@@ -2549,6 +4506,11 @@ class $$SalesTableFilterComposer extends Composer<_$AppDatabase, $SalesTable> {
 
   ColumnFilters<double> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2601,6 +4563,11 @@ class $$SalesTableOrderingComposer
     column: $table.totalAmount,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SalesTableAnnotationComposer
@@ -2622,6 +4589,9 @@ class $$SalesTableAnnotationComposer
     column: $table.totalAmount,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   Expression<T> saleItemsRefs<T extends Object>(
     Expression<T> Function($$SaleItemsTableAnnotationComposer a) f,
@@ -2680,20 +4650,24 @@ class $$SalesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => SalesCompanion(
                 id: id,
                 createdAt: createdAt,
                 totalAmount: totalAmount,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required DateTime createdAt,
                 required double totalAmount,
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => SalesCompanion.insert(
                 id: id,
                 createdAt: createdAt,
                 totalAmount: totalAmount,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -2746,16 +4720,20 @@ typedef $$SaleItemsTableCreateCompanionBuilder =
       Value<int> id,
       required int saleId,
       required int productId,
-      required int qty,
+      required double qty,
       required double unitPrice,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
     });
 typedef $$SaleItemsTableUpdateCompanionBuilder =
     SaleItemsCompanion Function({
       Value<int> id,
       Value<int> saleId,
       Value<int> productId,
-      Value<int> qty,
+      Value<double> qty,
       Value<double> unitPrice,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
     });
 
 final class $$SaleItemsTableReferences
@@ -2814,13 +4792,23 @@ class $$SaleItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get qty => $composableBuilder(
+  ColumnFilters<double> get qty => $composableBuilder(
     column: $table.qty,
     builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<double> get unitPrice => $composableBuilder(
     column: $table.unitPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2885,13 +4873,23 @@ class $$SaleItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get qty => $composableBuilder(
+  ColumnOrderings<double> get qty => $composableBuilder(
     column: $table.qty,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<double> get unitPrice => $composableBuilder(
     column: $table.unitPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2954,11 +4952,17 @@ class $$SaleItemsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<int> get qty =>
+  GeneratedColumn<double> get qty =>
       $composableBuilder(column: $table.qty, builder: (column) => column);
 
   GeneratedColumn<double> get unitPrice =>
       $composableBuilder(column: $table.unitPrice, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   $$SalesTableAnnotationComposer get saleId {
     final $$SalesTableAnnotationComposer composer = $composerBuilder(
@@ -3038,28 +5042,36 @@ class $$SaleItemsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> saleId = const Value.absent(),
                 Value<int> productId = const Value.absent(),
-                Value<int> qty = const Value.absent(),
+                Value<double> qty = const Value.absent(),
                 Value<double> unitPrice = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => SaleItemsCompanion(
                 id: id,
                 saleId: saleId,
                 productId: productId,
                 qty: qty,
                 unitPrice: unitPrice,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required int saleId,
                 required int productId,
-                required int qty,
+                required double qty,
                 required double unitPrice,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => SaleItemsCompanion.insert(
                 id: id,
                 saleId: saleId,
                 productId: productId,
                 qty: qty,
                 unitPrice: unitPrice,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3142,9 +5154,19 @@ typedef $$SaleItemsTableProcessedTableManager =
       PrefetchHooks Function({bool saleId, bool productId})
     >;
 typedef $$CustomersTableCreateCompanionBuilder =
-    CustomersCompanion Function({Value<int> id, required String name});
+    CustomersCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
 typedef $$CustomersTableUpdateCompanionBuilder =
-    CustomersCompanion Function({Value<int> id, Value<String> name});
+    CustomersCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
 
 final class $$CustomersTableReferences
     extends BaseReferences<_$AppDatabase, $CustomersTable, Customer> {
@@ -3188,6 +5210,16 @@ class $$CustomersTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3235,6 +5267,16 @@ class $$CustomersTableOrderingComposer
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CustomersTableAnnotationComposer
@@ -3251,6 +5293,12 @@ class $$CustomersTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   Expression<T> utangEntriesRefs<T extends Object>(
     Expression<T> Function($$UtangEntriesTableAnnotationComposer a) f,
@@ -3308,10 +5356,26 @@ class $$CustomersTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-              }) => CustomersCompanion(id: id, name: name),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => CustomersCompanion(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
           createCompanionCallback:
-              ({Value<int> id = const Value.absent(), required String name}) =>
-                  CustomersCompanion.insert(id: id, name: name),
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => CustomersCompanion.insert(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
@@ -3375,7 +5439,10 @@ typedef $$UtangEntriesTableCreateCompanionBuilder =
       required double amount,
       Value<bool> isPayment,
       required DateTime createdAt,
+      Value<DateTime?> dueDate,
+      Value<String?> itemName,
       Value<String?> note,
+      Value<DateTime?> deletedAt,
     });
 typedef $$UtangEntriesTableUpdateCompanionBuilder =
     UtangEntriesCompanion Function({
@@ -3384,7 +5451,10 @@ typedef $$UtangEntriesTableUpdateCompanionBuilder =
       Value<double> amount,
       Value<bool> isPayment,
       Value<DateTime> createdAt,
+      Value<DateTime?> dueDate,
+      Value<String?> itemName,
       Value<String?> note,
+      Value<DateTime?> deletedAt,
     });
 
 final class $$UtangEntriesTableReferences
@@ -3407,6 +5477,29 @@ final class $$UtangEntriesTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$UtangEntryItemsTable, List<UtangEntryItem>>
+  _utangEntryItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.utangEntryItems,
+    aliasName: $_aliasNameGenerator(
+      db.utangEntries.id,
+      db.utangEntryItems.utangEntryId,
+    ),
+  );
+
+  $$UtangEntryItemsTableProcessedTableManager get utangEntryItemsRefs {
+    final manager = $$UtangEntryItemsTableTableManager(
+      $_db,
+      $_db.utangEntryItems,
+    ).filter((f) => f.utangEntryId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _utangEntryItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
@@ -3440,8 +5533,23 @@ class $$UtangEntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemName => $composableBuilder(
+    column: $table.itemName,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3466,6 +5574,31 @@ class $$UtangEntriesTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> utangEntryItemsRefs(
+    Expression<bool> Function($$UtangEntryItemsTableFilterComposer f) f,
+  ) {
+    final $$UtangEntryItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntryItems,
+      getReferencedColumn: (t) => t.utangEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntryItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.utangEntryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -3498,8 +5631,23 @@ class $$UtangEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get itemName => $composableBuilder(
+    column: $table.itemName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3548,8 +5696,17 @@ class $$UtangEntriesTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<String> get itemName =>
+      $composableBuilder(column: $table.itemName, builder: (column) => column);
+
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   $$CustomersTableAnnotationComposer get customerId {
     final $$CustomersTableAnnotationComposer composer = $composerBuilder(
@@ -3573,6 +5730,31 @@ class $$UtangEntriesTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> utangEntryItemsRefs<T extends Object>(
+    Expression<T> Function($$UtangEntryItemsTableAnnotationComposer a) f,
+  ) {
+    final $$UtangEntryItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntryItems,
+      getReferencedColumn: (t) => t.utangEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntryItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.utangEntryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$UtangEntriesTableTableManager
@@ -3588,7 +5770,7 @@ class $$UtangEntriesTableTableManager
           $$UtangEntriesTableUpdateCompanionBuilder,
           (UtangEntry, $$UtangEntriesTableReferences),
           UtangEntry,
-          PrefetchHooks Function({bool customerId})
+          PrefetchHooks Function({bool customerId, bool utangEntryItemsRefs})
         > {
   $$UtangEntriesTableTableManager(_$AppDatabase db, $UtangEntriesTable table)
     : super(
@@ -3608,14 +5790,20 @@ class $$UtangEntriesTableTableManager
                 Value<double> amount = const Value.absent(),
                 Value<bool> isPayment = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<String?> itemName = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => UtangEntriesCompanion(
                 id: id,
                 customerId: customerId,
                 amount: amount,
                 isPayment: isPayment,
                 createdAt: createdAt,
+                dueDate: dueDate,
+                itemName: itemName,
                 note: note,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
@@ -3624,14 +5812,20 @@ class $$UtangEntriesTableTableManager
                 required double amount,
                 Value<bool> isPayment = const Value.absent(),
                 required DateTime createdAt,
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<String?> itemName = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => UtangEntriesCompanion.insert(
                 id: id,
                 customerId: customerId,
                 amount: amount,
                 isPayment: isPayment,
                 createdAt: createdAt,
+                dueDate: dueDate,
+                itemName: itemName,
                 note: note,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3641,7 +5835,489 @@ class $$UtangEntriesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({customerId = false}) {
+          prefetchHooksCallback:
+              ({customerId = false, utangEntryItemsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (utangEntryItemsRefs) db.utangEntryItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (customerId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.customerId,
+                                    referencedTable:
+                                        $$UtangEntriesTableReferences
+                                            ._customerIdTable(db),
+                                    referencedColumn:
+                                        $$UtangEntriesTableReferences
+                                            ._customerIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (utangEntryItemsRefs)
+                        await $_getPrefetchedData<
+                          UtangEntry,
+                          $UtangEntriesTable,
+                          UtangEntryItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UtangEntriesTableReferences
+                              ._utangEntryItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UtangEntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).utangEntryItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.utangEntryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$UtangEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UtangEntriesTable,
+      UtangEntry,
+      $$UtangEntriesTableFilterComposer,
+      $$UtangEntriesTableOrderingComposer,
+      $$UtangEntriesTableAnnotationComposer,
+      $$UtangEntriesTableCreateCompanionBuilder,
+      $$UtangEntriesTableUpdateCompanionBuilder,
+      (UtangEntry, $$UtangEntriesTableReferences),
+      UtangEntry,
+      PrefetchHooks Function({bool customerId, bool utangEntryItemsRefs})
+    >;
+typedef $$UtangEntryItemsTableCreateCompanionBuilder =
+    UtangEntryItemsCompanion Function({
+      Value<int> id,
+      required int utangEntryId,
+      required int productId,
+      required double qty,
+      required double unitPrice,
+      required double lineTotal,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+typedef $$UtangEntryItemsTableUpdateCompanionBuilder =
+    UtangEntryItemsCompanion Function({
+      Value<int> id,
+      Value<int> utangEntryId,
+      Value<int> productId,
+      Value<double> qty,
+      Value<double> unitPrice,
+      Value<double> lineTotal,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+
+final class $$UtangEntryItemsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $UtangEntryItemsTable, UtangEntryItem> {
+  $$UtangEntryItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $UtangEntriesTable _utangEntryIdTable(_$AppDatabase db) =>
+      db.utangEntries.createAlias(
+        $_aliasNameGenerator(
+          db.utangEntryItems.utangEntryId,
+          db.utangEntries.id,
+        ),
+      );
+
+  $$UtangEntriesTableProcessedTableManager get utangEntryId {
+    final $_column = $_itemColumn<int>('utang_entry_id')!;
+
+    final manager = $$UtangEntriesTableTableManager(
+      $_db,
+      $_db.utangEntries,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_utangEntryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ProductsTable _productIdTable(_$AppDatabase db) =>
+      db.products.createAlias(
+        $_aliasNameGenerator(db.utangEntryItems.productId, db.products.id),
+      );
+
+  $$ProductsTableProcessedTableManager get productId {
+    final $_column = $_itemColumn<int>('product_id')!;
+
+    final manager = $$ProductsTableTableManager(
+      $_db,
+      $_db.products,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_productIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$UtangEntryItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $UtangEntryItemsTable> {
+  $$UtangEntryItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get qty => $composableBuilder(
+    column: $table.qty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitPrice => $composableBuilder(
+    column: $table.unitPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lineTotal => $composableBuilder(
+    column: $table.lineTotal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$UtangEntriesTableFilterComposer get utangEntryId {
+    final $$UtangEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.utangEntryId,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ProductsTableFilterComposer get productId {
+    final $$ProductsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.products,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductsTableFilterComposer(
+            $db: $db,
+            $table: $db.products,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UtangEntryItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UtangEntryItemsTable> {
+  $$UtangEntryItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get qty => $composableBuilder(
+    column: $table.qty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitPrice => $composableBuilder(
+    column: $table.unitPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lineTotal => $composableBuilder(
+    column: $table.lineTotal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$UtangEntriesTableOrderingComposer get utangEntryId {
+    final $$UtangEntriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.utangEntryId,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ProductsTableOrderingComposer get productId {
+    final $$ProductsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.products,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductsTableOrderingComposer(
+            $db: $db,
+            $table: $db.products,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UtangEntryItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UtangEntryItemsTable> {
+  $$UtangEntryItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get qty =>
+      $composableBuilder(column: $table.qty, builder: (column) => column);
+
+  GeneratedColumn<double> get unitPrice =>
+      $composableBuilder(column: $table.unitPrice, builder: (column) => column);
+
+  GeneratedColumn<double> get lineTotal =>
+      $composableBuilder(column: $table.lineTotal, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  $$UtangEntriesTableAnnotationComposer get utangEntryId {
+    final $$UtangEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.utangEntryId,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ProductsTableAnnotationComposer get productId {
+    final $$ProductsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.products,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.products,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UtangEntryItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UtangEntryItemsTable,
+          UtangEntryItem,
+          $$UtangEntryItemsTableFilterComposer,
+          $$UtangEntryItemsTableOrderingComposer,
+          $$UtangEntryItemsTableAnnotationComposer,
+          $$UtangEntryItemsTableCreateCompanionBuilder,
+          $$UtangEntryItemsTableUpdateCompanionBuilder,
+          (UtangEntryItem, $$UtangEntryItemsTableReferences),
+          UtangEntryItem,
+          PrefetchHooks Function({bool utangEntryId, bool productId})
+        > {
+  $$UtangEntryItemsTableTableManager(
+    _$AppDatabase db,
+    $UtangEntryItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UtangEntryItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UtangEntryItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UtangEntryItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> utangEntryId = const Value.absent(),
+                Value<int> productId = const Value.absent(),
+                Value<double> qty = const Value.absent(),
+                Value<double> unitPrice = const Value.absent(),
+                Value<double> lineTotal = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => UtangEntryItemsCompanion(
+                id: id,
+                utangEntryId: utangEntryId,
+                productId: productId,
+                qty: qty,
+                unitPrice: unitPrice,
+                lineTotal: lineTotal,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int utangEntryId,
+                required int productId,
+                required double qty,
+                required double unitPrice,
+                required double lineTotal,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => UtangEntryItemsCompanion.insert(
+                id: id,
+                utangEntryId: utangEntryId,
+                productId: productId,
+                qty: qty,
+                unitPrice: unitPrice,
+                lineTotal: lineTotal,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$UtangEntryItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({utangEntryId = false, productId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -3661,16 +6337,33 @@ class $$UtangEntriesTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (customerId) {
+                    if (utangEntryId) {
                       state =
                           state.withJoin(
                                 currentTable: table,
-                                currentColumn: table.customerId,
-                                referencedTable: $$UtangEntriesTableReferences
-                                    ._customerIdTable(db),
-                                referencedColumn: $$UtangEntriesTableReferences
-                                    ._customerIdTable(db)
-                                    .id,
+                                currentColumn: table.utangEntryId,
+                                referencedTable:
+                                    $$UtangEntryItemsTableReferences
+                                        ._utangEntryIdTable(db),
+                                referencedColumn:
+                                    $$UtangEntryItemsTableReferences
+                                        ._utangEntryIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (productId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.productId,
+                                referencedTable:
+                                    $$UtangEntryItemsTableReferences
+                                        ._productIdTable(db),
+                                referencedColumn:
+                                    $$UtangEntryItemsTableReferences
+                                        ._productIdTable(db)
+                                        .id,
                               )
                               as T;
                     }
@@ -3686,36 +6379,358 @@ class $$UtangEntriesTableTableManager
       );
 }
 
-typedef $$UtangEntriesTableProcessedTableManager =
+typedef $$UtangEntryItemsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $UtangEntriesTable,
-      UtangEntry,
-      $$UtangEntriesTableFilterComposer,
-      $$UtangEntriesTableOrderingComposer,
-      $$UtangEntriesTableAnnotationComposer,
-      $$UtangEntriesTableCreateCompanionBuilder,
-      $$UtangEntriesTableUpdateCompanionBuilder,
-      (UtangEntry, $$UtangEntriesTableReferences),
-      UtangEntry,
-      PrefetchHooks Function({bool customerId})
+      $UtangEntryItemsTable,
+      UtangEntryItem,
+      $$UtangEntryItemsTableFilterComposer,
+      $$UtangEntryItemsTableOrderingComposer,
+      $$UtangEntryItemsTableAnnotationComposer,
+      $$UtangEntryItemsTableCreateCompanionBuilder,
+      $$UtangEntryItemsTableUpdateCompanionBuilder,
+      (UtangEntryItem, $$UtangEntryItemsTableReferences),
+      UtangEntryItem,
+      PrefetchHooks Function({bool utangEntryId, bool productId})
+    >;
+typedef $$ExpenseCategoriesTableCreateCompanionBuilder =
+    ExpenseCategoriesCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+typedef $$ExpenseCategoriesTableUpdateCompanionBuilder =
+    ExpenseCategoriesCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+
+final class $$ExpenseCategoriesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ExpenseCategoriesTable,
+          ExpenseCategory
+        > {
+  $$ExpenseCategoriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$ExpensesTable, List<Expense>> _expensesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.expenses,
+    aliasName: $_aliasNameGenerator(
+      db.expenseCategories.id,
+      db.expenses.categoryId,
+    ),
+  );
+
+  $$ExpensesTableProcessedTableManager get expensesRefs {
+    final manager = $$ExpensesTableTableManager(
+      $_db,
+      $_db.expenses,
+    ).filter((f) => f.categoryId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_expensesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ExpenseCategoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
+  $$ExpenseCategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> expensesRefs(
+    Expression<bool> Function($$ExpensesTableFilterComposer f) f,
+  ) {
+    final $$ExpensesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.expenses,
+      getReferencedColumn: (t) => t.categoryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpensesTableFilterComposer(
+            $db: $db,
+            $table: $db.expenses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ExpenseCategoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
+  $$ExpenseCategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExpenseCategoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExpenseCategoriesTable> {
+  $$ExpenseCategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  Expression<T> expensesRefs<T extends Object>(
+    Expression<T> Function($$ExpensesTableAnnotationComposer a) f,
+  ) {
+    final $$ExpensesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.expenses,
+      getReferencedColumn: (t) => t.categoryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpensesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.expenses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ExpenseCategoriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExpenseCategoriesTable,
+          ExpenseCategory,
+          $$ExpenseCategoriesTableFilterComposer,
+          $$ExpenseCategoriesTableOrderingComposer,
+          $$ExpenseCategoriesTableAnnotationComposer,
+          $$ExpenseCategoriesTableCreateCompanionBuilder,
+          $$ExpenseCategoriesTableUpdateCompanionBuilder,
+          (ExpenseCategory, $$ExpenseCategoriesTableReferences),
+          ExpenseCategory,
+          PrefetchHooks Function({bool expensesRefs})
+        > {
+  $$ExpenseCategoriesTableTableManager(
+    _$AppDatabase db,
+    $ExpenseCategoriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExpenseCategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExpenseCategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExpenseCategoriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => ExpenseCategoriesCompanion(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => ExpenseCategoriesCompanion.insert(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ExpenseCategoriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({expensesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (expensesRefs) db.expenses],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (expensesRefs)
+                    await $_getPrefetchedData<
+                      ExpenseCategory,
+                      $ExpenseCategoriesTable,
+                      Expense
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ExpenseCategoriesTableReferences
+                          ._expensesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ExpenseCategoriesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).expensesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.categoryId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ExpenseCategoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExpenseCategoriesTable,
+      ExpenseCategory,
+      $$ExpenseCategoriesTableFilterComposer,
+      $$ExpenseCategoriesTableOrderingComposer,
+      $$ExpenseCategoriesTableAnnotationComposer,
+      $$ExpenseCategoriesTableCreateCompanionBuilder,
+      $$ExpenseCategoriesTableUpdateCompanionBuilder,
+      (ExpenseCategory, $$ExpenseCategoriesTableReferences),
+      ExpenseCategory,
+      PrefetchHooks Function({bool expensesRefs})
     >;
 typedef $$ExpensesTableCreateCompanionBuilder =
     ExpensesCompanion Function({
       Value<int> id,
-      required String category,
+      required int categoryId,
+      required String expenseName,
+      required String reason,
       required double amount,
       required DateTime createdAt,
-      Value<String?> note,
+      Value<DateTime?> deletedAt,
     });
 typedef $$ExpensesTableUpdateCompanionBuilder =
     ExpensesCompanion Function({
       Value<int> id,
-      Value<String> category,
+      Value<int> categoryId,
+      Value<String> expenseName,
+      Value<String> reason,
       Value<double> amount,
       Value<DateTime> createdAt,
-      Value<String?> note,
+      Value<DateTime?> deletedAt,
     });
+
+final class $$ExpensesTableReferences
+    extends BaseReferences<_$AppDatabase, $ExpensesTable, Expense> {
+  $$ExpensesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ExpenseCategoriesTable _categoryIdTable(_$AppDatabase db) =>
+      db.expenseCategories.createAlias(
+        $_aliasNameGenerator(db.expenses.categoryId, db.expenseCategories.id),
+      );
+
+  $$ExpenseCategoriesTableProcessedTableManager get categoryId {
+    final $_column = $_itemColumn<int>('category_id')!;
+
+    final manager = $$ExpenseCategoriesTableTableManager(
+      $_db,
+      $_db.expenseCategories,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_categoryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$ExpensesTableFilterComposer
     extends Composer<_$AppDatabase, $ExpensesTable> {
@@ -3731,8 +6746,13 @@ class $$ExpensesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get category => $composableBuilder(
-    column: $table.category,
+  ColumnFilters<String> get expenseName => $composableBuilder(
+    column: $table.expenseName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3746,10 +6766,33 @@ class $$ExpensesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$ExpenseCategoriesTableFilterComposer get categoryId {
+    final $$ExpenseCategoriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.categoryId,
+      referencedTable: $db.expenseCategories,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpenseCategoriesTableFilterComposer(
+            $db: $db,
+            $table: $db.expenseCategories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ExpensesTableOrderingComposer
@@ -3766,8 +6809,13 @@ class $$ExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get category => $composableBuilder(
-    column: $table.category,
+  ColumnOrderings<String> get expenseName => $composableBuilder(
+    column: $table.expenseName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3781,10 +6829,33 @@ class $$ExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$ExpenseCategoriesTableOrderingComposer get categoryId {
+    final $$ExpenseCategoriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.categoryId,
+      referencedTable: $db.expenseCategories,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpenseCategoriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.expenseCategories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ExpensesTableAnnotationComposer
@@ -3799,8 +6870,13 @@ class $$ExpensesTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get category =>
-      $composableBuilder(column: $table.category, builder: (column) => column);
+  GeneratedColumn<String> get expenseName => $composableBuilder(
+    column: $table.expenseName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
 
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
@@ -3808,8 +6884,32 @@ class $$ExpensesTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  $$ExpenseCategoriesTableAnnotationComposer get categoryId {
+    final $$ExpenseCategoriesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.categoryId,
+          referencedTable: $db.expenseCategories,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ExpenseCategoriesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.expenseCategories,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
 }
 
 class $$ExpensesTableTableManager
@@ -3823,9 +6923,9 @@ class $$ExpensesTableTableManager
           $$ExpensesTableAnnotationComposer,
           $$ExpensesTableCreateCompanionBuilder,
           $$ExpensesTableUpdateCompanionBuilder,
-          (Expense, BaseReferences<_$AppDatabase, $ExpensesTable, Expense>),
+          (Expense, $$ExpensesTableReferences),
           Expense,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool categoryId})
         > {
   $$ExpensesTableTableManager(_$AppDatabase db, $ExpensesTable table)
     : super(
@@ -3841,35 +6941,88 @@ class $$ExpensesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<String> category = const Value.absent(),
+                Value<int> categoryId = const Value.absent(),
+                Value<String> expenseName = const Value.absent(),
+                Value<String> reason = const Value.absent(),
                 Value<double> amount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-                Value<String?> note = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => ExpensesCompanion(
                 id: id,
-                category: category,
+                categoryId: categoryId,
+                expenseName: expenseName,
+                reason: reason,
                 amount: amount,
                 createdAt: createdAt,
-                note: note,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required String category,
+                required int categoryId,
+                required String expenseName,
+                required String reason,
                 required double amount,
                 required DateTime createdAt,
-                Value<String?> note = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => ExpensesCompanion.insert(
                 id: id,
-                category: category,
+                categoryId: categoryId,
+                expenseName: expenseName,
+                reason: reason,
                 amount: amount,
                 createdAt: createdAt,
-                note: note,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ExpensesTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({categoryId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (categoryId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.categoryId,
+                                referencedTable: $$ExpensesTableReferences
+                                    ._categoryIdTable(db),
+                                referencedColumn: $$ExpensesTableReferences
+                                    ._categoryIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -3884,23 +7037,31 @@ typedef $$ExpensesTableProcessedTableManager =
       $$ExpensesTableAnnotationComposer,
       $$ExpensesTableCreateCompanionBuilder,
       $$ExpensesTableUpdateCompanionBuilder,
-      (Expense, BaseReferences<_$AppDatabase, $ExpensesTable, Expense>),
+      (Expense, $$ExpensesTableReferences),
       Expense,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool categoryId})
     >;
 typedef $$GroceryItemsTableCreateCompanionBuilder =
     GroceryItemsCompanion Function({
       Value<int> id,
       required String name,
-      Value<int> qty,
+      Value<double> qty,
+      Value<String> unitType,
+      Value<DateTime?> plannedDate,
       Value<bool> isDone,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
     });
 typedef $$GroceryItemsTableUpdateCompanionBuilder =
     GroceryItemsCompanion Function({
       Value<int> id,
       Value<String> name,
-      Value<int> qty,
+      Value<double> qty,
+      Value<String> unitType,
+      Value<DateTime?> plannedDate,
       Value<bool> isDone,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
     });
 
 class $$GroceryItemsTableFilterComposer
@@ -3922,13 +7083,33 @@ class $$GroceryItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get qty => $composableBuilder(
+  ColumnFilters<double> get qty => $composableBuilder(
     column: $table.qty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get plannedDate => $composableBuilder(
+    column: $table.plannedDate,
     builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<bool> get isDone => $composableBuilder(
     column: $table.isDone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3952,13 +7133,33 @@ class $$GroceryItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get qty => $composableBuilder(
+  ColumnOrderings<double> get qty => $composableBuilder(
     column: $table.qty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unitType => $composableBuilder(
+    column: $table.unitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get plannedDate => $composableBuilder(
+    column: $table.plannedDate,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<bool> get isDone => $composableBuilder(
     column: $table.isDone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -3978,11 +7179,25 @@ class $$GroceryItemsTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<int> get qty =>
+  GeneratedColumn<double> get qty =>
       $composableBuilder(column: $table.qty, builder: (column) => column);
+
+  GeneratedColumn<String> get unitType =>
+      $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get plannedDate => $composableBuilder(
+    column: $table.plannedDate,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isDone =>
       $composableBuilder(column: $table.isDone, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 }
 
 class $$GroceryItemsTableTableManager
@@ -4018,25 +7233,41 @@ class $$GroceryItemsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<int> qty = const Value.absent(),
+                Value<double> qty = const Value.absent(),
+                Value<String> unitType = const Value.absent(),
+                Value<DateTime?> plannedDate = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => GroceryItemsCompanion(
                 id: id,
                 name: name,
                 qty: qty,
+                unitType: unitType,
+                plannedDate: plannedDate,
                 isDone: isDone,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
-                Value<int> qty = const Value.absent(),
+                Value<double> qty = const Value.absent(),
+                Value<String> unitType = const Value.absent(),
+                Value<DateTime?> plannedDate = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
               }) => GroceryItemsCompanion.insert(
                 id: id,
                 name: name,
                 qty: qty,
+                unitType: unitType,
+                plannedDate: plannedDate,
                 isDone: isDone,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -4077,6 +7308,10 @@ class $AppDatabaseManager {
       $$CustomersTableTableManager(_db, _db.customers);
   $$UtangEntriesTableTableManager get utangEntries =>
       $$UtangEntriesTableTableManager(_db, _db.utangEntries);
+  $$UtangEntryItemsTableTableManager get utangEntryItems =>
+      $$UtangEntryItemsTableTableManager(_db, _db.utangEntryItems);
+  $$ExpenseCategoriesTableTableManager get expenseCategories =>
+      $$ExpenseCategoriesTableTableManager(_db, _db.expenseCategories);
   $$ExpensesTableTableManager get expenses =>
       $$ExpensesTableTableManager(_db, _db.expenses);
   $$GroceryItemsTableTableManager get groceryItems =>
