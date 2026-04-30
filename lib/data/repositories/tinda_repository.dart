@@ -14,6 +14,10 @@ class TindaRepository {
   Stream<double> watchTotalSales() => db.watchTotalSales();
   Stream<double> watchTotalExpenses() => db.watchTotalExpenses();
   Stream<int> watchLowStockCount() => db.watchLowStockCount();
+  Stream<List<Sale>> watchSalesInRange(DateTime from, DateTime to) =>
+      db.watchSalesInRange(from, to);
+  Stream<List<Expense>> watchExpensesInRange(DateTime from, DateTime to) =>
+      db.watchExpensesInRange(from, to);
 
   Future<int> addProduct({
     required String name,
@@ -55,4 +59,11 @@ class TindaRepository {
   Future<void> toggleGrocery(int id, bool done) => db.toggleGrocery(id, done);
 
   Future<List<int>> exportSimpleSnapshot() => db.exportSimpleSnapshot();
+  Future<Map<String, dynamic>> exportJsonBackup() => db.exportJsonBackup();
+  Future<Map<String, int>> previewJsonBackup(Map<String, dynamic> payload) =>
+      db.previewJsonBackup(payload);
+  Future<void> importJsonBackup(
+    Map<String, dynamic> payload, {
+    required bool replaceAll,
+  }) => db.importJsonBackup(payload, replaceAll: replaceAll);
 }
