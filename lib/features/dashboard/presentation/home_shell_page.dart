@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/layout/adaptive_scaffold.dart';
 import '../../../core/resources/app_copy.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
 import '../../expenses/presentation/expenses_page.dart';
@@ -77,7 +78,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: AppCopy.navGrocery),
       ],
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.page,
         child: pages[_index],
       ),
     );
