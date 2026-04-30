@@ -196,6 +196,158 @@ class AppDatabase extends _$AppDatabase {
     return q.watchSingle().map((row) => row.read<int>('total'));
   }
 
+  Stream<List<Sale>> watchSalesInRange(DateTime from, DateTime to) {
+    return (select(sales)
+          ..where((t) => t.createdAt.isBetweenValues(from, to))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .watch();
+  }
+
+  Stream<List<Expense>> watchExpensesInRange(DateTime from, DateTime to) {
+    return (select(expenses)
+          ..where((t) => t.createdAt.isBetweenValues(from, to))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .watch();
+  }
+
+  Future<Map<String, dynamic>> exportJsonBackup() async {
+    final payload = <String, dynamic>{
+      'meta': {
+        'schemaVersion': schemaVersion,
+        'exportedAt': DateTime.now().toIso8601String(),
+      },
+      'products': (await select(products).get()).map((e) => e.toJson()).toList(),
+      'sales': (await select(sales).get()).map((e) => e.toJson()).toList(),
+      'saleItems': (await select(saleItems).get()).map((e) => e.toJson()).toList(),
+      'customers': (await select(customers).get()).map((e) => e.toJson()).toList(),
+      'utangEntries': (await select(utangEntries).get()).map((e) => e.toJson()).toList(),
+      'expenses': (await select(expenses).get()).map((e) => e.toJson()).toList(),
+      'groceryItems': (await select(groceryItems).get()).map((e) => e.toJson()).toList(),
+    };
+    return payload;
+  }
+
+  Future<Map<String, int>> previewJsonBackup(Map<String, dynamic> payload) async {
+    return {
+      'products': (payload['products'] as List<dynamic>? ?? const []).length,
+      'sales': (payload['sales'] as List<dynamic>? ?? const []).length,
+      'customers': (payload['customers'] as List<dynamic>? ?? const []).length,
+      'expenses': (payload['expenses'] as List<dynamic>? ?? const []).length,
+      'groceryItems': (payload['groceryItems'] as List<dynamic>? ?? const []).length,
+    };
+  }
+
+  Future<void> importJsonBackup(
+    Map<String, dynamic> payload, {
+    required bool replaceAll,
+  }) async {
+    await transaction(() async {
+      if (replaceAll) {
+        await delete(groceryItems).go();
+        await delete(utangEntries).go();
+        await delete(saleItems).go();
+        await delete(expenses).go();
+        await delete(sales).go();
+        await delete(customers).go();
+        await delete(products).go();
+      }
+
+      Future<void> safeInsert<T extends Table, D>(
+        TableInfo<T, D> table,
+        Insertable<D> row,
+      ) async {
+        await into(table).insert(row, mode: InsertMode.insertOrIgnore);
+      }
+
+      for (final row in (payload['products'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          products,
+          ProductsCompanion(
+            id: Value(data['id'] as int),
+            name: Value(data['name'] as String),
+            price: Value((data['price'] as num).toDouble()),
+            stockQty: Value(data['stock_qty'] as int),
+            lowStockThreshold: Value(data['low_stock_threshold'] as int),
+          ),
+        );
+      }
+      for (final row in (payload['sales'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          sales,
+          SalesCompanion(
+            id: Value(data['id'] as int),
+            createdAt: Value(DateTime.parse(data['created_at'] as String)),
+            totalAmount: Value((data['total_amount'] as num).toDouble()),
+          ),
+        );
+      }
+      for (final row in (payload['saleItems'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          saleItems,
+          SaleItemsCompanion(
+            id: Value(data['id'] as int),
+            saleId: Value(data['sale_id'] as int),
+            productId: Value(data['product_id'] as int),
+            qty: Value(data['qty'] as int),
+            unitPrice: Value((data['unit_price'] as num).toDouble()),
+          ),
+        );
+      }
+      for (final row in (payload['customers'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          customers,
+          CustomersCompanion(
+            id: Value(data['id'] as int),
+            name: Value(data['name'] as String),
+          ),
+        );
+      }
+      for (final row in (payload['utangEntries'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          utangEntries,
+          UtangEntriesCompanion(
+            id: Value(data['id'] as int),
+            customerId: Value(data['customer_id'] as int),
+            amount: Value((data['amount'] as num).toDouble()),
+            isPayment: Value(data['is_payment'] as bool),
+            createdAt: Value(DateTime.parse(data['created_at'] as String)),
+            note: Value(data['note'] as String?),
+          ),
+        );
+      }
+      for (final row in (payload['expenses'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          expenses,
+          ExpensesCompanion(
+            id: Value(data['id'] as int),
+            category: Value(data['category'] as String),
+            amount: Value((data['amount'] as num).toDouble()),
+            createdAt: Value(DateTime.parse(data['created_at'] as String)),
+            note: Value(data['note'] as String?),
+          ),
+        );
+      }
+      for (final row in (payload['groceryItems'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          groceryItems,
+          GroceryItemsCompanion(
+            id: Value(data['id'] as int),
+            name: Value(data['name'] as String),
+            qty: Value(data['qty'] as int),
+            isDone: Value(data['is_done'] as bool),
+          ),
+        );
+      }
+    });
+  }
+
   Future<List<int>> exportSimpleSnapshot() async {
     final productCount =
         await customSelect('SELECT COUNT(*) AS c FROM products').getSingle();
