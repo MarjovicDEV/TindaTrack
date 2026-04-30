@@ -13,12 +13,12 @@ class InventoryPage extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text('Inventory', style: Theme.of(context).textTheme.titleLarge),
+            Text('Imbentaryo', style: Theme.of(context).textTheme.titleLarge),
             const Spacer(),
             FilledButton.icon(
               onPressed: () => _showAddProductDialog(context),
               icon: const Icon(Icons.add),
-              label: const Text('Add Product'),
+              label: const Text('Magdagdag ng produkto'),
             ),
           ],
         ),
@@ -29,7 +29,7 @@ class InventoryPage extends StatelessWidget {
             builder: (context, snapshot) {
               final items = snapshot.data ?? [];
               if (items.isEmpty) {
-                return const Center(child: Text('No products yet.'));
+                return const Center(child: Text('Wala pang produkto.'));
               }
               return ListView.separated(
                 itemCount: items.length,
@@ -41,14 +41,14 @@ class InventoryPage extends StatelessWidget {
                     child: ListTile(
                       title: Text(item.name),
                       subtitle: Text(
-                        'Price: PHP ${item.price.toStringAsFixed(2)}  |  Stock: ${item.stockQty}',
+                        'Presyo: PHP ${item.price.toStringAsFixed(2)}  |  Stock: ${item.stockQty}',
                       ),
                       trailing: low
                           ? const Chip(
                               avatar: Icon(Icons.warning_amber_outlined, size: 16),
-                              label: Text('Low Stock'),
+                              label: Text('Mababa'),
                             )
-                          : const Chip(label: Text('OK')),
+                          : const Chip(label: Text('Ayos')),
                     ),
                   );
                 },
@@ -69,16 +69,16 @@ class InventoryPage extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Add Product'),
+        title: const Text('Magdagdag ng produkto'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Pangalan')),
               const SizedBox(height: 8),
               TextField(
                 controller: priceCtrl,
-                decoration: const InputDecoration(labelText: 'Price'),
+                decoration: const InputDecoration(labelText: 'Presyo'),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 8),
@@ -90,14 +90,14 @@ class InventoryPage extends StatelessWidget {
               const SizedBox(height: 8),
               TextField(
                 controller: thresholdCtrl,
-                decoration: const InputDecoration(labelText: 'Low stock threshold'),
+                decoration: const InputDecoration(labelText: 'Babala sa mababang stock'),
                 keyboardType: TextInputType.number,
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
           FilledButton(
             onPressed: () async {
               final name = nameCtrl.text.trim();
@@ -113,7 +113,7 @@ class InventoryPage extends StatelessWidget {
               );
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: const Text('I-save'),
           ),
         ],
       ),
