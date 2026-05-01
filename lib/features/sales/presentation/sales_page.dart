@@ -30,7 +30,7 @@ class _SalesPageState extends State<SalesPage> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         Expanded(
           child: StreamBuilder<List<dynamic>>(
             stream: widget.repo.watchSales(),
@@ -46,11 +46,15 @@ class _SalesPageState extends State<SalesPage> {
                   return Dismissible(
                     key: ValueKey('sale-${item.id}'),
                     direction: DismissDirection.endToStart,
-                    confirmDismiss: (_) => _confirmDelete('Burahin ang benta #${item.id}?'),
-                    onDismissed: (_) => widget.repo.deleteSaleAndRestoreStock(item.id),
+                    confirmDismiss: (_) =>
+                        _confirmDelete('Burahin ang benta #${item.id}?'),
+                    onDismissed: (_) =>
+                        widget.repo.deleteSaleAndRestoreStock(item.id),
                     background: Container(
                       alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red.shade600,
                         borderRadius: BorderRadius.circular(12),
@@ -82,10 +86,14 @@ class _SalesPageState extends State<SalesPage> {
     final formKey = GlobalKey<FormState>();
     final qtyCtrl = TextEditingController(text: '1');
     int? selectedProductId;
+    int? priorProductId;
+    var priorQty = 0.0;
     if (existingSale != null) {
       final items = await widget.repo.getSaleItems(existingSale.id);
       if (items.isNotEmpty) {
         selectedProductId = items.first.productId;
+        priorProductId = items.first.productId;
+        priorQty = items.first.qty;
         qtyCtrl.text = items.first.qty.toString();
       }
     }
@@ -95,11 +103,22 @@ class _SalesPageState extends State<SalesPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existingSale == null ? 'Mag-record ng benta' : 'I-update ang benta'),
+          title: Text(
+            existingSale == null ? 'Mag-record ng benta' : 'I-update ang benta',
+          ),
           content: StreamBuilder(
             stream: widget.repo.watchProducts(),
             builder: (context, snapshot) {
               final products = snapshot.data ?? [];
+              dynamic selectedProduct;
+              if (selectedProductId != null) {
+                for (final product in products) {
+                  if (product.id == selectedProductId) {
+                    selectedProduct = product;
+                    break;
+                  }
+                }
+              }
               return Form(
                 key: formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -110,33 +129,58 @@ class _SalesPageState extends State<SalesPage> {
                       initialValue: selectedProductId,
                       hint: const Text('Pumili ng produkto'),
                       items: products
-                          .map((p) => DropdownMenuItem(
-                                value: p.id,
-                                child: Text(
-                                  '${p.name} (${p.unitType}) stock:${p.stockQty.toStringAsFixed(2)}',
-                                ),
-                              ))
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(
+                                '${p.name} (${p.unitType}) stock:${p.stockQty.toStringAsFixed(2)}',
+                              ),
+                            ),
+                          )
                           .toList(),
-                      validator: (v) => v == null ? 'Produkto ay required.' : null,
-                      onChanged: (value) => setState(() => selectedProductId = value),
+                      validator: (v) =>
+                          v == null ? 'Produkto ay required.' : null,
+                      onChanged: (value) =>
+                          setState(() => selectedProductId = value),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: qtyCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Dami / Timbang',
-                        helperText: 'kg=decimal, pcs/meter=whole',
+                      decoration: InputDecoration(
+                        labelText: selectedProduct == null
+                            ? 'Dami / Timbang'
+                            : 'Dami (${selectedProduct.unitType})',
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (v) {
-                        if (selectedProductId == null) return 'Pumili muna ng produkto.';
-                        final product = products.firstWhere((p) => p.id == selectedProductId);
+                        if (selectedProductId == null)
+                          return 'Pumili muna ng produkto.';
+                        final product = products.firstWhere(
+                          (p) => p.id == selectedProductId,
+                        );
                         final base = product.unitType == 'kg'
-                            ? InputValidators.validateDecimalPositive(v ?? '', field: 'Timbang')
-                            : InputValidators.validateWholePositive(v ?? '', field: 'Qty');
+                            ? InputValidators.validateDecimalPositive(
+                                v ?? '',
+                                field: 'Timbang',
+                              )
+                            : InputValidators.validateWholePositive(
+                                v ?? '',
+                                field: 'Qty',
+                              );
                         if (base != null) return base;
                         final q = double.tryParse(v ?? '') ?? 0;
-                        if (q > product.stockQty) return 'Hindi pwede. Kulang stock.';
+                        var effectiveAvailable = product.stockQty;
+                        if (existingSale != null &&
+                            priorProductId != null &&
+                            selectedProductId == priorProductId) {
+                          effectiveAvailable = product.stockQty + priorQty;
+                        }
+                        if (q > effectiveAvailable) {
+                          return 'Hindi pwede. Kulang stock. Max: '
+                              '${effectiveAvailable.toStringAsFixed(2)}.';
+                        }
                         return null;
                       },
                     ),
@@ -152,8 +196,11 @@ class _SalesPageState extends State<SalesPage> {
             ),
             FilledButton(
               onPressed: () async {
+                if (selectedProductId == null) return;
                 final products = await widget.repo.watchProducts().first;
-                final product = products.firstWhere((p) => p.id == selectedProductId);
+                final product = products.firstWhere(
+                  (p) => p.id == selectedProductId,
+                );
                 if (!formKey.currentState!.validate()) return;
                 final quantity = double.parse(qtyCtrl.text);
                 if (existingSale == null) {
@@ -185,7 +232,10 @@ class _SalesPageState extends State<SalesPage> {
         title: const Text('Kumpirmahin ang delete'),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hindi')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hindi'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),

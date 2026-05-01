@@ -16,8 +16,16 @@ class UtangPage extends StatefulWidget {
 }
 
 class _UtangPageState extends State<UtangPage> {
+  int _crossAxisCount(double width) {
+    if (width >= 1200) return 4;
+    if (width >= 900) return 3;
+    if (width >= 600) return 3;
+    return 2;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
     return Column(
       children: [
         Row(
@@ -26,61 +34,35 @@ class _UtangPageState extends State<UtangPage> {
             const Spacer(),
             FilledButton(
               onPressed: () => _showAddCustomer(context),
-              child: const Text('Magdagdag ng customer'),
+              child: const Text('Magdagdag'),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         Expanded(
           child: StreamBuilder(
             stream: widget.repo.watchCustomerBalances(),
             builder: (context, snapshot) {
               final customers = snapshot.data ?? [];
               if (customers.isEmpty) return const Center(child: Text('Wala pang customer.'));
-              return ListView.builder(
+              return GridView.builder(
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _crossAxisCount(width),
+                  crossAxisSpacing: AppSpacing.sm,
+                  mainAxisSpacing: AppSpacing.sm,
+                  childAspectRatio: 0.9,
+                ),
                 itemCount: customers.length,
                 itemBuilder: (_, index) {
                   final customer = customers[index];
-                  return Dismissible(
-                    key: ValueKey('customer-${customer.customerId}'),
-                    direction: DismissDirection.endToStart,
-                    confirmDismiss: (_) => _confirmDelete('Burahin si ${customer.name}?'),
-                    onDismissed: (_) => widget.repo.deleteCustomer(customer.customerId),
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade600,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    child: Card(
-                      child: ListTile(
-                        onTap: () => _showEntries(customer.customerId, customer.name),
-                        title: Text(customer.name),
-                        subtitle: Text(
-                          'Balanse: ${formatCurrency(customer.balance)}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _showEditCustomer(
-                                customer.customerId,
-                                customer.name,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () => _showAddEntry(context, customer.customerId),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  return _CustomerCard(
+                    customer: customer,
+                    onTap: () => _showEntries(customer.customerId, customer.name),
+                    onEdit: () => _showEditCustomer(customer.customerId, customer.name),
+                    onAddEntry: () => _showAddEntry(context, customer.customerId),
+                    onDelete: () => widget.repo.deleteCustomer(customer.customerId),
+                    onConfirmDelete: () => _confirmDelete('Burahin si ${customer.name}?'),
                   );
                 },
               );
@@ -128,7 +110,7 @@ class _UtangPageState extends State<UtangPage> {
                           decoration: const InputDecoration(labelText: 'Pangalan'),
                           validator: (v) => InputValidators.validateName(v ?? ''),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.md),
                         FormField<Set<int>>(
                           initialValue: selected,
                           validator: (_) =>
@@ -140,11 +122,11 @@ class _UtangPageState extends State<UtangPage> {
                                 alignment: Alignment.centerLeft,
                                 child: Text('Unang item na inutang'),
                               ),
-                              const SizedBox(height: AppSpacing.xs),
+                              const SizedBox(height: AppSpacing.md),
                               if (products.isEmpty)
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(AppSpacing.sm),
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(8),
@@ -181,7 +163,7 @@ class _UtangPageState extends State<UtangPage> {
                                         '${product.name} (${product.unitType}) PHP ${product.price.toStringAsFixed(2)}',
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: AppSpacing.sm),
                                     SizedBox(
                                       width: 110,
                                       child: TextFormField(
@@ -218,13 +200,13 @@ class _UtangPageState extends State<UtangPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.md),
                         TextFormField(
                           initialValue: total.toStringAsFixed(2),
                           enabled: false,
                           decoration: const InputDecoration(labelText: 'Unang amount ng utang'),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.md),
                         FormField<DateTime>(
                           initialValue: dueDate,
                           validator: (_) {
@@ -382,7 +364,7 @@ class _UtangPageState extends State<UtangPage> {
                           value: isPayment,
                           onChanged: (v) => setState(() => isPayment = v),
                         ),
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.md),
                         if (isPayment)
                           TextFormField(
                             controller: amountCtrl,
@@ -405,11 +387,11 @@ class _UtangPageState extends State<UtangPage> {
                                   alignment: Alignment.centerLeft,
                                   child: Text('Item / Product'),
                                 ),
-                                const SizedBox(height: AppSpacing.xs),
+                                const SizedBox(height: AppSpacing.md),
                                 if (products.isEmpty)
                                   Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.all(AppSpacing.sm),
                                     decoration: BoxDecoration(
                                       color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(8),
@@ -447,7 +429,7 @@ class _UtangPageState extends State<UtangPage> {
                                           '${product.name} (${product.unitType}) PHP ${product.price.toStringAsFixed(2)}',
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: AppSpacing.sm),
                                       SizedBox(
                                         width: 110,
                                         child: TextFormField(
@@ -484,13 +466,13 @@ class _UtangPageState extends State<UtangPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.xs),
+                          const SizedBox(height: AppSpacing.md),
                           TextFormField(
                             initialValue: computedTotal.toStringAsFixed(2),
                             enabled: false,
                             decoration: const InputDecoration(labelText: 'Amount (auto)'),
                           ),
-                          const SizedBox(height: AppSpacing.xs),
+                          const SizedBox(height: AppSpacing.md),
                           FormField<DateTime>(
                             initialValue: dueDate,
                             validator: (_) {
@@ -546,7 +528,7 @@ class _UtangPageState extends State<UtangPage> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.md),
                         TextFormField(
                           controller: noteCtrl,
                           decoration: const InputDecoration(labelText: 'Note'),
@@ -677,7 +659,7 @@ class _UtangPageState extends State<UtangPage> {
       builder: (_) => DraggableScrollableSheet(
         expand: false,
         builder: (context, controller) => Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             children: [
               Text('Entries ni $name', style: Theme.of(context).textTheme.titleMedium),
@@ -700,7 +682,7 @@ class _UtangPageState extends State<UtangPage> {
                           onDismissed: (_) => widget.repo.deleteUtangEntry(e.id),
                           background: Container(
                             alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                             decoration: BoxDecoration(
                               color: Colors.red.shade600,
                               borderRadius: BorderRadius.circular(12),
@@ -770,18 +752,18 @@ class _UtangPageState extends State<UtangPage> {
                   validator: (v) =>
                       InputValidators.validateDecimalPositive(v ?? '', field: 'Amount'),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: itemCtrl,
                   decoration: const InputDecoration(labelText: 'Item / Product'),
                   validator: (v) => InputValidators.validateName(v ?? '', field: 'Item'),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: noteCtrl,
                   decoration: const InputDecoration(labelText: 'Note'),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.md),
                 FormField<DateTime>(
                   initialValue: dueDate,
                   validator: (_) {
@@ -831,7 +813,7 @@ class _UtangPageState extends State<UtangPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: AppSpacing.md),
                 SwitchListTile(
                   title: Text(isPayment ? 'Bayad' : 'Bagong Utang'),
                   value: isPayment,
@@ -870,17 +852,17 @@ class _UtangPageState extends State<UtangPage> {
       builder: (_) => DraggableScrollableSheet(
         expand: false,
         builder: (context, controller) => Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Detalye ng Entry', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 '${entry.isPayment ? 'Bayad' : 'Utang'} • ${formatCurrency(entry.amount)}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 'Transaksyon (PH UTC+8): ${formatPhilippineDateTime(entry.createdAt)}'
                 '${entry.dueDate != null ? '\nDue date: ${formatLongDate(entry.dueDate!)}' : ''}',
@@ -943,6 +925,126 @@ class _UtangPageState extends State<UtangPage> {
             child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CustomerCard extends StatelessWidget {
+  const _CustomerCard({
+    required this.customer,
+    required this.onTap,
+    required this.onEdit,
+    required this.onAddEntry,
+    required this.onDelete,
+    required this.onConfirmDelete,
+  });
+
+  final CustomerBalance customer;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onAddEntry;
+  final VoidCallback onDelete;
+  final Future<bool?> Function() onConfirmDelete;
+
+  static const List<Color> _headerColors = [
+    Color(0xFF1565C0),
+    Color(0xFF6A1B9A),
+    Color(0xFF2E7D32),
+    Color(0xFFBF360C),
+    Color(0xFF00695C),
+    Color(0xFF37474F),
+  ];
+
+  Color _headerColor(String seed) =>
+      _headerColors[seed.hashCode.abs() % _headerColors.length];
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = _headerColor(customer.name);
+    final hasDebt = customer.balance > 0;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              height: 90,
+              color: color,
+              child: Center(
+                child: Text(
+                  customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      customer.name,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Balanse:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
+                    Text(
+                      formatCurrency(customer.balance),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: hasDebt ? cs.error : cs.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 4, bottom: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 18),
+                    onPressed: onAddEntry,
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Magdagdag ng utang',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    onPressed: onEdit,
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'I-edit',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Burahin',
+                    onPressed: () async {
+                      final confirmed = await onConfirmDelete();
+                      if (confirmed == true) onDelete();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
