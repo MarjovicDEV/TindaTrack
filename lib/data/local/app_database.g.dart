@@ -30,6 +30,18 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _brandNameMeta = const VerificationMeta(
+    'brandName',
+  );
+  @override
+  late final GeneratedColumn<String> brandName = GeneratedColumn<String>(
+    'brand_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
   late final GeneratedColumn<double> price = GeneratedColumn<double>(
@@ -73,6 +85,18 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _netWeightUnitMeta = const VerificationMeta(
+    'netWeightUnit',
+  );
+  @override
+  late final GeneratedColumn<String> netWeightUnit = GeneratedColumn<String>(
+    'net_weight_unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('g'),
+  );
   static const VerificationMeta _unitTypeMeta = const VerificationMeta(
     'unitType',
   );
@@ -84,6 +108,17 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultValue: const Constant('pcs'),
+  );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -111,11 +146,14 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   List<GeneratedColumn> get $columns => [
     id,
     name,
+    brandName,
     price,
     stockQty,
     lowStockThreshold,
     weight,
+    netWeightUnit,
     unitType,
+    imagePath,
     createdAt,
     deletedAt,
   ];
@@ -141,6 +179,12 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('brand_name')) {
+      context.handle(
+        _brandNameMeta,
+        brandName.isAcceptableOrUnknown(data['brand_name']!, _brandNameMeta),
+      );
     }
     if (data.containsKey('price')) {
       context.handle(
@@ -173,10 +217,25 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         weight.isAcceptableOrUnknown(data['weight']!, _weightMeta),
       );
     }
+    if (data.containsKey('net_weight_unit')) {
+      context.handle(
+        _netWeightUnitMeta,
+        netWeightUnit.isAcceptableOrUnknown(
+          data['net_weight_unit']!,
+          _netWeightUnitMeta,
+        ),
+      );
+    }
     if (data.containsKey('unit_type')) {
       context.handle(
         _unitTypeMeta,
         unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
       );
     }
     if (data.containsKey('created_at')) {
@@ -208,6 +267,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      brandName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brand_name'],
+      )!,
       price: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}price'],
@@ -224,10 +287,18 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.double,
         data['${effectivePrefix}weight'],
       )!,
+      netWeightUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}net_weight_unit'],
+      )!,
       unitType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}unit_type'],
       )!,
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -248,21 +319,27 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
 class Product extends DataClass implements Insertable<Product> {
   final int id;
   final String name;
+  final String brandName;
   final double price;
   final double stockQty;
   final double lowStockThreshold;
   final double weight;
+  final String netWeightUnit;
   final String unitType;
+  final String? imagePath;
   final DateTime? createdAt;
   final DateTime? deletedAt;
   const Product({
     required this.id,
     required this.name,
+    required this.brandName,
     required this.price,
     required this.stockQty,
     required this.lowStockThreshold,
     required this.weight,
+    required this.netWeightUnit,
     required this.unitType,
+    this.imagePath,
     this.createdAt,
     this.deletedAt,
   });
@@ -271,11 +348,16 @@ class Product extends DataClass implements Insertable<Product> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
+    map['brand_name'] = Variable<String>(brandName);
     map['price'] = Variable<double>(price);
     map['stock_qty'] = Variable<double>(stockQty);
     map['low_stock_threshold'] = Variable<double>(lowStockThreshold);
     map['weight'] = Variable<double>(weight);
+    map['net_weight_unit'] = Variable<String>(netWeightUnit);
     map['unit_type'] = Variable<String>(unitType);
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
     }
@@ -289,11 +371,16 @@ class Product extends DataClass implements Insertable<Product> {
     return ProductsCompanion(
       id: Value(id),
       name: Value(name),
+      brandName: Value(brandName),
       price: Value(price),
       stockQty: Value(stockQty),
       lowStockThreshold: Value(lowStockThreshold),
       weight: Value(weight),
+      netWeightUnit: Value(netWeightUnit),
       unitType: Value(unitType),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
@@ -311,11 +398,14 @@ class Product extends DataClass implements Insertable<Product> {
     return Product(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      brandName: serializer.fromJson<String>(json['brandName']),
       price: serializer.fromJson<double>(json['price']),
       stockQty: serializer.fromJson<double>(json['stockQty']),
       lowStockThreshold: serializer.fromJson<double>(json['lowStockThreshold']),
       weight: serializer.fromJson<double>(json['weight']),
+      netWeightUnit: serializer.fromJson<String>(json['netWeightUnit']),
       unitType: serializer.fromJson<String>(json['unitType']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
@@ -326,11 +416,14 @@ class Product extends DataClass implements Insertable<Product> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
+      'brandName': serializer.toJson<String>(brandName),
       'price': serializer.toJson<double>(price),
       'stockQty': serializer.toJson<double>(stockQty),
       'lowStockThreshold': serializer.toJson<double>(lowStockThreshold),
       'weight': serializer.toJson<double>(weight),
+      'netWeightUnit': serializer.toJson<String>(netWeightUnit),
       'unitType': serializer.toJson<String>(unitType),
+      'imagePath': serializer.toJson<String?>(imagePath),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
@@ -339,21 +432,27 @@ class Product extends DataClass implements Insertable<Product> {
   Product copyWith({
     int? id,
     String? name,
+    String? brandName,
     double? price,
     double? stockQty,
     double? lowStockThreshold,
     double? weight,
+    String? netWeightUnit,
     String? unitType,
+    Value<String?> imagePath = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => Product(
     id: id ?? this.id,
     name: name ?? this.name,
+    brandName: brandName ?? this.brandName,
     price: price ?? this.price,
     stockQty: stockQty ?? this.stockQty,
     lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
     weight: weight ?? this.weight,
+    netWeightUnit: netWeightUnit ?? this.netWeightUnit,
     unitType: unitType ?? this.unitType,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
@@ -361,13 +460,18 @@ class Product extends DataClass implements Insertable<Product> {
     return Product(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      brandName: data.brandName.present ? data.brandName.value : this.brandName,
       price: data.price.present ? data.price.value : this.price,
       stockQty: data.stockQty.present ? data.stockQty.value : this.stockQty,
       lowStockThreshold: data.lowStockThreshold.present
           ? data.lowStockThreshold.value
           : this.lowStockThreshold,
       weight: data.weight.present ? data.weight.value : this.weight,
+      netWeightUnit: data.netWeightUnit.present
+          ? data.netWeightUnit.value
+          : this.netWeightUnit,
       unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
@@ -378,11 +482,14 @@ class Product extends DataClass implements Insertable<Product> {
     return (StringBuffer('Product(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('brandName: $brandName, ')
           ..write('price: $price, ')
           ..write('stockQty: $stockQty, ')
           ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('weight: $weight, ')
+          ..write('netWeightUnit: $netWeightUnit, ')
           ..write('unitType: $unitType, ')
+          ..write('imagePath: $imagePath, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
@@ -393,11 +500,14 @@ class Product extends DataClass implements Insertable<Product> {
   int get hashCode => Object.hash(
     id,
     name,
+    brandName,
     price,
     stockQty,
     lowStockThreshold,
     weight,
+    netWeightUnit,
     unitType,
+    imagePath,
     createdAt,
     deletedAt,
   );
@@ -407,11 +517,14 @@ class Product extends DataClass implements Insertable<Product> {
       (other is Product &&
           other.id == this.id &&
           other.name == this.name &&
+          other.brandName == this.brandName &&
           other.price == this.price &&
           other.stockQty == this.stockQty &&
           other.lowStockThreshold == this.lowStockThreshold &&
           other.weight == this.weight &&
+          other.netWeightUnit == this.netWeightUnit &&
           other.unitType == this.unitType &&
+          other.imagePath == this.imagePath &&
           other.createdAt == this.createdAt &&
           other.deletedAt == this.deletedAt);
 }
@@ -419,32 +532,41 @@ class Product extends DataClass implements Insertable<Product> {
 class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<int> id;
   final Value<String> name;
+  final Value<String> brandName;
   final Value<double> price;
   final Value<double> stockQty;
   final Value<double> lowStockThreshold;
   final Value<double> weight;
+  final Value<String> netWeightUnit;
   final Value<String> unitType;
+  final Value<String?> imagePath;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> deletedAt;
   const ProductsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.brandName = const Value.absent(),
     this.price = const Value.absent(),
     this.stockQty = const Value.absent(),
     this.lowStockThreshold = const Value.absent(),
     this.weight = const Value.absent(),
+    this.netWeightUnit = const Value.absent(),
     this.unitType = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
   });
   ProductsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
+    this.brandName = const Value.absent(),
     required double price,
     required double stockQty,
     this.lowStockThreshold = const Value.absent(),
     this.weight = const Value.absent(),
+    this.netWeightUnit = const Value.absent(),
     this.unitType = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
   }) : name = Value(name),
@@ -453,22 +575,28 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   static Insertable<Product> custom({
     Expression<int>? id,
     Expression<String>? name,
+    Expression<String>? brandName,
     Expression<double>? price,
     Expression<double>? stockQty,
     Expression<double>? lowStockThreshold,
     Expression<double>? weight,
+    Expression<String>? netWeightUnit,
     Expression<String>? unitType,
+    Expression<String>? imagePath,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? deletedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (brandName != null) 'brand_name': brandName,
       if (price != null) 'price': price,
       if (stockQty != null) 'stock_qty': stockQty,
       if (lowStockThreshold != null) 'low_stock_threshold': lowStockThreshold,
       if (weight != null) 'weight': weight,
+      if (netWeightUnit != null) 'net_weight_unit': netWeightUnit,
       if (unitType != null) 'unit_type': unitType,
+      if (imagePath != null) 'image_path': imagePath,
       if (createdAt != null) 'created_at': createdAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
     });
@@ -477,22 +605,28 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   ProductsCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
+    Value<String>? brandName,
     Value<double>? price,
     Value<double>? stockQty,
     Value<double>? lowStockThreshold,
     Value<double>? weight,
+    Value<String>? netWeightUnit,
     Value<String>? unitType,
+    Value<String?>? imagePath,
     Value<DateTime?>? createdAt,
     Value<DateTime?>? deletedAt,
   }) {
     return ProductsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      brandName: brandName ?? this.brandName,
       price: price ?? this.price,
       stockQty: stockQty ?? this.stockQty,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       weight: weight ?? this.weight,
+      netWeightUnit: netWeightUnit ?? this.netWeightUnit,
       unitType: unitType ?? this.unitType,
+      imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
       deletedAt: deletedAt ?? this.deletedAt,
     );
@@ -507,6 +641,9 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (brandName.present) {
+      map['brand_name'] = Variable<String>(brandName.value);
+    }
     if (price.present) {
       map['price'] = Variable<double>(price.value);
     }
@@ -519,8 +656,14 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (weight.present) {
       map['weight'] = Variable<double>(weight.value);
     }
+    if (netWeightUnit.present) {
+      map['net_weight_unit'] = Variable<String>(netWeightUnit.value);
+    }
     if (unitType.present) {
       map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -536,11 +679,14 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return (StringBuffer('ProductsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('brandName: $brandName, ')
           ..write('price: $price, ')
           ..write('stockQty: $stockQty, ')
           ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('weight: $weight, ')
+          ..write('netWeightUnit: $netWeightUnit, ')
           ..write('unitType: $unitType, ')
+          ..write('imagePath: $imagePath, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
@@ -2972,6 +3118,307 @@ class ExpenseCategoriesCompanion extends UpdateCompanion<ExpenseCategory> {
   }
 }
 
+class $UnitMeasurementsTable extends UnitMeasurements
+    with TableInfo<$UnitMeasurementsTable, UnitMeasurement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UnitMeasurementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt, deletedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'unit_measurements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UnitMeasurement> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UnitMeasurement map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UnitMeasurement(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $UnitMeasurementsTable createAlias(String alias) {
+    return $UnitMeasurementsTable(attachedDatabase, alias);
+  }
+}
+
+class UnitMeasurement extends DataClass implements Insertable<UnitMeasurement> {
+  final int id;
+  final String name;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  const UnitMeasurement({
+    required this.id,
+    required this.name,
+    this.createdAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  UnitMeasurementsCompanion toCompanion(bool nullToAbsent) {
+    return UnitMeasurementsCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory UnitMeasurement.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UnitMeasurement(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  UnitMeasurement copyWith({
+    int? id,
+    String? name,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => UnitMeasurement(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  UnitMeasurement copyWithCompanion(UnitMeasurementsCompanion data) {
+    return UnitMeasurement(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnitMeasurement(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UnitMeasurement &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class UnitMeasurementsCompanion extends UpdateCompanion<UnitMeasurement> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
+  const UnitMeasurementsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  UnitMeasurementsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<UnitMeasurement> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  UnitMeasurementsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return UnitMeasurementsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnitMeasurementsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -3432,6 +3879,360 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   }
 }
 
+class $GroceryListsTable extends GroceryLists
+    with TableInfo<$GroceryListsTable, GroceryList> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroceryListsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _startAtMeta = const VerificationMeta(
+    'startAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startAt = GeneratedColumn<DateTime>(
+    'start_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mallNameMeta = const VerificationMeta(
+    'mallName',
+  );
+  @override
+  late final GeneratedColumn<String> mallName = GeneratedColumn<String>(
+    'mall_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    startAt,
+    mallName,
+    createdAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'grocery_lists';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GroceryList> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('start_at')) {
+      context.handle(
+        _startAtMeta,
+        startAt.isAcceptableOrUnknown(data['start_at']!, _startAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startAtMeta);
+    }
+    if (data.containsKey('mall_name')) {
+      context.handle(
+        _mallNameMeta,
+        mallName.isAcceptableOrUnknown(data['mall_name']!, _mallNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mallNameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GroceryList map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroceryList(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      startAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}start_at'],
+      )!,
+      mallName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mall_name'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $GroceryListsTable createAlias(String alias) {
+    return $GroceryListsTable(attachedDatabase, alias);
+  }
+}
+
+class GroceryList extends DataClass implements Insertable<GroceryList> {
+  final int id;
+  final DateTime startAt;
+  final String mallName;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  const GroceryList({
+    required this.id,
+    required this.startAt,
+    required this.mallName,
+    this.createdAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['start_at'] = Variable<DateTime>(startAt);
+    map['mall_name'] = Variable<String>(mallName);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  GroceryListsCompanion toCompanion(bool nullToAbsent) {
+    return GroceryListsCompanion(
+      id: Value(id),
+      startAt: Value(startAt),
+      mallName: Value(mallName),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory GroceryList.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroceryList(
+      id: serializer.fromJson<int>(json['id']),
+      startAt: serializer.fromJson<DateTime>(json['startAt']),
+      mallName: serializer.fromJson<String>(json['mallName']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'startAt': serializer.toJson<DateTime>(startAt),
+      'mallName': serializer.toJson<String>(mallName),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  GroceryList copyWith({
+    int? id,
+    DateTime? startAt,
+    String? mallName,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => GroceryList(
+    id: id ?? this.id,
+    startAt: startAt ?? this.startAt,
+    mallName: mallName ?? this.mallName,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  GroceryList copyWithCompanion(GroceryListsCompanion data) {
+    return GroceryList(
+      id: data.id.present ? data.id.value : this.id,
+      startAt: data.startAt.present ? data.startAt.value : this.startAt,
+      mallName: data.mallName.present ? data.mallName.value : this.mallName,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroceryList(')
+          ..write('id: $id, ')
+          ..write('startAt: $startAt, ')
+          ..write('mallName: $mallName, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, startAt, mallName, createdAt, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroceryList &&
+          other.id == this.id &&
+          other.startAt == this.startAt &&
+          other.mallName == this.mallName &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class GroceryListsCompanion extends UpdateCompanion<GroceryList> {
+  final Value<int> id;
+  final Value<DateTime> startAt;
+  final Value<String> mallName;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
+  const GroceryListsCompanion({
+    this.id = const Value.absent(),
+    this.startAt = const Value.absent(),
+    this.mallName = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  GroceryListsCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime startAt,
+    required String mallName,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : startAt = Value(startAt),
+       mallName = Value(mallName);
+  static Insertable<GroceryList> custom({
+    Expression<int>? id,
+    Expression<DateTime>? startAt,
+    Expression<String>? mallName,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (startAt != null) 'start_at': startAt,
+      if (mallName != null) 'mall_name': mallName,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  GroceryListsCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? startAt,
+    Value<String>? mallName,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return GroceryListsCompanion(
+      id: id ?? this.id,
+      startAt: startAt ?? this.startAt,
+      mallName: mallName ?? this.mallName,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (startAt.present) {
+      map['start_at'] = Variable<DateTime>(startAt.value);
+    }
+    if (mallName.present) {
+      map['mall_name'] = Variable<String>(mallName.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroceryListsCompanion(')
+          ..write('id: $id, ')
+          ..write('startAt: $startAt, ')
+          ..write('mallName: $mallName, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $GroceryItemsTable extends GroceryItems
     with TableInfo<$GroceryItemsTable, GroceryItem> {
   @override
@@ -3451,6 +4252,20 @@ class $GroceryItemsTable extends GroceryItems
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _groceryListIdMeta = const VerificationMeta(
+    'groceryListId',
+  );
+  @override
+  late final GeneratedColumn<int> groceryListId = GeneratedColumn<int>(
+    'grocery_list_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES grocery_lists (id) ON DELETE SET NULL',
+    ),
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -3459,6 +4274,42 @@ class $GroceryItemsTable extends GroceryItems
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _brandNameMeta = const VerificationMeta(
+    'brandName',
+  );
+  @override
+  late final GeneratedColumn<String> brandName = GeneratedColumn<String>(
+    'brand_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _netWeightMeta = const VerificationMeta(
+    'netWeight',
+  );
+  @override
+  late final GeneratedColumn<double> netWeight = GeneratedColumn<double>(
+    'net_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _netWeightUnitMeta = const VerificationMeta(
+    'netWeightUnit',
+  );
+  @override
+  late final GeneratedColumn<String> netWeightUnit = GeneratedColumn<String>(
+    'net_weight_unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('g'),
   );
   static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
   @override
@@ -3481,6 +4332,17 @@ class $GroceryItemsTable extends GroceryItems
     type: DriftSqlType.string,
     requiredDuringInsert: false,
     defaultValue: const Constant('pcs'),
+  );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _plannedDateMeta = const VerificationMeta(
     'plannedDate',
@@ -3531,9 +4393,14 @@ class $GroceryItemsTable extends GroceryItems
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    groceryListId,
     name,
+    brandName,
+    netWeight,
+    netWeightUnit,
     qty,
     unitType,
+    imagePath,
     plannedDate,
     isDone,
     createdAt,
@@ -3554,6 +4421,15 @@ class $GroceryItemsTable extends GroceryItems
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
+    if (data.containsKey('grocery_list_id')) {
+      context.handle(
+        _groceryListIdMeta,
+        groceryListId.isAcceptableOrUnknown(
+          data['grocery_list_id']!,
+          _groceryListIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('name')) {
       context.handle(
         _nameMeta,
@@ -3561,6 +4437,27 @@ class $GroceryItemsTable extends GroceryItems
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('brand_name')) {
+      context.handle(
+        _brandNameMeta,
+        brandName.isAcceptableOrUnknown(data['brand_name']!, _brandNameMeta),
+      );
+    }
+    if (data.containsKey('net_weight')) {
+      context.handle(
+        _netWeightMeta,
+        netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta),
+      );
+    }
+    if (data.containsKey('net_weight_unit')) {
+      context.handle(
+        _netWeightUnitMeta,
+        netWeightUnit.isAcceptableOrUnknown(
+          data['net_weight_unit']!,
+          _netWeightUnitMeta,
+        ),
+      );
     }
     if (data.containsKey('qty')) {
       context.handle(
@@ -3572,6 +4469,12 @@ class $GroceryItemsTable extends GroceryItems
       context.handle(
         _unitTypeMeta,
         unitType.isAcceptableOrUnknown(data['unit_type']!, _unitTypeMeta),
+      );
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
       );
     }
     if (data.containsKey('planned_date')) {
@@ -3614,9 +4517,25 @@ class $GroceryItemsTable extends GroceryItems
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      groceryListId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}grocery_list_id'],
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
+      )!,
+      brandName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brand_name'],
+      )!,
+      netWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}net_weight'],
+      )!,
+      netWeightUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}net_weight_unit'],
       )!,
       qty: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -3626,6 +4545,10 @@ class $GroceryItemsTable extends GroceryItems
         DriftSqlType.string,
         data['${effectivePrefix}unit_type'],
       )!,
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
       plannedDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}planned_date'],
@@ -3653,18 +4576,28 @@ class $GroceryItemsTable extends GroceryItems
 
 class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   final int id;
+  final int? groceryListId;
   final String name;
+  final String brandName;
+  final double netWeight;
+  final String netWeightUnit;
   final double qty;
   final String unitType;
+  final String? imagePath;
   final DateTime? plannedDate;
   final bool isDone;
   final DateTime? createdAt;
   final DateTime? deletedAt;
   const GroceryItem({
     required this.id,
+    this.groceryListId,
     required this.name,
+    required this.brandName,
+    required this.netWeight,
+    required this.netWeightUnit,
     required this.qty,
     required this.unitType,
+    this.imagePath,
     this.plannedDate,
     required this.isDone,
     this.createdAt,
@@ -3674,9 +4607,18 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || groceryListId != null) {
+      map['grocery_list_id'] = Variable<int>(groceryListId);
+    }
     map['name'] = Variable<String>(name);
+    map['brand_name'] = Variable<String>(brandName);
+    map['net_weight'] = Variable<double>(netWeight);
+    map['net_weight_unit'] = Variable<String>(netWeightUnit);
     map['qty'] = Variable<double>(qty);
     map['unit_type'] = Variable<String>(unitType);
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
     if (!nullToAbsent || plannedDate != null) {
       map['planned_date'] = Variable<DateTime>(plannedDate);
     }
@@ -3693,9 +4635,18 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   GroceryItemsCompanion toCompanion(bool nullToAbsent) {
     return GroceryItemsCompanion(
       id: Value(id),
+      groceryListId: groceryListId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groceryListId),
       name: Value(name),
+      brandName: Value(brandName),
+      netWeight: Value(netWeight),
+      netWeightUnit: Value(netWeightUnit),
       qty: Value(qty),
       unitType: Value(unitType),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
       plannedDate: plannedDate == null && nullToAbsent
           ? const Value.absent()
           : Value(plannedDate),
@@ -3716,9 +4667,14 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return GroceryItem(
       id: serializer.fromJson<int>(json['id']),
+      groceryListId: serializer.fromJson<int?>(json['groceryListId']),
       name: serializer.fromJson<String>(json['name']),
+      brandName: serializer.fromJson<String>(json['brandName']),
+      netWeight: serializer.fromJson<double>(json['netWeight']),
+      netWeightUnit: serializer.fromJson<String>(json['netWeightUnit']),
       qty: serializer.fromJson<double>(json['qty']),
       unitType: serializer.fromJson<String>(json['unitType']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
       plannedDate: serializer.fromJson<DateTime?>(json['plannedDate']),
       isDone: serializer.fromJson<bool>(json['isDone']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
@@ -3730,9 +4686,14 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'groceryListId': serializer.toJson<int?>(groceryListId),
       'name': serializer.toJson<String>(name),
+      'brandName': serializer.toJson<String>(brandName),
+      'netWeight': serializer.toJson<double>(netWeight),
+      'netWeightUnit': serializer.toJson<String>(netWeightUnit),
       'qty': serializer.toJson<double>(qty),
       'unitType': serializer.toJson<String>(unitType),
+      'imagePath': serializer.toJson<String?>(imagePath),
       'plannedDate': serializer.toJson<DateTime?>(plannedDate),
       'isDone': serializer.toJson<bool>(isDone),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
@@ -3742,18 +4703,30 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
 
   GroceryItem copyWith({
     int? id,
+    Value<int?> groceryListId = const Value.absent(),
     String? name,
+    String? brandName,
+    double? netWeight,
+    String? netWeightUnit,
     double? qty,
     String? unitType,
+    Value<String?> imagePath = const Value.absent(),
     Value<DateTime?> plannedDate = const Value.absent(),
     bool? isDone,
     Value<DateTime?> createdAt = const Value.absent(),
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => GroceryItem(
     id: id ?? this.id,
+    groceryListId: groceryListId.present
+        ? groceryListId.value
+        : this.groceryListId,
     name: name ?? this.name,
+    brandName: brandName ?? this.brandName,
+    netWeight: netWeight ?? this.netWeight,
+    netWeightUnit: netWeightUnit ?? this.netWeightUnit,
     qty: qty ?? this.qty,
     unitType: unitType ?? this.unitType,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
     plannedDate: plannedDate.present ? plannedDate.value : this.plannedDate,
     isDone: isDone ?? this.isDone,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
@@ -3762,9 +4735,18 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   GroceryItem copyWithCompanion(GroceryItemsCompanion data) {
     return GroceryItem(
       id: data.id.present ? data.id.value : this.id,
+      groceryListId: data.groceryListId.present
+          ? data.groceryListId.value
+          : this.groceryListId,
       name: data.name.present ? data.name.value : this.name,
+      brandName: data.brandName.present ? data.brandName.value : this.brandName,
+      netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
+      netWeightUnit: data.netWeightUnit.present
+          ? data.netWeightUnit.value
+          : this.netWeightUnit,
       qty: data.qty.present ? data.qty.value : this.qty,
       unitType: data.unitType.present ? data.unitType.value : this.unitType,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       plannedDate: data.plannedDate.present
           ? data.plannedDate.value
           : this.plannedDate,
@@ -3778,9 +4760,14 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   String toString() {
     return (StringBuffer('GroceryItem(')
           ..write('id: $id, ')
+          ..write('groceryListId: $groceryListId, ')
           ..write('name: $name, ')
+          ..write('brandName: $brandName, ')
+          ..write('netWeight: $netWeight, ')
+          ..write('netWeightUnit: $netWeightUnit, ')
           ..write('qty: $qty, ')
           ..write('unitType: $unitType, ')
+          ..write('imagePath: $imagePath, ')
           ..write('plannedDate: $plannedDate, ')
           ..write('isDone: $isDone, ')
           ..write('createdAt: $createdAt, ')
@@ -3792,9 +4779,14 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
   @override
   int get hashCode => Object.hash(
     id,
+    groceryListId,
     name,
+    brandName,
+    netWeight,
+    netWeightUnit,
     qty,
     unitType,
+    imagePath,
     plannedDate,
     isDone,
     createdAt,
@@ -3805,9 +4797,14 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
       identical(this, other) ||
       (other is GroceryItem &&
           other.id == this.id &&
+          other.groceryListId == this.groceryListId &&
           other.name == this.name &&
+          other.brandName == this.brandName &&
+          other.netWeight == this.netWeight &&
+          other.netWeightUnit == this.netWeightUnit &&
           other.qty == this.qty &&
           other.unitType == this.unitType &&
+          other.imagePath == this.imagePath &&
           other.plannedDate == this.plannedDate &&
           other.isDone == this.isDone &&
           other.createdAt == this.createdAt &&
@@ -3816,18 +4813,28 @@ class GroceryItem extends DataClass implements Insertable<GroceryItem> {
 
 class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   final Value<int> id;
+  final Value<int?> groceryListId;
   final Value<String> name;
+  final Value<String> brandName;
+  final Value<double> netWeight;
+  final Value<String> netWeightUnit;
   final Value<double> qty;
   final Value<String> unitType;
+  final Value<String?> imagePath;
   final Value<DateTime?> plannedDate;
   final Value<bool> isDone;
   final Value<DateTime?> createdAt;
   final Value<DateTime?> deletedAt;
   const GroceryItemsCompanion({
     this.id = const Value.absent(),
+    this.groceryListId = const Value.absent(),
     this.name = const Value.absent(),
+    this.brandName = const Value.absent(),
+    this.netWeight = const Value.absent(),
+    this.netWeightUnit = const Value.absent(),
     this.qty = const Value.absent(),
     this.unitType = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.plannedDate = const Value.absent(),
     this.isDone = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -3835,9 +4842,14 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   });
   GroceryItemsCompanion.insert({
     this.id = const Value.absent(),
+    this.groceryListId = const Value.absent(),
     required String name,
+    this.brandName = const Value.absent(),
+    this.netWeight = const Value.absent(),
+    this.netWeightUnit = const Value.absent(),
     this.qty = const Value.absent(),
     this.unitType = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.plannedDate = const Value.absent(),
     this.isDone = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -3845,9 +4857,14 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   }) : name = Value(name);
   static Insertable<GroceryItem> custom({
     Expression<int>? id,
+    Expression<int>? groceryListId,
     Expression<String>? name,
+    Expression<String>? brandName,
+    Expression<double>? netWeight,
+    Expression<String>? netWeightUnit,
     Expression<double>? qty,
     Expression<String>? unitType,
+    Expression<String>? imagePath,
     Expression<DateTime>? plannedDate,
     Expression<bool>? isDone,
     Expression<DateTime>? createdAt,
@@ -3855,9 +4872,14 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (groceryListId != null) 'grocery_list_id': groceryListId,
       if (name != null) 'name': name,
+      if (brandName != null) 'brand_name': brandName,
+      if (netWeight != null) 'net_weight': netWeight,
+      if (netWeightUnit != null) 'net_weight_unit': netWeightUnit,
       if (qty != null) 'qty': qty,
       if (unitType != null) 'unit_type': unitType,
+      if (imagePath != null) 'image_path': imagePath,
       if (plannedDate != null) 'planned_date': plannedDate,
       if (isDone != null) 'is_done': isDone,
       if (createdAt != null) 'created_at': createdAt,
@@ -3867,9 +4889,14 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
 
   GroceryItemsCompanion copyWith({
     Value<int>? id,
+    Value<int?>? groceryListId,
     Value<String>? name,
+    Value<String>? brandName,
+    Value<double>? netWeight,
+    Value<String>? netWeightUnit,
     Value<double>? qty,
     Value<String>? unitType,
+    Value<String?>? imagePath,
     Value<DateTime?>? plannedDate,
     Value<bool>? isDone,
     Value<DateTime?>? createdAt,
@@ -3877,9 +4904,14 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   }) {
     return GroceryItemsCompanion(
       id: id ?? this.id,
+      groceryListId: groceryListId ?? this.groceryListId,
       name: name ?? this.name,
+      brandName: brandName ?? this.brandName,
+      netWeight: netWeight ?? this.netWeight,
+      netWeightUnit: netWeightUnit ?? this.netWeightUnit,
       qty: qty ?? this.qty,
       unitType: unitType ?? this.unitType,
+      imagePath: imagePath ?? this.imagePath,
       plannedDate: plannedDate ?? this.plannedDate,
       isDone: isDone ?? this.isDone,
       createdAt: createdAt ?? this.createdAt,
@@ -3893,14 +4925,29 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (groceryListId.present) {
+      map['grocery_list_id'] = Variable<int>(groceryListId.value);
+    }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (brandName.present) {
+      map['brand_name'] = Variable<String>(brandName.value);
+    }
+    if (netWeight.present) {
+      map['net_weight'] = Variable<double>(netWeight.value);
+    }
+    if (netWeightUnit.present) {
+      map['net_weight_unit'] = Variable<String>(netWeightUnit.value);
     }
     if (qty.present) {
       map['qty'] = Variable<double>(qty.value);
     }
     if (unitType.present) {
       map['unit_type'] = Variable<String>(unitType.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
     }
     if (plannedDate.present) {
       map['planned_date'] = Variable<DateTime>(plannedDate.value);
@@ -3921,9 +4968,14 @@ class GroceryItemsCompanion extends UpdateCompanion<GroceryItem> {
   String toString() {
     return (StringBuffer('GroceryItemsCompanion(')
           ..write('id: $id, ')
+          ..write('groceryListId: $groceryListId, ')
           ..write('name: $name, ')
+          ..write('brandName: $brandName, ')
+          ..write('netWeight: $netWeight, ')
+          ..write('netWeightUnit: $netWeightUnit, ')
           ..write('qty: $qty, ')
           ..write('unitType: $unitType, ')
+          ..write('imagePath: $imagePath, ')
           ..write('plannedDate: $plannedDate, ')
           ..write('isDone: $isDone, ')
           ..write('createdAt: $createdAt, ')
@@ -3946,7 +4998,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $ExpenseCategoriesTable expenseCategories =
       $ExpenseCategoriesTable(this);
+  late final $UnitMeasurementsTable unitMeasurements = $UnitMeasurementsTable(
+    this,
+  );
   late final $ExpensesTable expenses = $ExpensesTable(this);
+  late final $GroceryListsTable groceryLists = $GroceryListsTable(this);
   late final $GroceryItemsTable groceryItems = $GroceryItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -3960,7 +5016,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     utangEntries,
     utangEntryItems,
     expenseCategories,
+    unitMeasurements,
     expenses,
+    groceryLists,
     groceryItems,
   ];
   @override
@@ -3972,6 +5030,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('utang_entry_items', kind: UpdateKind.delete)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'grocery_lists',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('grocery_items', kind: UpdateKind.update)],
+    ),
   ]);
 }
 
@@ -3979,11 +5044,14 @@ typedef $$ProductsTableCreateCompanionBuilder =
     ProductsCompanion Function({
       Value<int> id,
       required String name,
+      Value<String> brandName,
       required double price,
       required double stockQty,
       Value<double> lowStockThreshold,
       Value<double> weight,
+      Value<String> netWeightUnit,
       Value<String> unitType,
+      Value<String?> imagePath,
       Value<DateTime?> createdAt,
       Value<DateTime?> deletedAt,
     });
@@ -3991,11 +5059,14 @@ typedef $$ProductsTableUpdateCompanionBuilder =
     ProductsCompanion Function({
       Value<int> id,
       Value<String> name,
+      Value<String> brandName,
       Value<double> price,
       Value<double> stockQty,
       Value<double> lowStockThreshold,
       Value<double> weight,
+      Value<String> netWeightUnit,
       Value<String> unitType,
+      Value<String?> imagePath,
       Value<DateTime?> createdAt,
       Value<DateTime?> deletedAt,
     });
@@ -4065,6 +5136,11 @@ class $$ProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get brandName => $composableBuilder(
+    column: $table.brandName,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnFilters(column),
@@ -4085,8 +5161,18 @@ class $$ProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get netWeightUnit => $composableBuilder(
+    column: $table.netWeightUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get unitType => $composableBuilder(
     column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4170,6 +5256,11 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get brandName => $composableBuilder(
+    column: $table.brandName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get price => $composableBuilder(
     column: $table.price,
     builder: (column) => ColumnOrderings(column),
@@ -4190,8 +5281,18 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get netWeightUnit => $composableBuilder(
+    column: $table.netWeightUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get unitType => $composableBuilder(
     column: $table.unitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4221,6 +5322,9 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
+  GeneratedColumn<String> get brandName =>
+      $composableBuilder(column: $table.brandName, builder: (column) => column);
+
   GeneratedColumn<double> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
 
@@ -4235,8 +5339,16 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<double> get weight =>
       $composableBuilder(column: $table.weight, builder: (column) => column);
 
+  GeneratedColumn<String> get netWeightUnit => $composableBuilder(
+    column: $table.netWeightUnit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get unitType =>
       $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -4325,21 +5437,27 @@ class $$ProductsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String> brandName = const Value.absent(),
                 Value<double> price = const Value.absent(),
                 Value<double> stockQty = const Value.absent(),
                 Value<double> lowStockThreshold = const Value.absent(),
                 Value<double> weight = const Value.absent(),
+                Value<String> netWeightUnit = const Value.absent(),
                 Value<String> unitType = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
               }) => ProductsCompanion(
                 id: id,
                 name: name,
+                brandName: brandName,
                 price: price,
                 stockQty: stockQty,
                 lowStockThreshold: lowStockThreshold,
                 weight: weight,
+                netWeightUnit: netWeightUnit,
                 unitType: unitType,
+                imagePath: imagePath,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
               ),
@@ -4347,21 +5465,27 @@ class $$ProductsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
+                Value<String> brandName = const Value.absent(),
                 required double price,
                 required double stockQty,
                 Value<double> lowStockThreshold = const Value.absent(),
                 Value<double> weight = const Value.absent(),
+                Value<String> netWeightUnit = const Value.absent(),
                 Value<String> unitType = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
               }) => ProductsCompanion.insert(
                 id: id,
                 name: name,
+                brandName: brandName,
                 price: price,
                 stockQty: stockQty,
                 lowStockThreshold: lowStockThreshold,
                 weight: weight,
+                netWeightUnit: netWeightUnit,
                 unitType: unitType,
+                imagePath: imagePath,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
               ),
@@ -6687,6 +7811,187 @@ typedef $$ExpenseCategoriesTableProcessedTableManager =
       ExpenseCategory,
       PrefetchHooks Function({bool expensesRefs})
     >;
+typedef $$UnitMeasurementsTableCreateCompanionBuilder =
+    UnitMeasurementsCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+typedef $$UnitMeasurementsTableUpdateCompanionBuilder =
+    UnitMeasurementsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+
+class $$UnitMeasurementsTableFilterComposer
+    extends Composer<_$AppDatabase, $UnitMeasurementsTable> {
+  $$UnitMeasurementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UnitMeasurementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $UnitMeasurementsTable> {
+  $$UnitMeasurementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UnitMeasurementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UnitMeasurementsTable> {
+  $$UnitMeasurementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$UnitMeasurementsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UnitMeasurementsTable,
+          UnitMeasurement,
+          $$UnitMeasurementsTableFilterComposer,
+          $$UnitMeasurementsTableOrderingComposer,
+          $$UnitMeasurementsTableAnnotationComposer,
+          $$UnitMeasurementsTableCreateCompanionBuilder,
+          $$UnitMeasurementsTableUpdateCompanionBuilder,
+          (
+            UnitMeasurement,
+            BaseReferences<
+              _$AppDatabase,
+              $UnitMeasurementsTable,
+              UnitMeasurement
+            >,
+          ),
+          UnitMeasurement,
+          PrefetchHooks Function()
+        > {
+  $$UnitMeasurementsTableTableManager(
+    _$AppDatabase db,
+    $UnitMeasurementsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UnitMeasurementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UnitMeasurementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UnitMeasurementsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => UnitMeasurementsCompanion(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => UnitMeasurementsCompanion.insert(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UnitMeasurementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UnitMeasurementsTable,
+      UnitMeasurement,
+      $$UnitMeasurementsTableFilterComposer,
+      $$UnitMeasurementsTableOrderingComposer,
+      $$UnitMeasurementsTableAnnotationComposer,
+      $$UnitMeasurementsTableCreateCompanionBuilder,
+      $$UnitMeasurementsTableUpdateCompanionBuilder,
+      (
+        UnitMeasurement,
+        BaseReferences<_$AppDatabase, $UnitMeasurementsTable, UnitMeasurement>,
+      ),
+      UnitMeasurement,
+      PrefetchHooks Function()
+    >;
 typedef $$ExpensesTableCreateCompanionBuilder =
     ExpensesCompanion Function({
       Value<int> id,
@@ -7041,12 +8346,317 @@ typedef $$ExpensesTableProcessedTableManager =
       Expense,
       PrefetchHooks Function({bool categoryId})
     >;
+typedef $$GroceryListsTableCreateCompanionBuilder =
+    GroceryListsCompanion Function({
+      Value<int> id,
+      required DateTime startAt,
+      required String mallName,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+typedef $$GroceryListsTableUpdateCompanionBuilder =
+    GroceryListsCompanion Function({
+      Value<int> id,
+      Value<DateTime> startAt,
+      Value<String> mallName,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+
+final class $$GroceryListsTableReferences
+    extends BaseReferences<_$AppDatabase, $GroceryListsTable, GroceryList> {
+  $$GroceryListsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$GroceryItemsTable, List<GroceryItem>>
+  _groceryItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.groceryItems,
+    aliasName: $_aliasNameGenerator(
+      db.groceryLists.id,
+      db.groceryItems.groceryListId,
+    ),
+  );
+
+  $$GroceryItemsTableProcessedTableManager get groceryItemsRefs {
+    final manager = $$GroceryItemsTableTableManager(
+      $_db,
+      $_db.groceryItems,
+    ).filter((f) => f.groceryListId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_groceryItemsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$GroceryListsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroceryListsTable> {
+  $$GroceryListsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startAt => $composableBuilder(
+    column: $table.startAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mallName => $composableBuilder(
+    column: $table.mallName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> groceryItemsRefs(
+    Expression<bool> Function($$GroceryItemsTableFilterComposer f) f,
+  ) {
+    final $$GroceryItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.groceryItems,
+      getReferencedColumn: (t) => t.groceryListId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroceryItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.groceryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$GroceryListsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroceryListsTable> {
+  $$GroceryListsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startAt => $composableBuilder(
+    column: $table.startAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mallName => $composableBuilder(
+    column: $table.mallName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroceryListsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroceryListsTable> {
+  $$GroceryListsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startAt =>
+      $composableBuilder(column: $table.startAt, builder: (column) => column);
+
+  GeneratedColumn<String> get mallName =>
+      $composableBuilder(column: $table.mallName, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  Expression<T> groceryItemsRefs<T extends Object>(
+    Expression<T> Function($$GroceryItemsTableAnnotationComposer a) f,
+  ) {
+    final $$GroceryItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.groceryItems,
+      getReferencedColumn: (t) => t.groceryListId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroceryItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groceryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$GroceryListsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroceryListsTable,
+          GroceryList,
+          $$GroceryListsTableFilterComposer,
+          $$GroceryListsTableOrderingComposer,
+          $$GroceryListsTableAnnotationComposer,
+          $$GroceryListsTableCreateCompanionBuilder,
+          $$GroceryListsTableUpdateCompanionBuilder,
+          (GroceryList, $$GroceryListsTableReferences),
+          GroceryList,
+          PrefetchHooks Function({bool groceryItemsRefs})
+        > {
+  $$GroceryListsTableTableManager(_$AppDatabase db, $GroceryListsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroceryListsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroceryListsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroceryListsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> startAt = const Value.absent(),
+                Value<String> mallName = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => GroceryListsCompanion(
+                id: id,
+                startAt: startAt,
+                mallName: mallName,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required DateTime startAt,
+                required String mallName,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => GroceryListsCompanion.insert(
+                id: id,
+                startAt: startAt,
+                mallName: mallName,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$GroceryListsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groceryItemsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (groceryItemsRefs) db.groceryItems],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (groceryItemsRefs)
+                    await $_getPrefetchedData<
+                      GroceryList,
+                      $GroceryListsTable,
+                      GroceryItem
+                    >(
+                      currentTable: table,
+                      referencedTable: $$GroceryListsTableReferences
+                          ._groceryItemsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$GroceryListsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).groceryItemsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.groceryListId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$GroceryListsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroceryListsTable,
+      GroceryList,
+      $$GroceryListsTableFilterComposer,
+      $$GroceryListsTableOrderingComposer,
+      $$GroceryListsTableAnnotationComposer,
+      $$GroceryListsTableCreateCompanionBuilder,
+      $$GroceryListsTableUpdateCompanionBuilder,
+      (GroceryList, $$GroceryListsTableReferences),
+      GroceryList,
+      PrefetchHooks Function({bool groceryItemsRefs})
+    >;
 typedef $$GroceryItemsTableCreateCompanionBuilder =
     GroceryItemsCompanion Function({
       Value<int> id,
+      Value<int?> groceryListId,
       required String name,
+      Value<String> brandName,
+      Value<double> netWeight,
+      Value<String> netWeightUnit,
       Value<double> qty,
       Value<String> unitType,
+      Value<String?> imagePath,
       Value<DateTime?> plannedDate,
       Value<bool> isDone,
       Value<DateTime?> createdAt,
@@ -7055,14 +8665,43 @@ typedef $$GroceryItemsTableCreateCompanionBuilder =
 typedef $$GroceryItemsTableUpdateCompanionBuilder =
     GroceryItemsCompanion Function({
       Value<int> id,
+      Value<int?> groceryListId,
       Value<String> name,
+      Value<String> brandName,
+      Value<double> netWeight,
+      Value<String> netWeightUnit,
       Value<double> qty,
       Value<String> unitType,
+      Value<String?> imagePath,
       Value<DateTime?> plannedDate,
       Value<bool> isDone,
       Value<DateTime?> createdAt,
       Value<DateTime?> deletedAt,
     });
+
+final class $$GroceryItemsTableReferences
+    extends BaseReferences<_$AppDatabase, $GroceryItemsTable, GroceryItem> {
+  $$GroceryItemsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $GroceryListsTable _groceryListIdTable(_$AppDatabase db) =>
+      db.groceryLists.createAlias(
+        $_aliasNameGenerator(db.groceryItems.groceryListId, db.groceryLists.id),
+      );
+
+  $$GroceryListsTableProcessedTableManager? get groceryListId {
+    final $_column = $_itemColumn<int>('grocery_list_id');
+    if ($_column == null) return null;
+    final manager = $$GroceryListsTableTableManager(
+      $_db,
+      $_db.groceryLists,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groceryListIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$GroceryItemsTableFilterComposer
     extends Composer<_$AppDatabase, $GroceryItemsTable> {
@@ -7083,6 +8722,21 @@ class $$GroceryItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get brandName => $composableBuilder(
+    column: $table.brandName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get netWeight => $composableBuilder(
+    column: $table.netWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get netWeightUnit => $composableBuilder(
+    column: $table.netWeightUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get qty => $composableBuilder(
     column: $table.qty,
     builder: (column) => ColumnFilters(column),
@@ -7090,6 +8744,11 @@ class $$GroceryItemsTableFilterComposer
 
   ColumnFilters<String> get unitType => $composableBuilder(
     column: $table.unitType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7112,6 +8771,29 @@ class $$GroceryItemsTableFilterComposer
     column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$GroceryListsTableFilterComposer get groceryListId {
+    final $$GroceryListsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groceryListId,
+      referencedTable: $db.groceryLists,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroceryListsTableFilterComposer(
+            $db: $db,
+            $table: $db.groceryLists,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$GroceryItemsTableOrderingComposer
@@ -7133,6 +8815,21 @@ class $$GroceryItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get brandName => $composableBuilder(
+    column: $table.brandName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get netWeight => $composableBuilder(
+    column: $table.netWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get netWeightUnit => $composableBuilder(
+    column: $table.netWeightUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get qty => $composableBuilder(
     column: $table.qty,
     builder: (column) => ColumnOrderings(column),
@@ -7140,6 +8837,11 @@ class $$GroceryItemsTableOrderingComposer
 
   ColumnOrderings<String> get unitType => $composableBuilder(
     column: $table.unitType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -7162,6 +8864,29 @@ class $$GroceryItemsTableOrderingComposer
     column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$GroceryListsTableOrderingComposer get groceryListId {
+    final $$GroceryListsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groceryListId,
+      referencedTable: $db.groceryLists,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroceryListsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groceryLists,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$GroceryItemsTableAnnotationComposer
@@ -7179,11 +8904,25 @@ class $$GroceryItemsTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
+  GeneratedColumn<String> get brandName =>
+      $composableBuilder(column: $table.brandName, builder: (column) => column);
+
+  GeneratedColumn<double> get netWeight =>
+      $composableBuilder(column: $table.netWeight, builder: (column) => column);
+
+  GeneratedColumn<String> get netWeightUnit => $composableBuilder(
+    column: $table.netWeightUnit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get qty =>
       $composableBuilder(column: $table.qty, builder: (column) => column);
 
   GeneratedColumn<String> get unitType =>
       $composableBuilder(column: $table.unitType, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
   GeneratedColumn<DateTime> get plannedDate => $composableBuilder(
     column: $table.plannedDate,
@@ -7198,6 +8937,29 @@ class $$GroceryItemsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  $$GroceryListsTableAnnotationComposer get groceryListId {
+    final $$GroceryListsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groceryListId,
+      referencedTable: $db.groceryLists,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroceryListsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groceryLists,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$GroceryItemsTableTableManager
@@ -7211,12 +8973,9 @@ class $$GroceryItemsTableTableManager
           $$GroceryItemsTableAnnotationComposer,
           $$GroceryItemsTableCreateCompanionBuilder,
           $$GroceryItemsTableUpdateCompanionBuilder,
-          (
-            GroceryItem,
-            BaseReferences<_$AppDatabase, $GroceryItemsTable, GroceryItem>,
-          ),
+          (GroceryItem, $$GroceryItemsTableReferences),
           GroceryItem,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool groceryListId})
         > {
   $$GroceryItemsTableTableManager(_$AppDatabase db, $GroceryItemsTable table)
     : super(
@@ -7232,18 +8991,28 @@ class $$GroceryItemsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int?> groceryListId = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String> brandName = const Value.absent(),
+                Value<double> netWeight = const Value.absent(),
+                Value<String> netWeightUnit = const Value.absent(),
                 Value<double> qty = const Value.absent(),
                 Value<String> unitType = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<DateTime?> plannedDate = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
               }) => GroceryItemsCompanion(
                 id: id,
+                groceryListId: groceryListId,
                 name: name,
+                brandName: brandName,
+                netWeight: netWeight,
+                netWeightUnit: netWeightUnit,
                 qty: qty,
                 unitType: unitType,
+                imagePath: imagePath,
                 plannedDate: plannedDate,
                 isDone: isDone,
                 createdAt: createdAt,
@@ -7252,27 +9021,82 @@ class $$GroceryItemsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int?> groceryListId = const Value.absent(),
                 required String name,
+                Value<String> brandName = const Value.absent(),
+                Value<double> netWeight = const Value.absent(),
+                Value<String> netWeightUnit = const Value.absent(),
                 Value<double> qty = const Value.absent(),
                 Value<String> unitType = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<DateTime?> plannedDate = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
               }) => GroceryItemsCompanion.insert(
                 id: id,
+                groceryListId: groceryListId,
                 name: name,
+                brandName: brandName,
+                netWeight: netWeight,
+                netWeightUnit: netWeightUnit,
                 qty: qty,
                 unitType: unitType,
+                imagePath: imagePath,
                 plannedDate: plannedDate,
                 isDone: isDone,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$GroceryItemsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({groceryListId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groceryListId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.groceryListId,
+                                referencedTable: $$GroceryItemsTableReferences
+                                    ._groceryListIdTable(db),
+                                referencedColumn: $$GroceryItemsTableReferences
+                                    ._groceryListIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -7287,12 +9111,9 @@ typedef $$GroceryItemsTableProcessedTableManager =
       $$GroceryItemsTableAnnotationComposer,
       $$GroceryItemsTableCreateCompanionBuilder,
       $$GroceryItemsTableUpdateCompanionBuilder,
-      (
-        GroceryItem,
-        BaseReferences<_$AppDatabase, $GroceryItemsTable, GroceryItem>,
-      ),
+      (GroceryItem, $$GroceryItemsTableReferences),
       GroceryItem,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool groceryListId})
     >;
 
 class $AppDatabaseManager {
@@ -7312,8 +9133,12 @@ class $AppDatabaseManager {
       $$UtangEntryItemsTableTableManager(_db, _db.utangEntryItems);
   $$ExpenseCategoriesTableTableManager get expenseCategories =>
       $$ExpenseCategoriesTableTableManager(_db, _db.expenseCategories);
+  $$UnitMeasurementsTableTableManager get unitMeasurements =>
+      $$UnitMeasurementsTableTableManager(_db, _db.unitMeasurements);
   $$ExpensesTableTableManager get expenses =>
       $$ExpensesTableTableManager(_db, _db.expenses);
+  $$GroceryListsTableTableManager get groceryLists =>
+      $$GroceryListsTableTableManager(_db, _db.groceryLists);
   $$GroceryItemsTableTableManager get groceryItems =>
       $$GroceryItemsTableTableManager(_db, _db.groceryItems);
 }

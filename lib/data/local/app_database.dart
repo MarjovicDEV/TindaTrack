@@ -7,11 +7,14 @@ part 'app_database.g.dart';
 class Products extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
+  TextColumn get brandName => text().withDefault(const Constant(''))();
   RealColumn get price => real()();
   RealColumn get stockQty => real()();
   RealColumn get lowStockThreshold => real().withDefault(const Constant(5))();
   RealColumn get weight => real().withDefault(const Constant(1))();
+  TextColumn get netWeightUnit => text().withDefault(const Constant('g'))();
   TextColumn get unitType => text().withDefault(const Constant('pcs'))();
+  TextColumn get imagePath => text().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
 }
@@ -71,6 +74,13 @@ class ExpenseCategories extends Table {
   DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
+class UnitMeasurements extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().unique()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+}
+
 class Expenses extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get categoryId => integer().references(ExpenseCategories, #id)();
@@ -83,20 +93,34 @@ class Expenses extends Table {
 
 class GroceryItems extends Table {
   IntColumn get id => integer().autoIncrement()();
+  IntColumn get groceryListId => integer().nullable().references(
+    GroceryLists,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
   TextColumn get name => text()();
+  TextColumn get brandName => text().withDefault(const Constant(''))();
+  RealColumn get netWeight => real().withDefault(const Constant(1))();
+  TextColumn get netWeightUnit => text().withDefault(const Constant('g'))();
   RealColumn get qty => real().withDefault(const Constant(1))();
   TextColumn get unitType => text().withDefault(const Constant('pcs'))();
+  TextColumn get imagePath => text().nullable()();
   DateTimeColumn get plannedDate => dateTime().nullable()();
   BoolColumn get isDone => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
+class GroceryLists extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  DateTimeColumn get startAt => dateTime()();
+  TextColumn get mallName => text()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+}
+
 class ExpenseWithCategory {
-  ExpenseWithCategory({
-    required this.expense,
-    required this.categoryName,
-  });
+  ExpenseWithCategory({required this.expense, required this.categoryName});
 
   final Expense expense;
   final String categoryName;
@@ -146,97 +170,197 @@ class UtangEntryItemDetail {
     UtangEntries,
     UtangEntryItems,
     ExpenseCategories,
+    UnitMeasurements,
     Expenses,
+    GroceryLists,
     GroceryItems,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  static const List<String> _defaultExpenseCategories = [
+    'Pagkain',
+    'Transportasyon',
+    'Kuryente',
+    'Tubig',
+    'Internet',
+    'Upa',
+    'Sahod',
+    'Iba pa',
+  ];
+
+  static const List<String> _defaultUnitMeasurements = ['kg', 'meters', 'pcs'];
+
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await customStatement(
-              'ALTER TABLE products ADD COLUMN weight REAL NOT NULL DEFAULT 1',
-            );
-            await customStatement(
-              "ALTER TABLE products ADD COLUMN unit_type TEXT NOT NULL DEFAULT 'pcs'",
-            );
-            await customStatement(
-              'ALTER TABLE products ADD COLUMN stock_qty_tmp REAL',
-            );
-            await customStatement(
-              'UPDATE products SET stock_qty_tmp = stock_qty',
-            );
-            await customStatement(
-              'ALTER TABLE products ADD COLUMN low_stock_threshold_tmp REAL',
-            );
-            await customStatement(
-              'UPDATE products SET low_stock_threshold_tmp = low_stock_threshold',
-            );
-            await customStatement(
-              'ALTER TABLE utang_entries ADD COLUMN item_name TEXT',
-            );
-            await m.createTable(expenseCategories);
-            await customStatement(
-              'ALTER TABLE expenses ADD COLUMN category_id INTEGER REFERENCES expense_categories(id)',
-            );
-            await customStatement(
-              "ALTER TABLE expenses ADD COLUMN expense_name TEXT NOT NULL DEFAULT ''",
-            );
-            await customStatement(
-              "ALTER TABLE expenses ADD COLUMN reason TEXT NOT NULL DEFAULT ''",
-            );
-            await customStatement(
-              'ALTER TABLE grocery_items ADD COLUMN unit_type TEXT NOT NULL DEFAULT \'pcs\'',
-            );
-            await customStatement(
-              'ALTER TABLE grocery_items ADD COLUMN planned_date INTEGER',
-            );
-          }
-          if (from < 3) {
-            await m.createTable(utangEntryItems);
-          }
-          if (from < 4) {
-            await customStatement('ALTER TABLE utang_entries ADD COLUMN due_date INTEGER');
-          }
-          if (from < 5) {
-            await customStatement('ALTER TABLE products ADD COLUMN created_at INTEGER');
-            await customStatement('ALTER TABLE products ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE sales ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE sale_items ADD COLUMN created_at INTEGER');
-            await customStatement('ALTER TABLE sale_items ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE customers ADD COLUMN created_at INTEGER');
-            await customStatement('ALTER TABLE customers ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE utang_entries ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE utang_entry_items ADD COLUMN created_at INTEGER');
-            await customStatement('ALTER TABLE utang_entry_items ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE expense_categories ADD COLUMN created_at INTEGER');
-            await customStatement('ALTER TABLE expense_categories ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE expenses ADD COLUMN deleted_at INTEGER');
-            await customStatement('ALTER TABLE grocery_items ADD COLUMN created_at INTEGER');
-            await customStatement('ALTER TABLE grocery_items ADD COLUMN deleted_at INTEGER');
-          }
-        },
-        beforeOpen: (details) async {
-          final hasDueDate = await customSelect(
-            "SELECT 1 FROM pragma_table_info('utang_entries') WHERE name='due_date'",
-          ).getSingleOrNull();
-          if (hasDueDate == null) {
-            await customStatement('ALTER TABLE utang_entries ADD COLUMN due_date INTEGER');
-          }
-        },
-      );
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await customStatement(
+          'ALTER TABLE products ADD COLUMN weight REAL NOT NULL DEFAULT 1',
+        );
+        await customStatement(
+          "ALTER TABLE products ADD COLUMN unit_type TEXT NOT NULL DEFAULT 'pcs'",
+        );
+        await customStatement(
+          'ALTER TABLE products ADD COLUMN stock_qty_tmp REAL',
+        );
+        await customStatement('UPDATE products SET stock_qty_tmp = stock_qty');
+        await customStatement(
+          'ALTER TABLE products ADD COLUMN low_stock_threshold_tmp REAL',
+        );
+        await customStatement(
+          'UPDATE products SET low_stock_threshold_tmp = low_stock_threshold',
+        );
+        await customStatement(
+          'ALTER TABLE utang_entries ADD COLUMN item_name TEXT',
+        );
+        await m.createTable(expenseCategories);
+        await customStatement(
+          'ALTER TABLE expenses ADD COLUMN category_id INTEGER REFERENCES expense_categories(id)',
+        );
+        await customStatement(
+          "ALTER TABLE expenses ADD COLUMN expense_name TEXT NOT NULL DEFAULT ''",
+        );
+        await customStatement(
+          "ALTER TABLE expenses ADD COLUMN reason TEXT NOT NULL DEFAULT ''",
+        );
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN unit_type TEXT NOT NULL DEFAULT \'pcs\'',
+        );
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN planned_date INTEGER',
+        );
+      }
+      if (from < 3) {
+        await m.createTable(utangEntryItems);
+      }
+      if (from < 4) {
+        await customStatement(
+          'ALTER TABLE utang_entries ADD COLUMN due_date INTEGER',
+        );
+      }
+      if (from < 5) {
+        await customStatement(
+          'ALTER TABLE products ADD COLUMN created_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE products ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE sales ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE sale_items ADD COLUMN created_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE sale_items ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE customers ADD COLUMN created_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE customers ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE utang_entries ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE utang_entry_items ADD COLUMN created_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE utang_entry_items ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE expense_categories ADD COLUMN created_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE expense_categories ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE expenses ADD COLUMN deleted_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN created_at INTEGER',
+        );
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN deleted_at INTEGER',
+        );
+      }
+      if (from < 6) {
+        await m.createTable(unitMeasurements);
+      }
+      if (from < 7) {
+        await customStatement(
+          "ALTER TABLE products ADD COLUMN brand_name TEXT NOT NULL DEFAULT ''",
+        );
+        await customStatement(
+          "ALTER TABLE grocery_items ADD COLUMN brand_name TEXT NOT NULL DEFAULT ''",
+        );
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN net_weight REAL NOT NULL DEFAULT 1',
+        );
+      }
+      if (from < 8) {
+        await customStatement(
+          "ALTER TABLE products ADD COLUMN net_weight_unit TEXT NOT NULL DEFAULT 'g'",
+        );
+        await customStatement(
+          "ALTER TABLE grocery_items ADD COLUMN net_weight_unit TEXT NOT NULL DEFAULT 'g'",
+        );
+      }
+      if (from < 9) {
+        await customStatement(
+          'ALTER TABLE products ADD COLUMN image_path TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN image_path TEXT',
+        );
+      }
+      if (from < 10) {
+        await m.createTable(groceryLists);
+        await customStatement(
+          'ALTER TABLE grocery_items ADD COLUMN grocery_list_id INTEGER',
+        );
+      }
+    },
+    beforeOpen: (details) async {
+      final hasDueDate = await customSelect(
+        "SELECT 1 FROM pragma_table_info('utang_entries') WHERE name='due_date'",
+      ).getSingleOrNull();
+      if (hasDueDate == null) {
+        await customStatement(
+          'ALTER TABLE utang_entries ADD COLUMN due_date INTEGER',
+        );
+      }
+      final hasUnitMeasurementsTable = await customSelect(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='unit_measurements'",
+      ).getSingleOrNull();
+      if (hasUnitMeasurementsTable == null) {
+        await customStatement(
+          'CREATE TABLE IF NOT EXISTS unit_measurements ('
+          'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+          'name TEXT NOT NULL UNIQUE, '
+          'created_at INTEGER NULL, '
+          'deleted_at INTEGER NULL'
+          ')',
+        );
+      }
+      await _seedDefaultExpenseCategories();
+      await _seedDefaultUnitMeasurements();
+    },
+  );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
       name: 'tinda_track',
-      native: const DriftNativeOptions(databaseDirectory: getApplicationDocumentsDirectory),
+      native: const DriftNativeOptions(
+        databaseDirectory: getApplicationDocumentsDirectory,
+      ),
       web: DriftWebOptions(
         sqlite3Wasm: Uri.parse('sqlite3.wasm'),
         driftWorker: Uri.parse('drift_worker.dart.js'),
@@ -246,20 +370,26 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> addProduct({
     required String name,
+    required String brandName,
     required double price,
     required double stockQty,
     required double threshold,
     required double weight,
+    required String netWeightUnit,
     required String unitType,
+    String? imagePath,
   }) {
     return into(products).insert(
       ProductsCompanion.insert(
         name: name,
+        brandName: Value(brandName),
         price: price,
         stockQty: stockQty,
         lowStockThreshold: Value(threshold),
         weight: Value(weight),
+        netWeightUnit: Value(netWeightUnit),
         unitType: Value(unitType),
+        imagePath: Value(imagePath),
         createdAt: Value(DateTime.now()),
       ),
     );
@@ -268,26 +398,42 @@ class AppDatabase extends _$AppDatabase {
   Future<void> updateProduct({
     required int id,
     required String name,
+    required String brandName,
     required double price,
     required double stockQty,
     required double threshold,
     required double weight,
+    required String netWeightUnit,
     required String unitType,
+    String? imagePath,
   }) {
     return (update(products)..where((t) => t.id.equals(id))).write(
       ProductsCompanion(
         name: Value(name),
+        brandName: Value(brandName),
         price: Value(price),
         stockQty: Value(stockQty),
         lowStockThreshold: Value(threshold),
         weight: Value(weight),
+        netWeightUnit: Value(netWeightUnit),
         unitType: Value(unitType),
+        imagePath: Value(imagePath),
       ),
     );
   }
 
   Future<void> deleteProduct(int id) {
-    return (delete(products)..where((t) => t.id.equals(id))).go();
+    return transaction(() async {
+      final linkedSaleItem = await (select(
+        saleItems,
+      )..where((s) => s.productId.equals(id))).getSingleOrNull();
+      if (linkedSaleItem != null) {
+        throw Exception(
+          'Hindi puwedeng burahin: may Benta record na gumagamit ng produktong ito.',
+        );
+      }
+      await (delete(products)..where((t) => t.id.equals(id))).go();
+    });
   }
 
   Stream<List<Product>> watchProducts() => select(products).watch();
@@ -300,8 +446,9 @@ class AppDatabase extends _$AppDatabase {
     required double quantity,
   }) async {
     await transaction(() async {
-      final product = await (select(products)..where((p) => p.id.equals(productId)))
-          .getSingle();
+      final product = await (select(
+        products,
+      )..where((p) => p.id.equals(productId))).getSingle();
       if (quantity <= 0) {
         throw Exception('Invalid quantity.');
       }
@@ -334,8 +481,9 @@ class AppDatabase extends _$AppDatabase {
     required double quantity,
   }) async {
     await transaction(() async {
-      final existingItems =
-          await (select(saleItems)..where((i) => i.saleId.equals(saleId))).get();
+      final existingItems = await (select(
+        saleItems,
+      )..where((i) => i.saleId.equals(saleId))).get();
       for (final item in existingItems) {
         await customStatement(
           'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
@@ -343,8 +491,9 @@ class AppDatabase extends _$AppDatabase {
         );
       }
 
-      final product = await (select(products)..where((p) => p.id.equals(productId)))
-          .getSingle();
+      final product = await (select(
+        products,
+      )..where((p) => p.id.equals(productId))).getSingle();
       if (quantity <= 0 || quantity > product.stockQty) {
         throw Exception('Invalid quantity or insufficient stock.');
       }
@@ -371,8 +520,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteSaleAndRestoreStock(int saleId) async {
     await transaction(() async {
-      final items =
-          await (select(saleItems)..where((i) => i.saleId.equals(saleId))).get();
+      final items = await (select(
+        saleItems,
+      )..where((i) => i.saleId.equals(saleId))).get();
       for (final item in items) {
         await customStatement(
           'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
@@ -402,14 +552,16 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteCustomer(int id) async {
     await transaction(() async {
-      final entries = await (select(utangEntries)
-            ..where((u) => u.customerId.equals(id) & u.isPayment.equals(false)))
-          .get();
+      final entries =
+          await (select(utangEntries)..where(
+                (u) => u.customerId.equals(id) & u.isPayment.equals(false),
+              ))
+              .get();
 
       for (final entry in entries) {
-        final lines = await (select(utangEntryItems)
-              ..where((i) => i.utangEntryId.equals(entry.id)))
-            .get();
+        final lines = await (select(
+          utangEntryItems,
+        )..where((i) => i.utangEntryId.equals(entry.id))).get();
         for (final line in lines) {
           await customStatement(
             'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
@@ -498,7 +650,9 @@ class AppDatabase extends _$AppDatabase {
         }
       }
       final ids = lines.map((e) => e.productId).toSet().toList();
-      final dbProducts = await (select(products)..where((p) => p.id.isIn(ids))).get();
+      final dbProducts = await (select(
+        products,
+      )..where((p) => p.id.isIn(ids))).get();
       if (dbProducts.length != ids.length) {
         throw Exception('May napiling produktong hindi nahanap.');
       }
@@ -555,9 +709,9 @@ class AppDatabase extends _$AppDatabase {
       );
 
       for (final row in lineRows) {
-        await into(utangEntryItems).insert(
-          row.copyWith(utangEntryId: Value(entryId)),
-        );
+        await into(
+          utangEntryItems,
+        ).insert(row.copyWith(utangEntryId: Value(entryId)));
       }
 
       for (final line in lines) {
@@ -607,13 +761,15 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteUtangEntry(int entryId) async {
     await transaction(() async {
-      final entry = await (select(utangEntries)..where((u) => u.id.equals(entryId))).getSingleOrNull();
+      final entry = await (select(
+        utangEntries,
+      )..where((u) => u.id.equals(entryId))).getSingleOrNull();
       if (entry == null) return;
 
       if (!entry.isPayment) {
-        final lines = await (select(utangEntryItems)
-              ..where((i) => i.utangEntryId.equals(entryId)))
-            .get();
+        final lines = await (select(
+          utangEntryItems,
+        )..where((i) => i.utangEntryId.equals(entryId))).get();
         for (final line in lines) {
           await customStatement(
             'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
@@ -648,14 +804,48 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> addExpenseCategory(String name) {
     return into(expenseCategories).insert(
-      ExpenseCategoriesCompanion.insert(name: name, createdAt: Value(DateTime.now())),
+      ExpenseCategoriesCompanion.insert(
+        name: name,
+        createdAt: Value(DateTime.now()),
+      ),
       mode: InsertMode.insertOrIgnore,
     );
   }
 
+  Future<void> _seedDefaultExpenseCategories() async {
+    for (final name in _defaultExpenseCategories) {
+      await into(expenseCategories).insert(
+        ExpenseCategoriesCompanion.insert(
+          name: name,
+          createdAt: Value(DateTime.now()),
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+    }
+  }
+
+  Future<void> _seedDefaultUnitMeasurements() async {
+    for (final name in _defaultUnitMeasurements) {
+      await into(unitMeasurements).insert(
+        UnitMeasurementsCompanion.insert(
+          name: name,
+          createdAt: Value(DateTime.now()),
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+    }
+  }
+
   Stream<List<ExpenseCategory>> watchExpenseCategories() {
-    return (select(expenseCategories)..orderBy([(c) => OrderingTerm.asc(c.name)]))
-        .watch();
+    return (select(
+      expenseCategories,
+    )..orderBy([(c) => OrderingTerm.asc(c.name)])).watch();
+  }
+
+  Stream<List<UnitMeasurement>> watchUnitMeasurements() {
+    return (select(
+      unitMeasurements,
+    )..orderBy([(u) => OrderingTerm.asc(u.name)])).watch();
   }
 
   Future<int> addExpense({
@@ -697,40 +887,85 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<List<ExpenseWithCategory>> watchExpenses() {
-    final q = select(expenses).join(
-      [
-        leftOuterJoin(
-          expenseCategories,
-          expenseCategories.id.equalsExp(expenses.categoryId),
-        ),
-      ],
-    )..orderBy([OrderingTerm.desc(expenses.createdAt)]);
+    final q = select(expenses).join([
+      leftOuterJoin(
+        expenseCategories,
+        expenseCategories.id.equalsExp(expenses.categoryId),
+      ),
+    ])..orderBy([OrderingTerm.desc(expenses.createdAt)]);
 
     return q.watch().map(
       (rows) => rows
           .map(
             (row) => ExpenseWithCategory(
               expense: row.readTable(expenses),
-              categoryName: row.readTableOrNull(expenseCategories)?.name ?? 'N/A',
+              categoryName:
+                  row.readTableOrNull(expenseCategories)?.name ?? 'N/A',
             ),
           )
           .toList(),
     );
   }
 
-  Stream<List<GroceryItem>> watchGroceryItems() => select(groceryItems).watch();
+  Stream<List<GroceryItem>> watchGroceryItems() =>
+      (select(groceryItems)
+            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          .watch();
+
+  Stream<List<GroceryItem>> watchGroceryItemsByList(int listId) {
+    return (select(groceryItems)
+          ..where((t) => t.groceryListId.equals(listId))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
+  }
+
+  Stream<List<GroceryList>> watchGroceryLists() {
+    return (select(groceryLists)
+          ..orderBy([(t) => OrderingTerm.asc(t.startAt)]))
+        .watch();
+  }
+
+  Future<int> addGroceryList({
+    required DateTime startAt,
+    required String mallName,
+  }) {
+    return into(groceryLists).insert(
+      GroceryListsCompanion.insert(
+        startAt: startAt,
+        mallName: mallName,
+        createdAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  Future<void> deleteGroceryList(int id) {
+    return transaction(() async {
+      await (delete(groceryItems)..where((g) => g.groceryListId.equals(id))).go();
+      await (delete(groceryLists)..where((g) => g.id.equals(id))).go();
+    });
+  }
 
   Future<int> addGroceryItem(
     String name, {
+    required int groceryListId,
+    String brandName = '',
+    double netWeight = 1,
+    String netWeightUnit = 'g',
     double qty = 1,
     String unitType = 'pcs',
+    String? imagePath,
     DateTime? plannedDate,
   }) {
     return into(groceryItems).insert(
       GroceryItemsCompanion.insert(
         name: name,
+        groceryListId: Value(groceryListId),
+        brandName: Value(brandName),
+        netWeight: Value(netWeight),
+        netWeightUnit: Value(netWeightUnit),
         qty: Value(qty),
         unitType: Value(unitType),
+        imagePath: Value(imagePath),
         plannedDate: Value(plannedDate),
         createdAt: Value(DateTime.now()),
       ),
@@ -739,16 +974,26 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateGroceryItem({
     required int id,
+    required int groceryListId,
     required String name,
+    required String brandName,
+    required double netWeight,
+    required String netWeightUnit,
     required double qty,
     required String unitType,
+    String? imagePath,
     DateTime? plannedDate,
   }) {
     return (update(groceryItems)..where((g) => g.id.equals(id))).write(
       GroceryItemsCompanion(
         name: Value(name),
+        groceryListId: Value(groceryListId),
+        brandName: Value(brandName),
+        netWeight: Value(netWeight),
+        netWeightUnit: Value(netWeightUnit),
         qty: Value(qty),
         unitType: Value(unitType),
+        imagePath: Value(imagePath),
         plannedDate: Value(plannedDate),
       ),
     );
@@ -808,20 +1053,38 @@ class AppDatabase extends _$AppDatabase {
         'schemaVersion': schemaVersion,
         'exportedAt': DateTime.now().toIso8601String(),
       },
-      'products': (await select(products).get()).map((e) => e.toJson()).toList(),
+      'products': (await select(
+        products,
+      ).get()).map((e) => e.toJson()).toList(),
       'sales': (await select(sales).get()).map((e) => e.toJson()).toList(),
-      'saleItems': (await select(saleItems).get()).map((e) => e.toJson()).toList(),
-      'customers': (await select(customers).get()).map((e) => e.toJson()).toList(),
-      'utangEntries': (await select(utangEntries).get()).map((e) => e.toJson()).toList(),
-      'expenseCategories':
-          (await select(expenseCategories).get()).map((e) => e.toJson()).toList(),
-      'expenses': (await select(expenses).get()).map((e) => e.toJson()).toList(),
-      'groceryItems': (await select(groceryItems).get()).map((e) => e.toJson()).toList(),
+      'saleItems': (await select(
+        saleItems,
+      ).get()).map((e) => e.toJson()).toList(),
+      'customers': (await select(
+        customers,
+      ).get()).map((e) => e.toJson()).toList(),
+      'utangEntries': (await select(
+        utangEntries,
+      ).get()).map((e) => e.toJson()).toList(),
+      'expenseCategories': (await select(
+        expenseCategories,
+      ).get()).map((e) => e.toJson()).toList(),
+      'expenses': (await select(
+        expenses,
+      ).get()).map((e) => e.toJson()).toList(),
+      'groceryLists': (await select(
+        groceryLists,
+      ).get()).map((e) => e.toJson()).toList(),
+      'groceryItems': (await select(
+        groceryItems,
+      ).get()).map((e) => e.toJson()).toList(),
     };
     return payload;
   }
 
-  Future<Map<String, int>> previewJsonBackup(Map<String, dynamic> payload) async {
+  Future<Map<String, int>> previewJsonBackup(
+    Map<String, dynamic> payload,
+  ) async {
     return {
       'products': (payload['products'] as List<dynamic>? ?? const []).length,
       'sales': (payload['sales'] as List<dynamic>? ?? const []).length,
@@ -829,7 +1092,10 @@ class AppDatabase extends _$AppDatabase {
       'expenseCategories':
           (payload['expenseCategories'] as List<dynamic>? ?? const []).length,
       'expenses': (payload['expenses'] as List<dynamic>? ?? const []).length,
-      'groceryItems': (payload['groceryItems'] as List<dynamic>? ?? const []).length,
+      'groceryLists':
+          (payload['groceryLists'] as List<dynamic>? ?? const []).length,
+      'groceryItems':
+          (payload['groceryItems'] as List<dynamic>? ?? const []).length,
     };
   }
 
@@ -840,6 +1106,7 @@ class AppDatabase extends _$AppDatabase {
     await transaction(() async {
       if (replaceAll) {
         await delete(groceryItems).go();
+        await delete(groceryLists).go();
         await delete(utangEntries).go();
         await delete(saleItems).go();
         await delete(expenses).go();
@@ -863,12 +1130,16 @@ class AppDatabase extends _$AppDatabase {
           ProductsCompanion(
             id: Value(data['id'] as int),
             name: Value(data['name'] as String),
+            brandName: Value(data['brand_name'] as String? ?? ''),
             price: Value((data['price'] as num).toDouble()),
             stockQty: Value((data['stock_qty'] as num).toDouble()),
-            lowStockThreshold:
-                Value((data['low_stock_threshold'] as num).toDouble()),
+            lowStockThreshold: Value(
+              (data['low_stock_threshold'] as num).toDouble(),
+            ),
             weight: Value((data['weight'] as num?)?.toDouble() ?? 1),
+            netWeightUnit: Value(data['net_weight_unit'] as String? ?? 'g'),
             unitType: Value(data['unit_type'] as String? ?? 'pcs'),
+            imagePath: Value(data['image_path'] as String?),
           ),
         );
       }
@@ -906,7 +1177,8 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
       }
-      for (final row in (payload['utangEntries'] as List<dynamic>? ?? const [])) {
+      for (final row
+          in (payload['utangEntries'] as List<dynamic>? ?? const [])) {
         final data = row as Map<String, dynamic>;
         await safeInsert(
           utangEntries,
@@ -917,7 +1189,9 @@ class AppDatabase extends _$AppDatabase {
             isPayment: Value(data['is_payment'] as bool),
             createdAt: Value(DateTime.parse(data['created_at'] as String)),
             dueDate: Value(
-              data['due_date'] == null ? null : DateTime.parse(data['due_date'] as String),
+              data['due_date'] == null
+                  ? null
+                  : DateTime.parse(data['due_date'] as String),
             ),
             itemName: Value(data['item_name'] as String?),
             note: Value(data['note'] as String?),
@@ -949,15 +1223,32 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
       }
-      for (final row in (payload['groceryItems'] as List<dynamic>? ?? const [])) {
+      for (final row in (payload['groceryLists'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          groceryLists,
+          GroceryListsCompanion(
+            id: Value(data['id'] as int),
+            startAt: Value(DateTime.parse(data['start_at'] as String)),
+            mallName: Value(data['mall_name'] as String),
+          ),
+        );
+      }
+      for (final row
+          in (payload['groceryItems'] as List<dynamic>? ?? const [])) {
         final data = row as Map<String, dynamic>;
         await safeInsert(
           groceryItems,
           GroceryItemsCompanion(
             id: Value(data['id'] as int),
             name: Value(data['name'] as String),
+            groceryListId: Value(data['grocery_list_id'] as int?),
+            brandName: Value(data['brand_name'] as String? ?? ''),
+            netWeight: Value((data['net_weight'] as num?)?.toDouble() ?? 1),
+            netWeightUnit: Value(data['net_weight_unit'] as String? ?? 'g'),
             qty: Value((data['qty'] as num).toDouble()),
             unitType: Value(data['unit_type'] as String? ?? 'pcs'),
+            imagePath: Value(data['image_path'] as String?),
             plannedDate: Value(
               data['planned_date'] == null
                   ? null
@@ -971,11 +1262,15 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<int>> exportSimpleSnapshot() async {
-    final productCount =
-        await customSelect('SELECT COUNT(*) AS c FROM products').getSingle();
-    final salesCount = await customSelect('SELECT COUNT(*) AS c FROM sales').getSingle();
-    final customerCount =
-        await customSelect('SELECT COUNT(*) AS c FROM customers').getSingle();
+    final productCount = await customSelect(
+      'SELECT COUNT(*) AS c FROM products',
+    ).getSingle();
+    final salesCount = await customSelect(
+      'SELECT COUNT(*) AS c FROM sales',
+    ).getSingle();
+    final customerCount = await customSelect(
+      'SELECT COUNT(*) AS c FROM customers',
+    ).getSingle();
     return [
       productCount.read<int>('c'),
       salesCount.read<int>('c'),
