@@ -61,12 +61,12 @@ class _ReportsPageState extends State<ReportsPage> {
             selected: {_filter},
             onSelectionChanged: (value) => setState(() => _filter = value.first),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Saklaw (PH UTC+8): ${formatPhilippineDateTime(range.from)} - ${formatPhilippineDateTime(range.to)}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           StreamBuilder<List<Sale>>(
             stream: widget.repo.watchSalesInRange(range.from, range.to),
             builder: (context, salesSnap) {
@@ -123,7 +123,7 @@ class _ReportsPageState extends State<ReportsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   Card(
                     child: Padding(
                       padding: AppSpacing.card,
@@ -164,14 +164,14 @@ class _ReportsPageState extends State<ReportsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(AppCopy.backupRestoreTitle, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.sm),
                   const Text(
                     'Pumili ng export/import type. May preview at babala bago i-restore.',
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
                       OutlinedButton(
                         onPressed: _exportJson,
