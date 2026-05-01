@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_spacing.dart';
+
 class SummaryCard extends StatelessWidget {
   const SummaryCard({
     required this.label,
@@ -14,20 +16,17 @@ class SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon),
-            const SizedBox(height: 8),
+            Icon(icon, color: scheme.primary),
+            const SizedBox(height: AppSpacing.sm),
             Text(label, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.sm),
             Text(value, style: Theme.of(context).textTheme.titleLarge),
           ],
         ),
