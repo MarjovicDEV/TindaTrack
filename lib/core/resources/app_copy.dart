@@ -7,6 +7,10 @@ class AppCopy {
   static const navUtang = 'Utang';
   static const navExpenses = 'Gastos';
   static const navGrocery = 'Bilihin';
+  static const themeMenuTitle = 'Tema ng App';
+  static const themeSystem = 'System Theme';
+  static const themeDark = 'Dark Theme';
+  static const themeLight = 'Light Theme';
 
   static const summaryTitle = 'Buod ng Tindahan';
   static const totalSales = 'Kabuuang Benta';
