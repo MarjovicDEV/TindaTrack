@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/resources/app_copy.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validators/input_validators.dart';
 import '../../../core/utils/formatters.dart';
@@ -26,50 +27,77 @@ class _UtangPageState extends State<UtangPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return Column(
-      children: [
-        Row(
-          children: [
-            Text('Utang', style: Theme.of(context).textTheme.titleLarge),
-            const Spacer(),
-            FilledButton(
-              onPressed: () => _showAddCustomer(context),
-              child: const Text('Magdagdag'),
-            ),
-          ],
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.maybePop(context),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Expanded(
-          child: StreamBuilder(
-            stream: widget.repo.watchCustomerBalances(),
-            builder: (context, snapshot) {
-              final customers = snapshot.data ?? [];
-              if (customers.isEmpty) return const Center(child: Text('Wala pang customer.'));
-              return GridView.builder(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _crossAxisCount(width),
-                  crossAxisSpacing: AppSpacing.sm,
-                  mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: 0.9,
+        title: const Text(AppCopy.navUtang),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: () => _showAddCustomer(context),
+                  icon: const Icon(Icons.person_add_outlined),
+                  label: const Text('Magdagdag'),
                 ),
-                itemCount: customers.length,
-                itemBuilder: (_, index) {
-                  final customer = customers[index];
-                  return _CustomerCard(
-                    customer: customer,
-                    onTap: () => _showEntries(customer.customerId, customer.name),
-                    onEdit: () => _showEditCustomer(customer.customerId, customer.name),
-                    onAddEntry: () => _showAddEntry(context, customer.customerId),
-                    onDelete: () => widget.repo.deleteCustomer(customer.customerId),
-                    onConfirmDelete: () => _confirmDelete('Burahin si ${customer.name}?'),
-                  );
-                },
-              );
-            },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: StreamBuilder(
+                    stream: widget.repo.watchCustomerBalances(),
+                    builder: (context, snapshot) {
+                      final customers = snapshot.data ?? [];
+                      if (customers.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Wala pang customer.',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        );
+                      }
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: _crossAxisCount(width),
+                          crossAxisSpacing: AppSpacing.sm,
+                          mainAxisSpacing: AppSpacing.sm,
+                          childAspectRatio: 0.9,
+                        ),
+                        itemCount: customers.length,
+                        itemBuilder: (_, index) {
+                          final customer = customers[index];
+                          return _CustomerCard(
+                            customer: customer,
+                            onTap: () => _showEntries(customer.customerId, customer.name),
+                            onEdit: () => _showEditCustomer(customer.customerId, customer.name),
+                            onAddEntry: () => _showAddEntry(context, customer.customerId),
+                            onDelete: () => widget.repo.deleteCustomer(customer.customerId),
+                            onConfirmDelete: () => _confirmDelete('Burahin si ${customer.name}?'),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
