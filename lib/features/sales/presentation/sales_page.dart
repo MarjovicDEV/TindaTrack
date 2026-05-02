@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/resources/app_copy.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/validators/input_validators.dart';
@@ -17,68 +18,101 @@ class SalesPage extends StatefulWidget {
 class _SalesPageState extends State<SalesPage> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Text('Benta', style: Theme.of(context).textTheme.titleLarge),
-            const Spacer(),
-            FilledButton.icon(
-              onPressed: () => _showSaleDialog(),
-              icon: const Icon(Icons.save_outlined),
-              label: const Text('Mag-record ng benta'),
-            ),
-          ],
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.maybePop(context),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Expanded(
-          child: StreamBuilder<List<dynamic>>(
-            stream: widget.repo.watchSales(),
-            builder: (context, snapshot) {
-              final sales = snapshot.data ?? [];
-              if (sales.isEmpty) {
-                return const Center(child: Text('Wala pang naitalang benta.'));
-              }
-              return ListView.builder(
-                itemCount: sales.length,
-                itemBuilder: (context, index) {
-                  final item = sales[index];
-                  return Dismissible(
-                    key: ValueKey('sale-${item.id}'),
-                    direction: DismissDirection.endToStart,
-                    confirmDismiss: (_) =>
-                        _confirmDelete('Burahin ang benta #${item.id}?'),
-                    onDismissed: (_) =>
-                        widget.repo.deleteSaleAndRestoreStock(item.id),
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade600,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    child: Card(
-                      child: ListTile(
-                        onTap: () => _showSaleDialog(existingSale: item),
-                        title: Text('Benta #${item.id}'),
-                        subtitle: Text(
-                          'Transaksyon (PH UTC+8): ${formatPhilippineDateTime(item.createdAt)}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        trailing: Text(formatCurrency(item.totalAmount)),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+        title: const Text(AppCopy.navSales),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: () => _showSaleDialog(),
+                  icon: const Icon(Icons.save_outlined),
+                  label: const Text('Mag-record ng benta'),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: StreamBuilder<List<dynamic>>(
+                    stream: widget.repo.watchSales(),
+                    builder: (context, snapshot) {
+                      final sales = snapshot.data ?? [];
+                      if (sales.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Wala pang naitalang benta.',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        itemCount: sales.length,
+                        itemBuilder: (context, index) {
+                          final item = sales[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                            child: Dismissible(
+                              key: ValueKey('sale-${item.id}'),
+                              direction: DismissDirection.endToStart,
+                              confirmDismiss: (_) =>
+                                  _confirmDelete('Burahin ang benta #${item.id}?'),
+                              onDismissed: (_) =>
+                                  widget.repo.deleteSaleAndRestoreStock(item.id),
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade600,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.delete, color: Colors.white),
+                              ),
+                              child: Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: scheme.outlineVariant),
+                                ),
+                                child: ListTile(
+                                  onTap: () => _showSaleDialog(existingSale: item),
+                                  title: Text('Benta #${item.id}'),
+                                  subtitle: Text(
+                                    'Transaksyon (PH UTC+8): ${formatPhilippineDateTime(item.createdAt)}',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  trailing: Text(formatCurrency(item.totalAmount)),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
