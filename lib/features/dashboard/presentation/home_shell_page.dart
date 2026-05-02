@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/currency/currency_controller.dart';
 import '../../../core/layout/adaptive_scaffold.dart';
+import '../../../core/locale/locale_controller.dart';
 import '../../../core/resources/app_copy.dart';
 import '../../../core/theme/theme_mode_controller.dart';
 import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
 import '../../expenses/presentation/expenses_page.dart';
-import '../../grocery/presentation/grocery_page.dart';
-import '../../inventory/presentation/inventory_page.dart';
+import '../../history/presentation/history_page.dart';
 import '../../reports/presentation/reports_page.dart';
 import '../../sales/presentation/sales_page.dart';
+import '../../settings/presentation/settings_hub_page.dart';
+import '../../stock/presentation/stock_hub_page.dart';
 import '../../utang/presentation/utang_page.dart';
+import 'home_overview_page.dart';
 
 class HomeShellPage extends StatefulWidget {
-  const HomeShellPage({required this.themeController, super.key});
+  const HomeShellPage({
+    required this.themeController,
+    required this.localeController,
+    required this.currencyController,
+    super.key,
+  });
 
   final ThemeModeController themeController;
+  final LocaleController localeController;
+  final CurrencyController currencyController;
 
   @override
   State<HomeShellPage> createState() => _HomeShellPageState();
@@ -39,129 +50,187 @@ class _HomeShellPageState extends State<HomeShellPage> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final pages = [
-      ReportsPage(repo: _repo),
-      InventoryPage(repo: _repo),
-      SalesPage(repo: _repo),
-      UtangPage(repo: _repo),
-      ExpensesPage(repo: _repo),
-      GroceryPage(repo: _repo),
-    ];
-
-    return AdaptiveScaffold(
-      title: AppCopy.appTitle,
-      titleWidget: RichText(
-        text: TextSpan(
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          children: [
-            const TextSpan(text: 'Tinda'),
-            TextSpan(
-              text: 'Track',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-            ),
-          ],
+  void _openSettings() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsHubPage(
+          themeController: widget.themeController,
+          localeController: widget.localeController,
+          currencyController: widget.currencyController,
+          repo: _repo,
         ),
       ),
-      appBarActions: [
-        IconButton(
-          tooltip: AppCopy.themeMenuTitle,
-          icon: const Icon(Icons.brightness_6_outlined),
-          onPressed: _showThemePicker,
-        ),
-      ],
-      selectedIndex: _index,
-      onDestinationSelected: (value) => setState(() => _index = value),
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.dashboard_outlined),
-          label: AppCopy.navDashboard,
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.inventory_2_outlined),
-          label: AppCopy.navInventory,
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.point_of_sale_outlined),
-          label: AppCopy.navSales,
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.people_outline),
-          label: AppCopy.navUtang,
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          label: AppCopy.navExpenses,
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.shopping_cart_outlined),
-          label: AppCopy.navGrocery,
-        ),
-      ],
-      body: pages[_index],
     );
   }
 
-  Future<void> _showThemePicker() async {
+  Future<void> _showSpeedDial() async {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) {
-        return AnimatedBuilder(
-          animation: widget.themeController,
-          builder: (context, _) {
-            final current = widget.themeController.themeMode;
-
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const ListTile(title: Text(AppCopy.themeMenuTitle)),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                    child: SegmentedButton<ThemeMode>(
-                      showSelectedIcon: false,
-                      segments: const [
-                        ButtonSegment<ThemeMode>(
-                          value: ThemeMode.system,
-                          label: Text(AppCopy.themeSystem),
-                        ),
-                        ButtonSegment<ThemeMode>(
-                          value: ThemeMode.dark,
-                          label: Text(AppCopy.themeDark),
-                        ),
-                        ButtonSegment<ThemeMode>(
-                          value: ThemeMode.light,
-                          label: Text(AppCopy.themeLight),
-                        ),
-                      ],
-                      selected: {current},
-                      onSelectionChanged: (selection) {
-                        _selectTheme(selection.first);
-                      },
-                    ),
-                  ),
-                ],
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.point_of_sale_outlined),
+                title: const Text(AppCopy.speedDialBenta),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(builder: (_) => SalesPage(repo: _repo)),
+                  );
+                },
               ),
-            );
-          },
+              ListTile(
+                leading: const Icon(Icons.people_outline),
+                title: const Text(AppCopy.speedDialUtang),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(builder: (_) => UtangPage(repo: _repo)),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt_long_outlined),
+                title: const Text(AppCopy.speedDialGastos),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(builder: (_) => ExpensesPage(repo: _repo)),
+                  );
+                },
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Future<void> _selectTheme(ThemeMode? mode) async {
-    if (mode == null) {
-      return;
+  @override
+  Widget build(BuildContext context) {
+    final code = widget.currencyController.code;
+    final pages = <Widget>[
+      HomeOverviewPage(repo: _repo, currencyCode: code),
+      StockHubPage(repo: _repo),
+      HistoryPage(repo: _repo),
+      ReportsPage(repo: _repo, currencyCode: code),
+    ];
+
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget navIcon({required int index, required IconData icon, required IconData selectedIcon}) {
+      final selected = _index == index;
+      return IconButton(
+        tooltip: _labelForIndex(index),
+        icon: Icon(selected ? selectedIcon : icon),
+        color: selected ? scheme.primary : scheme.onSurfaceVariant,
+        onPressed: () => setState(() => _index = index),
+      );
     }
 
-    await widget.themeController.setThemeMode(mode);
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    final narrowBar = BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 6,
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            Expanded(child: navIcon(index: 0, icon: Icons.home_outlined, selectedIcon: Icons.home)),
+            Expanded(
+              child: navIcon(
+                index: 1,
+                icon: Icons.inventory_2_outlined,
+                selectedIcon: Icons.inventory_2,
+              ),
+            ),
+            const SizedBox(width: 72),
+            Expanded(
+              child: navIcon(
+                index: 2,
+                icon: Icons.history_outlined,
+                selectedIcon: Icons.history,
+              ),
+            ),
+            Expanded(
+              child: navIcon(
+                index: 3,
+                icon: Icons.assessment_outlined,
+                selectedIcon: Icons.assessment,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return ListenableBuilder(
+      listenable: Listenable.merge([widget.currencyController, widget.localeController]),
+      builder: (context, _) {
+        return AdaptiveScaffold(
+          title: AppCopy.appTitle,
+          titleWidget: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              children: [
+                const TextSpan(text: 'Tinda'),
+                TextSpan(
+                  text: 'Track',
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                ),
+              ],
+            ),
+          ),
+          appBarActions: [
+            IconButton(
+              tooltip: AppCopy.settingsTooltip,
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: _openSettings,
+            ),
+          ],
+          selectedIndex: _index,
+          onDestinationSelected: (value) => setState(() => _index = value),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              label: AppCopy.navHome,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.inventory_2_outlined),
+              label: AppCopy.navStock,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined),
+              label: AppCopy.navHistory,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.assessment_outlined),
+              label: AppCopy.navReports,
+            ),
+          ],
+          narrowBottomBar: narrowBar,
+          floatingActionButton: FloatingActionButton(
+            tooltip: AppCopy.speedDialTitle,
+            onPressed: _showSpeedDial,
+            child: const Icon(Icons.add),
+          ),
+          body: pages[_index],
+        );
+      },
+    );
+  }
+
+  String _labelForIndex(int index) {
+    return switch (index) {
+      0 => AppCopy.navHome,
+      1 => AppCopy.navStock,
+      2 => AppCopy.navHistory,
+      _ => AppCopy.navReports,
+    };
   }
 }
