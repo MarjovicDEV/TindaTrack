@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/resources/app_copy.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/validators/input_validators.dart';
@@ -26,48 +27,76 @@ class _ExpensesPageState extends State<ExpensesPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return Column(
-      children: [
-        Row(
-          children: [
-            Text('Gastos', style: Theme.of(context).textTheme.titleLarge),
-            const Spacer(),
-            FilledButton(
-              onPressed: () => _showExpenseDialog(),
-              child: const Text('Magdagdag ng gastos'),
-            ),
-          ],
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.maybePop(context),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Expanded(
-          child: StreamBuilder(
-            stream: widget.repo.watchExpenses(),
-            builder: (context, snapshot) {
-              final items = snapshot.data ?? [];
-              if (items.isEmpty) return const Center(child: Text('Wala pang gastos.'));
-              return GridView.builder(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _crossAxisCount(width),
-                  crossAxisSpacing: AppSpacing.sm,
-                  mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: 0.85,
+        title: const Text(AppCopy.navExpenses),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: () => _showExpenseDialog(),
+                  icon: const Icon(Icons.add_outlined),
+                  label: const Text('Magdagdag ng gastos'),
                 ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final e = items[index];
-                  return _ExpenseCard(
-                    item: e,
-                    onTap: () => _showExpenseDialog(existing: e),
-                    onDelete: () => widget.repo.deleteExpense(e.expense.id),
-                    onConfirmDelete: () => _confirmDelete('Burahin ang gastos na "${e.expense.expenseName}"?'),
-                  );
-                },
-              );
-            },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: StreamBuilder(
+                    stream: widget.repo.watchExpenses(),
+                    builder: (context, snapshot) {
+                      final items = snapshot.data ?? [];
+                      if (items.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Wala pang gastos.',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        );
+                      }
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: _crossAxisCount(width),
+                          crossAxisSpacing: AppSpacing.sm,
+                          mainAxisSpacing: AppSpacing.sm,
+                          childAspectRatio: 0.85,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final e = items[index];
+                          return _ExpenseCard(
+                            item: e,
+                            onTap: () => _showExpenseDialog(existing: e),
+                            onDelete: () => widget.repo.deleteExpense(e.expense.id),
+                            onConfirmDelete: () =>
+                                _confirmDelete('Burahin ang gastos na "${e.expense.expenseName}"?'),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
