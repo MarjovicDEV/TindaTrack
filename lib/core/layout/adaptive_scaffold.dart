@@ -12,6 +12,9 @@ class AdaptiveScaffold extends StatelessWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.body,
+    this.narrowBottomBar,
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
     super.key,
   });
 
@@ -22,6 +25,11 @@ class AdaptiveScaffold extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final Widget body;
+
+  /// When non-null on narrow layouts, replaces [NavigationBar].
+  final Widget? narrowBottomBar;
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +58,17 @@ class AdaptiveScaffold extends StatelessWidget {
       return padded;
     }
 
+    // Wide layout uses [NavigationRail] (no notched bottom bar), so keep the same
+    // primary action as narrow: show FAB and anchor it to the content end, not centerDocked.
     return Scaffold(
       appBar: AppBar(title: titleWidget ?? Text(title), actions: appBarActions),
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButton == null
+          ? null
+          : (isWide
+                ? FloatingActionButtonLocation.endFloat
+                : (floatingActionButtonLocation ??
+                    FloatingActionButtonLocation.centerDocked)),
       body: isWide
           ? Row(
               children: [
@@ -79,11 +96,12 @@ class AdaptiveScaffold extends StatelessWidget {
           : LayoutBuilder(builder: (context, c) => framedBody(c)),
       bottomNavigationBar: isWide
           ? null
-          : NavigationBar(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
-              destinations: destinations,
-            ),
+          : (narrowBottomBar ??
+                NavigationBar(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: onDestinationSelected,
+                  destinations: destinations,
+                )),
     );
   }
 }
