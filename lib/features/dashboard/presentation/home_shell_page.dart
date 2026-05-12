@@ -68,13 +68,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
       context: context,
       showDragHandle: true,
       builder: (ctx) {
+        final copy = AppCopy.of(ctx);
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.point_of_sale_outlined),
-                title: const Text(AppCopy.speedDialBenta),
+                title: Text(copy.speedDialBenta),
                 onTap: () {
                   Navigator.pop(ctx);
                   Navigator.of(context).push<void>(
@@ -84,7 +85,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.people_outline),
-                title: const Text(AppCopy.speedDialUtang),
+                title: Text(copy.speedDialUtang),
                 onTap: () {
                   Navigator.pop(ctx);
                   Navigator.of(context).push<void>(
@@ -94,7 +95,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.receipt_long_outlined),
-                title: const Text(AppCopy.speedDialGastos),
+                title: Text(copy.speedDialGastos),
                 onTap: () {
                   Navigator.pop(ctx);
                   Navigator.of(context).push<void>(
@@ -119,58 +120,58 @@ class _HomeShellPageState extends State<HomeShellPage> {
       ReportsPage(repo: _repo, currencyCode: code),
     ];
 
-    final scheme = Theme.of(context).colorScheme;
-
-    Widget navIcon({required int index, required IconData icon, required IconData selectedIcon}) {
-      final selected = _index == index;
-      return IconButton(
-        tooltip: _labelForIndex(index),
-        icon: Icon(selected ? selectedIcon : icon),
-        color: selected ? scheme.primary : scheme.onSurfaceVariant,
-        onPressed: () => setState(() => _index = index),
-      );
-    }
-
-    final narrowBar = BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 6,
-      child: SizedBox(
-        height: 56,
-        child: Row(
-          children: [
-            Expanded(child: navIcon(index: 0, icon: Icons.home_outlined, selectedIcon: Icons.home)),
-            Expanded(
-              child: navIcon(
-                index: 1,
-                icon: Icons.inventory_2_outlined,
-                selectedIcon: Icons.inventory_2,
-              ),
-            ),
-            const SizedBox(width: 72),
-            Expanded(
-              child: navIcon(
-                index: 2,
-                icon: Icons.history_outlined,
-                selectedIcon: Icons.history,
-              ),
-            ),
-            Expanded(
-              child: navIcon(
-                index: 3,
-                icon: Icons.assessment_outlined,
-                selectedIcon: Icons.assessment,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
     return ListenableBuilder(
       listenable: Listenable.merge([widget.currencyController, widget.localeController]),
       builder: (context, _) {
+        final copy = AppCopy.of(context);
+        final scheme = Theme.of(context).colorScheme;
+
+        Widget navIcon({required int index, required IconData icon, required IconData selectedIcon}) {
+          final selected = _index == index;
+          return IconButton(
+            tooltip: _labelForIndex(copy, index),
+            icon: Icon(selected ? selectedIcon : icon),
+            color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            onPressed: () => setState(() => _index = index),
+          );
+        }
+
+        final narrowBar = BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 6,
+          child: SizedBox(
+            height: 56,
+            child: Row(
+              children: [
+                Expanded(child: navIcon(index: 0, icon: Icons.home_outlined, selectedIcon: Icons.home)),
+                Expanded(
+                  child: navIcon(
+                    index: 1,
+                    icon: Icons.inventory_2_outlined,
+                    selectedIcon: Icons.inventory_2,
+                  ),
+                ),
+                const SizedBox(width: 72),
+                Expanded(
+                  child: navIcon(
+                    index: 2,
+                    icon: Icons.history_outlined,
+                    selectedIcon: Icons.history,
+                  ),
+                ),
+                Expanded(
+                  child: navIcon(
+                    index: 3,
+                    icon: Icons.assessment_outlined,
+                    selectedIcon: Icons.assessment,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
         return AdaptiveScaffold(
-          title: AppCopy.appTitle,
+          title: copy.appTitle,
           titleWidget: RichText(
             text: TextSpan(
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -188,34 +189,22 @@ class _HomeShellPageState extends State<HomeShellPage> {
           ),
           appBarActions: [
             IconButton(
-              tooltip: AppCopy.settingsTooltip,
+              tooltip: copy.settingsTooltip,
               icon: const Icon(Icons.settings_outlined),
               onPressed: _openSettings,
             ),
           ],
           selectedIndex: _index,
           onDestinationSelected: (value) => setState(() => _index = value),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              label: AppCopy.navHome,
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.inventory_2_outlined),
-              label: AppCopy.navStock,
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.history_outlined),
-              label: AppCopy.navHistory,
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.assessment_outlined),
-              label: AppCopy.navReports,
-            ),
+          destinations: [
+            NavigationDestination(icon: Icon(Icons.home_outlined), label: copy.navHome),
+            NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: copy.navStock),
+            NavigationDestination(icon: Icon(Icons.history_outlined), label: copy.navHistory),
+            NavigationDestination(icon: Icon(Icons.assessment_outlined), label: copy.navReports),
           ],
           narrowBottomBar: narrowBar,
           floatingActionButton: FloatingActionButton(
-            tooltip: AppCopy.speedDialTitle,
+            tooltip: copy.speedDialTitle,
             onPressed: _showSpeedDial,
             child: const Icon(Icons.add),
           ),
@@ -225,12 +214,12 @@ class _HomeShellPageState extends State<HomeShellPage> {
     );
   }
 
-  String _labelForIndex(int index) {
+  String _labelForIndex(AppCopy copy, int index) {
     return switch (index) {
-      0 => AppCopy.navHome,
-      1 => AppCopy.navStock,
-      2 => AppCopy.navHistory,
-      _ => AppCopy.navReports,
+      0 => copy.navHome,
+      1 => copy.navStock,
+      2 => copy.navHistory,
+      _ => copy.navReports,
     };
   }
 }
