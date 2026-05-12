@@ -57,7 +57,7 @@ class _InventoryPageState extends State<InventoryPage> {
                   crossAxisCount: _crossAxisCount(width),
                   crossAxisSpacing: AppSpacing.sm,
                   mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: 0.62,
+                  childAspectRatio: 0.52,
                 ),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
@@ -348,6 +348,8 @@ class _ProductCard extends StatelessWidget {
                     const Spacer(),
                     Text(
                       formatCurrency(item.price),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: cs.primary,
                             fontWeight: FontWeight.w700,
