@@ -28,10 +28,11 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppCopy.historyTitle, style: Theme.of(context).textTheme.titleLarge),
+        Text(copy.historyTitle, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
         Expanded(
           child: FutureBuilder<List<HistoryItem>>(
@@ -42,7 +43,7 @@ class _HistoryPageState extends State<HistoryPage> {
               }
               final rows = snap.data ?? const [];
               if (rows.isEmpty) {
-                return const Center(child: Text(AppCopy.historyEmpty));
+                return Center(child: Text(copy.historyEmpty));
               }
               return RefreshIndicator(
                 onRefresh: () async {
