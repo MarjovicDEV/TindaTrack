@@ -52,6 +52,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   }
 
   Future<void> _runSearch() async {
+    final copy = AppCopy.of(context);
     final q = _search.text.trim();
     if (q.isEmpty || _nominatim == null) return;
     setState(() => _searching = true);
@@ -60,14 +61,14 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       if (!mounted) return;
       if (hits.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Walang resulta.')),
+          SnackBar(content: Text(copy.searchNoResults)),
         );
         return;
       }
       final choice = await showDialog<LocationSuggestion>(
         context: context,
         builder: (ctx) => SimpleDialog(
-          title: const Text('Pumili ng lokasyon'),
+          title: Text(copy.pickLocationTitle),
           children: hits
               .map(
                 (h) => SimpleDialogOption(
@@ -101,30 +102,31 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text(AppCopy.settingsProfileSection)),
+      appBar: AppBar(title: Text(copy.settingsProfileSection)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
             controller: _owner,
-            decoration: const InputDecoration(labelText: AppCopy.settingsOwnerName),
+            decoration: InputDecoration(labelText: copy.settingsOwnerName),
             onEditingComplete: _saveFields,
           ),
           TextField(
             controller: _store,
-            decoration: const InputDecoration(labelText: AppCopy.settingsStoreName),
+            decoration: InputDecoration(labelText: copy.settingsStoreName),
             onEditingComplete: _saveFields,
           ),
           const SizedBox(height: 8),
-          const Text(AppCopy.settingsEmailSoon, style: TextStyle(color: Colors.grey)),
+          Text(copy.settingsEmailSoon, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 16),
-          Text(AppCopy.settingsLocation, style: Theme.of(context).textTheme.titleSmall),
+          Text(copy.settingsLocation, style: Theme.of(context).textTheme.titleSmall),
           if (_savedLocation.isNotEmpty) Text(_savedLocation),
           TextField(
             controller: _search,
             decoration: InputDecoration(
-              labelText: AppCopy.settingsSearchLocation,
+              labelText: copy.settingsSearchLocation,
               suffixIcon: _searching
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -139,7 +141,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             onSubmitted: (_) => _runSearch(),
           ),
           const SizedBox(height: 8),
-          const Text(AppCopy.settingsOsmAttribution, style: TextStyle(fontSize: 12)),
+          Text(copy.settingsOsmAttribution, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
