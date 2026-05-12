@@ -26,6 +26,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
@@ -34,7 +35,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
         ),
-        title: const Text(AppCopy.navExpenses),
+        title: Text(copy.navExpenses),
       ),
       body: SafeArea(
         child: Padding(
@@ -47,7 +48,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 child: FilledButton.icon(
                   onPressed: () => _showExpenseDialog(),
                   icon: const Icon(Icons.add_outlined),
-                  label: const Text('Magdagdag ng gastos'),
+                   label: Text(copy.isEnglish ? 'Add expense' : 'Magdagdag ng gastos'),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -64,7 +65,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                       if (items.isEmpty) {
                         return Center(
                           child: Text(
-                            'Wala pang gastos.',
+                             copy.isEnglish ? 'No expenses yet.' : 'Wala pang gastos.',
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         );
@@ -75,7 +76,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                           crossAxisCount: _crossAxisCount(width),
                           crossAxisSpacing: AppSpacing.sm,
                           mainAxisSpacing: AppSpacing.sm,
-                          childAspectRatio: 0.85,
+                          mainAxisExtent: width >= 900 ? 220 : (width >= 600 ? 240 : 260),
                         ),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
@@ -84,8 +85,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
                             item: e,
                             onTap: () => _showExpenseDialog(existing: e),
                             onDelete: () => widget.repo.deleteExpense(e.expense.id),
-                            onConfirmDelete: () =>
-                                _confirmDelete('Burahin ang gastos na "${e.expense.expenseName}"?'),
+                            onConfirmDelete: () => _confirmDelete(
+                              copy.isEnglish
+                                  ? 'Delete expense "${e.expense.expenseName}"?'
+                                  : 'Burahin ang gastos na "${e.expense.expenseName}"?',
+                            ),
                           );
                         },
                       );
@@ -101,6 +105,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
   }
 
   Future<void> _showExpenseDialog({dynamic existing}) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController(text: existing?.expense.expenseName ?? '');
     final reasonCtrl = TextEditingController(text: existing?.expense.reason ?? '');
@@ -115,7 +120,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existing == null ? 'Magdagdag ng gastos' : 'I-update ang gastos'),
+          title: Text(
+            existing == null
+                ? (copy.isEnglish ? 'Add expense' : 'Magdagdag ng gastos')
+                : (copy.isEnglish ? 'Update expense' : 'I-update ang gastos'),
+          ),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -131,19 +140,20 @@ class _ExpensesPageState extends State<ExpensesPage> {
                         children: [
                           DropdownButtonFormField<int>(
                             initialValue: selectedCategoryId,
-                            hint: const Text('Kategorya'),
-                            validator: (v) => v == null ? 'Required ang kategorya.' : null,
+                            hint: Text(copy.isEnglish ? 'Category' : 'Kategorya'),
+                            validator: (v) =>
+                                v == null ? (copy.isEnglish ? 'Category is required.' : 'Required ang kategorya.') : null,
                             items: categories
                                 .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
                                 .toList(),
                             onChanged: (v) => setState(() => selectedCategoryId = v),
                           ),
                           const SizedBox(height: AppSpacing.md),
-                          OutlinedButton.icon(
-                            onPressed: () => _showAddCategoryDialog(),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Magdagdag ng kategorya'),
-                          ),
+                           OutlinedButton.icon(
+                             onPressed: () => _showAddCategoryDialog(),
+                             icon: const Icon(Icons.add),
+                             label: Text(copy.isEnglish ? 'Add category' : 'Magdagdag ng kategorya'),
+                           ),
                         ],
                       );
                     },
@@ -151,28 +161,28 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Pangalan ng gastos'),
-                    validator: (v) => InputValidators.validateName(v ?? '', field: 'Expense name'),
+                    decoration: InputDecoration(labelText: copy.isEnglish ? 'Expense name' : 'Pangalan ng gastos'),
+                    validator: (v) => InputValidators.validateName(v ?? '', field: copy.isEnglish ? 'Expense name' : 'Pangalan ng gastos'),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: reasonCtrl,
-                    decoration: const InputDecoration(labelText: 'Dahilan'),
-                    validator: (v) => InputValidators.validateName(v ?? '', field: 'Reason'),
+                    decoration: InputDecoration(labelText: copy.isEnglish ? 'Reason' : 'Dahilan'),
+                    validator: (v) => InputValidators.validateName(v ?? '', field: copy.isEnglish ? 'Reason' : 'Dahilan'),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: amountCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Halaga'),
-                    validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: 'Amount'),
+                    decoration: InputDecoration(labelText: copy.isEnglish ? 'Amount' : 'Halaga'),
+                    validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: copy.isEnglish ? 'Amount' : 'Halaga'),
                   ),
                 ],
               ),
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.inventoryCancel)),
             FilledButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
@@ -194,7 +204,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('I-save'),
+              child: Text(copy.inventorySave),
             ),
           ],
         ),
@@ -203,23 +213,24 @@ class _ExpensesPageState extends State<ExpensesPage> {
   }
 
   Future<void> _showAddCategoryDialog() async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final ctrl = TextEditingController();
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Magdagdag ng kategorya'),
+        title: Text(copy.isEnglish ? 'Add category' : 'Magdagdag ng kategorya'),
         content: Form(
           key: formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: TextFormField(
             controller: ctrl,
-            decoration: const InputDecoration(labelText: 'Pangalan ng kategorya'),
-            validator: (v) => InputValidators.validateName(v ?? '', field: 'Category'),
+             decoration: InputDecoration(labelText: copy.isEnglish ? 'Category name' : 'Pangalan ng kategorya'),
+             validator: (v) => InputValidators.validateName(v ?? '', field: copy.isEnglish ? 'Category' : 'Kategorya'),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+           TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.inventoryCancel)),
           FilledButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
@@ -227,25 +238,26 @@ class _ExpensesPageState extends State<ExpensesPage> {
               if (!mounted) return;
               Navigator.pop(context);
             },
-            child: const Text('I-save'),
-          ),
+             child: Text(copy.inventorySave),
+            ),
         ],
       ),
     );
   }
 
   Future<bool?> _confirmDelete(String message) {
+    final copy = AppCopy.of(context);
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Kumpirmahin ang delete'),
+        title: Text(copy.inventoryConfirmDeleteTitle),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hindi')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(copy.inventoryDeleteNo)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(copy.inventoryDeleteYes),
           ),
         ],
       ),
@@ -280,6 +292,7 @@ class _ExpenseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final cs = Theme.of(context).colorScheme;
     final color = _headerColor(item.categoryName);
 
@@ -328,7 +341,7 @@ class _ExpenseCard extends StatelessWidget {
                     Text(
                       item.expense.reason,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
@@ -356,12 +369,12 @@ class _ExpenseCard extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     onPressed: onTap,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'I-edit',
+                    tooltip: copy.inventoryEdit,
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Burahin',
+                    tooltip: copy.inventoryDelete,
                     onPressed: () async {
                       final confirmed = await onConfirmDelete();
                       if (confirmed == true) onDelete();
