@@ -67,10 +67,11 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _exportPng() async {
+    final copy = AppCopy.of(context);
     if (kIsWeb) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ang PNG export ay desktop/mobile app lamang sa ngayon.')),
+        SnackBar(content: Text(copy.reportsPngUnavailable)),
       );
       return;
     }
@@ -81,7 +82,7 @@ class _ReportsPageState extends State<ReportsPage> {
     final boundary = _repaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Walang ma-export na view.')),
+        SnackBar(content: Text(copy.reportsNoExportView)),
       );
       return;
     }
@@ -94,7 +95,7 @@ class _ReportsPageState extends State<ReportsPage> {
       final path = await report_export.writeReportPngBytes(bytes);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Na-save ang PNG: $path')),
+        SnackBar(content: Text(copy.reportPngSaved(path))),
       );
     } catch (e) {
       if (!mounted) return;
@@ -103,11 +104,12 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _exportPdf() async {
+    final copy = AppCopy.of(context);
     try {
       final range = _range();
       final t = await _totalsForRange();
       final bytes = await ReportPdfBuilder.buildSummaryBytes(
-        title: AppCopy.reportsPageTitle,
+        copy: copy,
         from: range.from,
         to: range.to,
         totalSales: t.totalSales,
@@ -118,14 +120,14 @@ class _ReportsPageState extends State<ReportsPage> {
       if (kIsWeb) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('PDF (${bytes.length} bytes) — i-download support sa susunod.')),
+          SnackBar(content: Text(copy.reportPdfDownloadSoon(bytes.length))),
         );
         return;
       }
       final path = await report_export.writeReportPdfBytes(bytes);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Na-save ang PDF: $path')),
+        SnackBar(content: Text(copy.reportPdfSaved(path))),
       );
     } catch (e) {
       if (!mounted) return;
@@ -135,6 +137,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final range = _range();
     final code = widget.currencyCode;
     return LayoutBuilder(
@@ -152,22 +155,22 @@ class _ReportsPageState extends State<ReportsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      AppCopy.reportsPageTitle,
+                      copy.reportsPageTitle,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     SegmentedButton<ReportFilter>(
-                      segments: const [
-                        ButtonSegment(value: ReportFilter.daily, label: Text(AppCopy.reportFilterDaily)),
-                        ButtonSegment(value: ReportFilter.weekly, label: Text(AppCopy.reportFilterWeekly)),
-                        ButtonSegment(value: ReportFilter.monthly, label: Text(AppCopy.reportFilterMonthly)),
+                      segments: [
+                        ButtonSegment(value: ReportFilter.daily, label: Text(copy.reportFilterDaily)),
+                        ButtonSegment(value: ReportFilter.weekly, label: Text(copy.reportFilterWeekly)),
+                        ButtonSegment(value: ReportFilter.monthly, label: Text(copy.reportFilterMonthly)),
                       ],
                       selected: {_filter},
                       onSelectionChanged: (value) => setState(() => _filter = value.first),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Saklaw (PH UTC+8): ${formatPhilippineDateTime(range.from)} - ${formatPhilippineDateTime(range.to)}',
+                      '${copy.reportRangeLabel} ${formatPhilippineDateTime(range.from)} - ${formatPhilippineDateTime(range.to)}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -178,12 +181,12 @@ class _ReportsPageState extends State<ReportsPage> {
                         OutlinedButton.icon(
                           onPressed: _exportPng,
                           icon: const Icon(Icons.image_outlined),
-                          label: const Text(AppCopy.exportPng),
+                          label: Text(copy.exportPng),
                         ),
                         OutlinedButton.icon(
                           onPressed: _exportPdf,
                           icon: const Icon(Icons.picture_as_pdf_outlined),
-                          label: const Text(AppCopy.exportPdf),
+                          label: Text(copy.exportPdf),
                         ),
                       ],
                     ),
@@ -224,8 +227,8 @@ class _ReportsPageState extends State<ReportsPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Expanded(
-                                          child: SummaryCard(
-                                            label: AppCopy.totalSales,
+                                            child: SummaryCard(
+                                            label: copy.totalSales,
                                             value: formatCurrency(totalSales, currencyCode: code),
                                             icon: Icons.payments_outlined,
                                           ),
@@ -233,7 +236,7 @@ class _ReportsPageState extends State<ReportsPage> {
                                         SizedBox(width: gap),
                                         Expanded(
                                           child: SummaryCard(
-                                            label: AppCopy.totalExpenses,
+                                            label: copy.totalExpenses,
                                             value: formatCurrency(totalExpenses, currencyCode: code),
                                             icon: Icons.receipt_outlined,
                                           ),
@@ -242,20 +245,20 @@ class _ReportsPageState extends State<ReportsPage> {
                                     )
                                   else ...[
                                     SummaryCard(
-                                      label: AppCopy.totalSales,
+                                      label: copy.totalSales,
                                       value: formatCurrency(totalSales, currencyCode: code),
                                       icon: Icons.payments_outlined,
                                     ),
                                     SizedBox(height: gap),
                                     SummaryCard(
-                                      label: AppCopy.totalExpenses,
+                                      label: copy.totalExpenses,
                                       value: formatCurrency(totalExpenses, currencyCode: code),
                                       icon: Icons.receipt_outlined,
                                     ),
                                   ],
                                   SizedBox(height: gap),
                                   SummaryCard(
-                                    label: AppCopy.netProfit,
+                                    label: copy.netProfit,
                                     value: formatCurrency(net, currencyCode: code),
                                     icon: Icons.trending_up_outlined,
                                   ),
@@ -266,7 +269,7 @@ class _ReportsPageState extends State<ReportsPage> {
                                       child: SizedBox(
                                         height: 220,
                                         child: spots.isEmpty
-                                            ? const Center(child: Text(AppCopy.noDataRange))
+                                            ? Center(child: Text(copy.noDataRange))
                                             : LineChart(
                                                 LineChartData(
                                                   gridData: const FlGridData(show: true),
