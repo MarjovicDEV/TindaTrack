@@ -26,6 +26,7 @@ class _UtangPageState extends State<UtangPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
@@ -34,7 +35,7 @@ class _UtangPageState extends State<UtangPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
         ),
-        title: const Text(AppCopy.navUtang),
+        title: Text(copy.navUtang),
       ),
       body: SafeArea(
         child: Padding(
@@ -47,7 +48,7 @@ class _UtangPageState extends State<UtangPage> {
                 child: FilledButton.icon(
                   onPressed: () => _showAddCustomer(context),
                   icon: const Icon(Icons.person_add_outlined),
-                  label: const Text('Magdagdag'),
+                   label: Text(copy.utangAdd),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -64,7 +65,7 @@ class _UtangPageState extends State<UtangPage> {
                       if (customers.isEmpty) {
                         return Center(
                           child: Text(
-                            'Wala pang customer.',
+                             copy.isEnglish ? 'No customers yet.' : 'Wala pang customer.',
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         );
@@ -86,7 +87,9 @@ class _UtangPageState extends State<UtangPage> {
                             onEdit: () => _showEditCustomer(customer.customerId, customer.name),
                             onAddEntry: () => _showAddEntry(context, customer.customerId),
                             onDelete: () => widget.repo.deleteCustomer(customer.customerId),
-                            onConfirmDelete: () => _confirmDelete('Burahin si ${customer.name}?'),
+                            onConfirmDelete: () => _confirmDelete(
+                              copy.isEnglish ? 'Delete ${customer.name}?' : 'Burahin si ${customer.name}?',
+                            ),
                           );
                         },
                       );
@@ -102,6 +105,7 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<void> _showAddCustomer(BuildContext context) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final qtyCtrls = <int, TextEditingController>{};
@@ -112,7 +116,7 @@ class _UtangPageState extends State<UtangPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Magdagdag ng customer'),
+          title: Text(copy.utangAddCustomerTitle),
           content: Form(
             key: formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -135,20 +139,20 @@ class _UtangPageState extends State<UtangPage> {
                       children: [
                         TextFormField(
                           controller: nameCtrl,
-                          decoration: const InputDecoration(labelText: 'Pangalan'),
+                          decoration: InputDecoration(labelText: copy.utangName),
                           validator: (v) => InputValidators.validateName(v ?? ''),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         FormField<Set<int>>(
                           initialValue: selected,
                           validator: (_) =>
-                              selected.isEmpty ? 'Pumili ng kahit isang item.' : null,
+                              selected.isEmpty ? copy.utangSelectAtLeastOneItem : null,
                           builder: (field) => Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Align(
+                              Align(
                                 alignment: Alignment.centerLeft,
-                                child: Text('Unang item na inutang'),
+                                child: Text(copy.utangFirstBorrowedItem),
                               ),
                               const SizedBox(height: AppSpacing.md),
                               if (products.isEmpty)
@@ -159,9 +163,7 @@ class _UtangPageState extends State<UtangPage> {
                                     color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Text(
-                                    'Wala pang produkto sa Imbentaryo. Magdagdag muna bago gumawa ng bulk utang.',
-                                  ),
+                                  child: Text(copy.utangNoInventoryPrompt),
                                 ),
                               ...products.map((product) {
                                 final checked = selected.contains(product.id);
@@ -199,19 +201,19 @@ class _UtangPageState extends State<UtangPage> {
                                         keyboardType: const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
-                                        decoration: const InputDecoration(labelText: 'Qty'),
+                                        decoration: InputDecoration(labelText: copy.utangQty),
                                         enabled: checked,
                                         validator: (v) {
                                           if (!checked) return null;
                                           if (product.unitType == 'pcs') {
                                             return InputValidators.validateWholePositive(
                                               v ?? '',
-                                              field: 'Qty',
+                                              field: copy.utangQty,
                                             );
                                           }
                                           return InputValidators.validateDecimalPositive(
                                             v ?? '',
-                                            field: 'Qty',
+                                            field: copy.utangQty,
                                           );
                                         },
                                         onChanged: (_) => setState(() {}),
@@ -232,13 +234,13 @@ class _UtangPageState extends State<UtangPage> {
                         TextFormField(
                           initialValue: total.toStringAsFixed(2),
                           enabled: false,
-                          decoration: const InputDecoration(labelText: 'Unang amount ng utang'),
+                          decoration: InputDecoration(labelText: copy.utangInitialAmount),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         FormField<DateTime>(
                           initialValue: dueDate,
                           validator: (_) {
-                            if (dueDate == null) return 'Due date ay required.';
+                            if (dueDate == null) return copy.utangDueDateRequired;
                             final now = DateTime.now();
                             final today = DateTime(now.year, now.month, now.day);
                             final selected =
@@ -255,7 +257,7 @@ class _UtangPageState extends State<UtangPage> {
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Due date ng utang'),
                                 subtitle: Text(
-                                  dueDate == null ? 'Pumili ng due date' : formatLongDate(dueDate!),
+                                  dueDate == null ? copy.utangPickDueDate : formatLongDate(dueDate!),
                                 ),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.calendar_month_outlined),
@@ -293,14 +295,14 @@ class _UtangPageState extends State<UtangPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.inventoryCancel)),
             FilledButton(
               onPressed: () async {
                 final products = await widget.repo.watchProducts().first;
                 if (products.isEmpty) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Magdagdag muna ng produkto sa Imbentaryo.')),
+                    SnackBar(content: Text(copy.utangAddProductInventoryPrompt)),
                   );
                   return;
                 }
@@ -314,7 +316,7 @@ class _UtangPageState extends State<UtangPage> {
                 if (lines.isEmpty) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Ilagay ang valid na quantity ng napiling item.')),
+                    SnackBar(content: Text(copy.utangInvalidSelectedQty)),
                   );
                   return;
                 }
@@ -324,20 +326,20 @@ class _UtangPageState extends State<UtangPage> {
                     customerId: customerId,
                     lines: lines,
                     dueDate: dueDate,
-                    note: 'Initial utang',
+                    note: copy.utangInitialDebtNote,
                   );
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(
                     context,
-                  ).showSnackBar(SnackBar(content: Text('Hindi na-save: $e')));
+                    ).showSnackBar(SnackBar(content: Text('${copy.utangSaveFailedPrefix} $e')));
                   return;
                 }
                 if (!mounted) return;
                 // ignore: use_build_context_synchronously
                 Navigator.pop(rootContext);
               },
-              child: const Text('I-save ang customer'),
+              child: Text(copy.utangSaveCustomer),
             ),
           ],
         ),
@@ -349,6 +351,7 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<void> _showAddEntry(BuildContext context, int customerId) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final amountCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
@@ -361,7 +364,7 @@ class _UtangPageState extends State<UtangPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Magdagdag ng utang entry'),
+          title: Text(copy.utangAddEntryTitle),
           content: Form(
             key: formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -385,10 +388,10 @@ class _UtangPageState extends State<UtangPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SwitchListTile(
-                          title: Text(isPayment ? 'Bayad' : 'Bagong Utang'),
-                          subtitle: Text(
-                            isPayment ? 'Bawas sa balanse' : 'Dagdag sa balanse',
-                          ),
+                           title: Text(isPayment ? copy.utangPayment : copy.utangNewDebt),
+                           subtitle: Text(
+                             isPayment ? copy.utangPaymentSubtitle : copy.utangDebtSubtitle,
+                           ),
                           value: isPayment,
                           onChanged: (v) => setState(() => isPayment = v),
                         ),
@@ -397,10 +400,10 @@ class _UtangPageState extends State<UtangPage> {
                           TextFormField(
                             controller: amountCtrl,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(labelText: 'Amount'),
-                            validator: (v) => InputValidators.validateDecimalPositive(
+                             decoration: InputDecoration(labelText: copy.utangAmount),
+                             validator: (v) => InputValidators.validateDecimalPositive(
                               v ?? '',
-                              field: 'Amount',
+                              field: copy.utangAmount,
                             ),
                           ),
                         if (!isPayment) ...[
@@ -472,12 +475,12 @@ class _UtangPageState extends State<UtangPage> {
                                             if (product.unitType == 'pcs') {
                                               return InputValidators.validateWholePositive(
                                                 v ?? '',
-                                                field: 'Qty',
+                                                field: copy.utangQty,
                                               );
                                             }
                                             return InputValidators.validateDecimalPositive(
                                               v ?? '',
-                                              field: 'Qty',
+                                                field: copy.utangQty,
                                             );
                                           },
                                           onChanged: (_) => setState(() {}),
@@ -505,14 +508,14 @@ class _UtangPageState extends State<UtangPage> {
                             initialValue: dueDate,
                             validator: (_) {
                               if (isPayment) return null;
-                              if (dueDate == null) return 'Due date ay required.';
+                              if (dueDate == null) return copy.utangDueDateRequired;
                               final now = DateTime.now();
                               final today = DateTime(now.year, now.month, now.day);
                               final selected =
                                   DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
-                              if (selected.isBefore(today)) {
-                                return 'Due date dapat today o future lang.';
-                              }
+                                if (selected.isBefore(today)) {
+                                  return copy.utangDueDateTodayOrFuture;
+                                }
                               return null;
                             },
                             builder: (field) => Column(
@@ -523,7 +526,7 @@ class _UtangPageState extends State<UtangPage> {
                                   title: const Text('Due date ng utang'),
                                   subtitle: Text(
                                     dueDate == null
-                                        ? 'Pumili ng due date'
+                                        ? copy.utangPickDueDate
                                         : formatLongDate(dueDate!),
                                   ),
                                   trailing: IconButton(
@@ -647,24 +650,25 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<void> _showEditCustomer(int customerId, String currentName) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final rootContext = context;
     final ctrl = TextEditingController(text: currentName);
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('I-update ang customer'),
+        title: Text(copy.isEnglish ? 'Update customer' : 'I-update ang customer'),
         content: Form(
           key: formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: TextFormField(
             controller: ctrl,
-            decoration: const InputDecoration(labelText: 'Pangalan'),
-            validator: (v) => InputValidators.validateName(v ?? ''),
+            decoration: InputDecoration(labelText: copy.utangName),
+            validator: (v) => InputValidators.validateName(v ?? '', field: copy.utangName),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.inventoryCancel)),
           FilledButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
@@ -673,7 +677,7 @@ class _UtangPageState extends State<UtangPage> {
               // ignore: use_build_context_synchronously
               Navigator.pop(rootContext);
             },
-            child: const Text('I-save'),
+            child: Text(copy.inventorySave),
           ),
         ],
       ),
@@ -681,6 +685,7 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<void> _showEntries(int customerId, String name) async {
+    final copy = AppCopy.of(context);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -690,14 +695,14 @@ class _UtangPageState extends State<UtangPage> {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             children: [
-              Text('Entries ni $name', style: Theme.of(context).textTheme.titleMedium),
+              Text(copy.entriesForCustomer(name), style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
               Expanded(
                 child: StreamBuilder(
                   stream: widget.repo.watchUtangEntriesByCustomer(customerId),
                   builder: (context, snapshot) {
                     final entries = snapshot.data ?? [];
-                    if (entries.isEmpty) return const Center(child: Text('Wala pang entries.'));
+                    if (entries.isEmpty) return Center(child: Text(copy.utangNoEntriesYet));
                     return ListView.builder(
                       controller: controller,
                       itemCount: entries.length,
@@ -706,7 +711,9 @@ class _UtangPageState extends State<UtangPage> {
                         return Dismissible(
                           key: ValueKey('utang-${e.id}'),
                           direction: DismissDirection.endToStart,
-                          confirmDismiss: (_) => _confirmDelete('Burahin ang entry na ito?'),
+                          confirmDismiss: (_) => _confirmDelete(
+                            copy.isEnglish ? 'Delete this entry?' : 'Burahin ang entry na ito?',
+                          ),
                           onDismissed: (_) => widget.repo.deleteUtangEntry(e.id),
                           background: Container(
                             alignment: Alignment.centerRight,
@@ -720,10 +727,12 @@ class _UtangPageState extends State<UtangPage> {
                           child: Card(
                             child: ListTile(
                               onTap: () => _showEntryDetailModal(e),
-                              title: Text(e.itemName ?? (e.isPayment ? 'Bayad' : 'Utang')),
+                              title: Text(
+                                e.itemName ?? (e.isPayment ? copy.utangPayment : copy.utangNewDebt),
+                              ),
                               subtitle: Text(
-                                'Transaksyon (PH UTC+8): ${formatPhilippineDateTime(e.createdAt)}'
-                                '${e.dueDate != null ? ' • Due: ${formatLongDate(e.dueDate!)}' : ''}'
+                                '${copy.utangTransactionLabel} ${formatPhilippineDateTime(e.createdAt)}'
+                                '${e.dueDate != null ? ' • ${copy.utangDueDateLabelShort} ${formatLongDate(e.dueDate!)}' : ''}'
                                 '${(e.note ?? '').isNotEmpty ? '\n${e.note}' : ''}',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -755,6 +764,7 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<void> _showEditEntry(dynamic entry) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final amountCtrl = TextEditingController(text: entry.amount.toString());
     final itemCtrl = TextEditingController(text: entry.itemName ?? '');
@@ -766,7 +776,7 @@ class _UtangPageState extends State<UtangPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('I-update ang utang entry'),
+          title: Text(copy.isEnglish ? 'Update debt entry' : 'I-update ang utang entry'),
           content: Form(
             key: formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -776,27 +786,27 @@ class _UtangPageState extends State<UtangPage> {
                 TextFormField(
                   controller: amountCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Amount'),
+                  decoration: InputDecoration(labelText: copy.utangAmount),
                   validator: (v) =>
-                      InputValidators.validateDecimalPositive(v ?? '', field: 'Amount'),
+                      InputValidators.validateDecimalPositive(v ?? '', field: copy.utangAmount),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: itemCtrl,
-                  decoration: const InputDecoration(labelText: 'Item / Product'),
-                  validator: (v) => InputValidators.validateName(v ?? '', field: 'Item'),
+                  decoration: InputDecoration(labelText: copy.utangItemProduct),
+                  validator: (v) => InputValidators.validateName(v ?? '', field: copy.utangItemProduct),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: noteCtrl,
-                  decoration: const InputDecoration(labelText: 'Note'),
+                  decoration: InputDecoration(labelText: copy.utangNote),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 FormField<DateTime>(
                   initialValue: dueDate,
                   validator: (_) {
                     if (isPayment) return null;
-                    if (dueDate == null) return 'Due date ay required.';
+                    if (dueDate == null) return copy.utangDueDateRequired;
                     final now = DateTime.now();
                     final today = DateTime(now.year, now.month, now.day);
                     final selected = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
@@ -810,10 +820,10 @@ class _UtangPageState extends State<UtangPage> {
                     children: [
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Due date ng utang'),
-                        subtitle: Text(
-                          dueDate == null ? 'Pumili ng due date' : formatLongDate(dueDate!),
-                        ),
+                                title: Text(copy.utangDueDateLabel),
+                                subtitle: Text(
+                                  dueDate == null ? copy.utangPickDueDate : formatLongDate(dueDate!),
+                                ),
                         trailing: IconButton(
                           icon: const Icon(Icons.calendar_month_outlined),
                           onPressed: () async {
@@ -843,7 +853,7 @@ class _UtangPageState extends State<UtangPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SwitchListTile(
-                  title: Text(isPayment ? 'Bayad' : 'Bagong Utang'),
+                  title: Text(isPayment ? copy.utangPayment : copy.utangNewDebt),
                   value: isPayment,
                   onChanged: (v) => setState(() => isPayment = v),
                 ),
@@ -851,7 +861,7 @@ class _UtangPageState extends State<UtangPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.inventoryCancel)),
             FilledButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
@@ -865,7 +875,7 @@ class _UtangPageState extends State<UtangPage> {
                 );
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('I-save ang entry'),
+              child: Text(copy.utangSaveEntry),
             ),
           ],
         ),
@@ -874,6 +884,7 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<void> _showEntryDetailModal(dynamic entry) async {
+    final copy = AppCopy.of(context);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -884,22 +895,22 @@ class _UtangPageState extends State<UtangPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Detalye ng Entry', style: Theme.of(context).textTheme.titleMedium),
+              Text(copy.utangDetailTitle, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                '${entry.isPayment ? 'Bayad' : 'Utang'} • ${formatCurrency(entry.amount)}',
+                '${entry.isPayment ? copy.utangPayment : copy.utangNewDebt} • ${formatCurrency(entry.amount)}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Transaksyon (PH UTC+8): ${formatPhilippineDateTime(entry.createdAt)}'
-                '${entry.dueDate != null ? '\nDue date: ${formatLongDate(entry.dueDate!)}' : ''}',
+                '${copy.utangTransactionLabel} ${formatPhilippineDateTime(entry.createdAt)}'
+                '${entry.dueDate != null ? '\n${copy.utangDueDateLabelShort} ${formatLongDate(entry.dueDate!)}' : ''}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: AppSpacing.sm),
               if (entry.isPayment)
                 Text(
-                  'Walang item breakdown para sa bayad entry.',
+                  copy.utangNoBreakdownForPayment,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               if (!entry.isPayment)
@@ -909,7 +920,7 @@ class _UtangPageState extends State<UtangPage> {
                     builder: (context, snapshot) {
                       final lines = snapshot.data ?? [];
                       if (lines.isEmpty) {
-                        return const Center(child: Text('Walang line items.'));
+                        return Center(child: Text(copy.utangNoLineItems));
                       }
                       return ListView.separated(
                         controller: controller,
@@ -923,7 +934,7 @@ class _UtangPageState extends State<UtangPage> {
                           return ListTile(
                             title: Text(line.productName),
                             subtitle: Text(
-                              'Qty: $qtyLabel ${line.unitType} • Unit: ${formatCurrency(line.unitPrice)}',
+                              '${copy.utangQtyShort}: $qtyLabel ${line.unitType} • ${copy.utangUnitLabel} ${formatCurrency(line.unitPrice)}',
                             ),
                             trailing: Text(formatCurrency(line.lineTotal)),
                           );
@@ -940,17 +951,18 @@ class _UtangPageState extends State<UtangPage> {
   }
 
   Future<bool?> _confirmDelete(String message) {
+    final copy = AppCopy.of(context);
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Kumpirmahin ang delete'),
+        title: Text(copy.inventoryConfirmDeleteTitle),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hindi')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(copy.inventoryDeleteNo)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(copy.inventoryDeleteYes),
           ),
         ],
       ),
@@ -989,6 +1001,7 @@ class _CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final cs = Theme.of(context).colorScheme;
     final color = _headerColor(customer.name);
     final hasDebt = customer.balance > 0;
@@ -1028,7 +1041,7 @@ class _CustomerCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      'Balanse:',
+                      copy.utangBalance,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
                     Text(
@@ -1051,18 +1064,18 @@ class _CustomerCard extends StatelessWidget {
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: onAddEntry,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Magdagdag ng utang',
+                    tooltip: copy.utangAddDebtTooltip,
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     onPressed: onEdit,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'I-edit',
+                    tooltip: copy.utangEdit,
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Burahin',
+                    tooltip: copy.utangDelete,
                     onPressed: () async {
                       final confirmed = await onConfirmDelete();
                       if (confirmed == true) onDelete();
