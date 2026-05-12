@@ -10,6 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
+import '../../../shared/widgets/report_export_card.dart';
 import '../../../shared/widgets/summary_card.dart';
 import '../application/report_pdf_builder.dart';
 import 'report_export_stub.dart' if (dart.library.io) 'report_export_io.dart' as report_export;
@@ -46,7 +47,14 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
-  Future<({double totalSales, double totalExpenses, double net})> _totalsForRange() async {
+  Future<
+      ({
+        double totalSales,
+        double totalExpenses,
+        double net,
+        int saleCount,
+        int expenseCount,
+      })> _statsForRange() async {
     final range = _range();
     final db = widget.repo.db;
     final sales = await (db.select(db.sales)
@@ -63,7 +71,24 @@ class _ReportsPageState extends State<ReportsPage> {
         .get();
     final totalSales = sales.fold<double>(0, (a, b) => a + b.totalAmount);
     final totalExpenses = expenses.fold<double>(0, (a, b) => a + b.amount);
-    return (totalSales: totalSales, totalExpenses: totalExpenses, net: totalSales - totalExpenses);
+    return (
+      totalSales: totalSales,
+      totalExpenses: totalExpenses,
+      net: totalSales - totalExpenses,
+      saleCount: sales.length,
+      expenseCount: expenses.length,
+    );
+  }
+
+  String _periodLabel(AppCopy copy) {
+    switch (_filter) {
+      case ReportFilter.daily:
+        return copy.reportFilterDaily;
+      case ReportFilter.weekly:
+        return copy.reportFilterWeekly;
+      case ReportFilter.monthly:
+        return copy.reportFilterMonthly;
+    }
   }
 
   Future<void> _exportPng() async {
@@ -107,11 +132,14 @@ class _ReportsPageState extends State<ReportsPage> {
     final copy = AppCopy.of(context);
     try {
       final range = _range();
-      final t = await _totalsForRange();
+      final t = await _statsForRange();
       final bytes = await ReportPdfBuilder.buildSummaryBytes(
         copy: copy,
         from: range.from,
         to: range.to,
+        periodLabel: _periodLabel(copy),
+        saleCount: t.saleCount,
+        expenseCount: t.expenseCount,
         totalSales: t.totalSales,
         totalExpenses: t.totalExpenses,
         net: t.net,
@@ -174,55 +202,68 @@ class _ReportsPageState extends State<ReportsPage> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _exportPng,
-                          icon: const Icon(Icons.image_outlined),
-                          label: Text(copy.exportPng),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _exportPdf,
-                          icon: const Icon(Icons.picture_as_pdf_outlined),
-                          label: Text(copy.exportPdf),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    RepaintBoundary(
-                      key: _repaintKey,
-                      child: StreamBuilder<List<Sale>>(
-                        stream: widget.repo.watchSalesInRange(range.from, range.to),
-                        builder: (context, salesSnap) {
-                          final sales = salesSnap.data ?? const [];
-                          return StreamBuilder<List<Expense>>(
-                            stream: widget.repo.watchExpensesInRange(range.from, range.to),
-                            builder: (context, expSnap) {
-                              final expenses = expSnap.data ?? const [];
-                              final totalSales = sales.fold<double>(
-                                0,
-                                (sum, e) => sum + e.totalAmount,
-                              );
-                              final totalExpenses = expenses.fold<double>(
-                                0,
-                                (sum, e) => sum + e.amount,
-                              );
-                              final net = totalSales - totalExpenses;
+                    StreamBuilder<List<Sale>>(
+                      stream: widget.repo.watchSalesInRange(range.from, range.to),
+                      builder: (context, salesSnap) {
+                        final sales = salesSnap.data ?? const [];
+                        return StreamBuilder<List<Expense>>(
+                          stream: widget.repo.watchExpensesInRange(range.from, range.to),
+                          builder: (context, expSnap) {
+                            final expenses = expSnap.data ?? const [];
+                            final totalSales = sales.fold<double>(
+                              0,
+                              (sum, e) => sum + e.totalAmount,
+                            );
+                            final totalExpenses = expenses.fold<double>(
+                              0,
+                              (sum, e) => sum + e.amount,
+                            );
+                            final net = totalSales - totalExpenses;
 
-                              final spots = <FlSpot>[];
-                              for (var i = 0; i < sales.length; i++) {
-                                final y = sales[i].totalAmount;
-                                spots.add(FlSpot(i.toDouble(), y));
-                              }
+                            final spots = <FlSpot>[];
+                            for (var i = 0; i < sales.length; i++) {
+                              final y = sales[i].totalAmount;
+                              spots.add(FlSpot(i.toDouble(), y));
+                            }
 
-                              final useTwoCols = fullW >= 320;
+                            final useTwoCols = fullW >= 320;
 
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  if (useTwoCols)
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                RepaintBoundary(
+                                  key: _repaintKey,
+                                  child: ReportExportCard(
+                                    periodLabel: _periodLabel(copy),
+                                    rangeFrom: range.from,
+                                    rangeTo: range.to,
+                                    totalSales: totalSales,
+                                    totalExpenses: totalExpenses,
+                                    net: net,
+                                    currencyCode: code,
+                                    saleCount: sales.length,
+                                    expenseCount: expenses.length,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                Wrap(
+                                  spacing: AppSpacing.sm,
+                                  runSpacing: AppSpacing.sm,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: _exportPng,
+                                      icon: const Icon(Icons.image_outlined),
+                                      label: Text(copy.exportPng),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: _exportPdf,
+                                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                                      label: Text(copy.exportPdf),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                if (useTwoCols)
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -290,11 +331,10 @@ class _ReportsPageState extends State<ReportsPage> {
                                     ),
                                   ),
                                 ],
-                              );
-                            },
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),
