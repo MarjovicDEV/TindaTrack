@@ -18,6 +18,7 @@ class SalesPage extends StatefulWidget {
 class _SalesPageState extends State<SalesPage> {
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +26,7 @@ class _SalesPageState extends State<SalesPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
         ),
-        title: const Text(AppCopy.navSales),
+        title: Text(copy.navSales),
       ),
       body: SafeArea(
         child: Padding(
@@ -38,7 +39,7 @@ class _SalesPageState extends State<SalesPage> {
                 child: FilledButton.icon(
                   onPressed: () => _showSaleDialog(),
                   icon: const Icon(Icons.save_outlined),
-                  label: const Text('Mag-record ng benta'),
+                  label: Text(copy.isEnglish ? 'Record sale' : 'Mag-record ng benta'),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -55,7 +56,7 @@ class _SalesPageState extends State<SalesPage> {
                       if (sales.isEmpty) {
                         return Center(
                           child: Text(
-                            'Wala pang naitalang benta.',
+                            copy.isEnglish ? 'No sales yet recorded.' : 'Wala pang naitalang benta.',
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         );
@@ -70,8 +71,9 @@ class _SalesPageState extends State<SalesPage> {
                             child: Dismissible(
                               key: ValueKey('sale-${item.id}'),
                               direction: DismissDirection.endToStart,
-                              confirmDismiss: (_) =>
-                                  _confirmDelete('Burahin ang benta #${item.id}?'),
+                              confirmDismiss: (_) => _confirmDelete(
+                                copy.isEnglish ? 'Delete sale #${item.id}?' : 'Burahin ang benta #${item.id}?',
+                              ),
                               onDismissed: (_) =>
                                   widget.repo.deleteSaleAndRestoreStock(item.id),
                               background: Container(
@@ -93,11 +95,11 @@ class _SalesPageState extends State<SalesPage> {
                                 ),
                                 child: ListTile(
                                   onTap: () => _showSaleDialog(existingSale: item),
-                                  title: Text('Benta #${item.id}'),
-                                  subtitle: Text(
-                                    'Transaksyon (PH UTC+8): ${formatPhilippineDateTime(item.createdAt)}',
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
+                                   title: Text(copy.isEnglish ? 'Sale #${item.id}' : 'Benta #${item.id}'),
+                                   subtitle: Text(
+                                     '${copy.isEnglish ? 'Transaction' : 'Transaksyon'} (PH UTC+8): ${formatPhilippineDateTime(item.createdAt)}',
+                                     style: Theme.of(context).textTheme.bodySmall,
+                                   ),
                                   trailing: Text(formatCurrency(item.totalAmount)),
                                 ),
                               ),
@@ -117,6 +119,7 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   Future<void> _showSaleDialog({dynamic existingSale}) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final qtyCtrl = TextEditingController(text: '1');
     int? selectedProductId;
@@ -138,7 +141,9 @@ class _SalesPageState extends State<SalesPage> {
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text(
-            existingSale == null ? 'Mag-record ng benta' : 'I-update ang benta',
+            existingSale == null
+                ? (copy.isEnglish ? 'Record sale' : 'Mag-record ng benta')
+                : (copy.isEnglish ? 'Update sale' : 'I-update ang benta'),
           ),
           content: StreamBuilder(
             stream: widget.repo.watchProducts(),
@@ -161,7 +166,7 @@ class _SalesPageState extends State<SalesPage> {
                   children: [
                     DropdownButtonFormField<int>(
                       initialValue: selectedProductId,
-                      hint: const Text('Pumili ng produkto'),
+                       hint: Text(copy.isEnglish ? 'Choose a product' : 'Pumili ng produkto'),
                       items: products
                           .map(
                             (p) => DropdownMenuItem(
@@ -173,7 +178,7 @@ class _SalesPageState extends State<SalesPage> {
                           )
                           .toList(),
                       validator: (v) =>
-                          v == null ? 'Produkto ay required.' : null,
+                           v == null ? (copy.isEnglish ? 'Product is required.' : 'Produkto ay required.') : null,
                       onChanged: (value) =>
                           setState(() => selectedProductId = value),
                     ),
@@ -181,27 +186,28 @@ class _SalesPageState extends State<SalesPage> {
                     TextFormField(
                       controller: qtyCtrl,
                       decoration: InputDecoration(
-                        labelText: selectedProduct == null
-                            ? 'Dami / Timbang'
-                            : 'Dami (${selectedProduct.unitType})',
+                         labelText: selectedProduct == null
+                             ? (copy.isEnglish ? 'Quantity / weight' : 'Dami / Timbang')
+                             : (copy.isEnglish ? 'Quantity (${selectedProduct.unitType})' : 'Dami (${selectedProduct.unitType})'),
                       ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       validator: (v) {
-                        if (selectedProductId == null)
-                          return 'Pumili muna ng produkto.';
+                        if (selectedProductId == null) {
+                          return copy.isEnglish ? 'Choose a product first.' : 'Pumili muna ng produkto.';
+                        }
                         final product = products.firstWhere(
                           (p) => p.id == selectedProductId,
                         );
                         final base = product.unitType == 'kg'
-                            ? InputValidators.validateDecimalPositive(
-                                v ?? '',
-                                field: 'Timbang',
-                              )
+                              ? InputValidators.validateDecimalPositive(
+                                  v ?? '',
+                                  field: copy.isEnglish ? 'Weight' : 'Timbang',
+                                )
                             : InputValidators.validateWholePositive(
                                 v ?? '',
-                                field: 'Qty',
+                                 field: 'Qty',
                               );
                         if (base != null) return base;
                         final q = double.tryParse(v ?? '') ?? 0;
@@ -212,8 +218,8 @@ class _SalesPageState extends State<SalesPage> {
                           effectiveAvailable = product.stockQty + priorQty;
                         }
                         if (q > effectiveAvailable) {
-                          return 'Hindi pwede. Kulang stock. Max: '
-                              '${effectiveAvailable.toStringAsFixed(2)}.';
+                           return copy.isEnglish ? 'Not allowed. Insufficient stock. Max: ' : 'Hindi pwede. Kulang stock. Max: '
+                               '${effectiveAvailable.toStringAsFixed(2)}.';
                         }
                         return null;
                       },
@@ -225,8 +231,8 @@ class _SalesPageState extends State<SalesPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Kanselahin'),
+               onPressed: () => Navigator.pop(context),
+               child: Text(copy.inventoryCancel),
             ),
             FilledButton(
               onPressed: () async {
@@ -251,7 +257,7 @@ class _SalesPageState extends State<SalesPage> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('I-save ang benta'),
+               child: Text(copy.isEnglish ? 'Save sale' : 'I-save ang benta'),
             ),
           ],
         ),
@@ -260,20 +266,18 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   Future<bool?> _confirmDelete(String message) {
+    final copy = AppCopy.of(context);
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Kumpirmahin ang delete'),
+        title: Text(copy.inventoryConfirmDeleteTitle),
         content: Text(message),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hindi'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(copy.inventoryDeleteNo)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(copy.inventoryDeleteYes),
           ),
         ],
       ),
