@@ -694,762 +694,6 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   }
 }
 
-class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SalesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _totalAmountMeta = const VerificationMeta(
-    'totalAmount',
-  );
-  @override
-  late final GeneratedColumn<double> totalAmount = GeneratedColumn<double>(
-    'total_amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [id, createdAt, totalAmount, deletedAt];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'sales';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Sale> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('total_amount')) {
-      context.handle(
-        _totalAmountMeta,
-        totalAmount.isAcceptableOrUnknown(
-          data['total_amount']!,
-          _totalAmountMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_totalAmountMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Sale map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Sale(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      totalAmount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}total_amount'],
-      )!,
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-    );
-  }
-
-  @override
-  $SalesTable createAlias(String alias) {
-    return $SalesTable(attachedDatabase, alias);
-  }
-}
-
-class Sale extends DataClass implements Insertable<Sale> {
-  final int id;
-  final DateTime createdAt;
-  final double totalAmount;
-  final DateTime? deletedAt;
-  const Sale({
-    required this.id,
-    required this.createdAt,
-    required this.totalAmount,
-    this.deletedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['total_amount'] = Variable<double>(totalAmount);
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    return map;
-  }
-
-  SalesCompanion toCompanion(bool nullToAbsent) {
-    return SalesCompanion(
-      id: Value(id),
-      createdAt: Value(createdAt),
-      totalAmount: Value(totalAmount),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-    );
-  }
-
-  factory Sale.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Sale(
-      id: serializer.fromJson<int>(json['id']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      totalAmount: serializer.fromJson<double>(json['totalAmount']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'totalAmount': serializer.toJson<double>(totalAmount),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-    };
-  }
-
-  Sale copyWith({
-    int? id,
-    DateTime? createdAt,
-    double? totalAmount,
-    Value<DateTime?> deletedAt = const Value.absent(),
-  }) => Sale(
-    id: id ?? this.id,
-    createdAt: createdAt ?? this.createdAt,
-    totalAmount: totalAmount ?? this.totalAmount,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-  );
-  Sale copyWithCompanion(SalesCompanion data) {
-    return Sale(
-      id: data.id.present ? data.id.value : this.id,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      totalAmount: data.totalAmount.present
-          ? data.totalAmount.value
-          : this.totalAmount,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Sale(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('totalAmount: $totalAmount, ')
-          ..write('deletedAt: $deletedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, createdAt, totalAmount, deletedAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Sale &&
-          other.id == this.id &&
-          other.createdAt == this.createdAt &&
-          other.totalAmount == this.totalAmount &&
-          other.deletedAt == this.deletedAt);
-}
-
-class SalesCompanion extends UpdateCompanion<Sale> {
-  final Value<int> id;
-  final Value<DateTime> createdAt;
-  final Value<double> totalAmount;
-  final Value<DateTime?> deletedAt;
-  const SalesCompanion({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.totalAmount = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-  });
-  SalesCompanion.insert({
-    this.id = const Value.absent(),
-    required DateTime createdAt,
-    required double totalAmount,
-    this.deletedAt = const Value.absent(),
-  }) : createdAt = Value(createdAt),
-       totalAmount = Value(totalAmount);
-  static Insertable<Sale> custom({
-    Expression<int>? id,
-    Expression<DateTime>? createdAt,
-    Expression<double>? totalAmount,
-    Expression<DateTime>? deletedAt,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (createdAt != null) 'created_at': createdAt,
-      if (totalAmount != null) 'total_amount': totalAmount,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-    });
-  }
-
-  SalesCompanion copyWith({
-    Value<int>? id,
-    Value<DateTime>? createdAt,
-    Value<double>? totalAmount,
-    Value<DateTime?>? deletedAt,
-  }) {
-    return SalesCompanion(
-      id: id ?? this.id,
-      createdAt: createdAt ?? this.createdAt,
-      totalAmount: totalAmount ?? this.totalAmount,
-      deletedAt: deletedAt ?? this.deletedAt,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (totalAmount.present) {
-      map['total_amount'] = Variable<double>(totalAmount.value);
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SalesCompanion(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('totalAmount: $totalAmount, ')
-          ..write('deletedAt: $deletedAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $SaleItemsTable extends SaleItems
-    with TableInfo<$SaleItemsTable, SaleItem> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SaleItemsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _saleIdMeta = const VerificationMeta('saleId');
-  @override
-  late final GeneratedColumn<int> saleId = GeneratedColumn<int>(
-    'sale_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES sales (id)',
-    ),
-  );
-  static const VerificationMeta _productIdMeta = const VerificationMeta(
-    'productId',
-  );
-  @override
-  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
-    'product_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES products (id)',
-    ),
-  );
-  static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
-  @override
-  late final GeneratedColumn<double> qty = GeneratedColumn<double>(
-    'qty',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _unitPriceMeta = const VerificationMeta(
-    'unitPrice',
-  );
-  @override
-  late final GeneratedColumn<double> unitPrice = GeneratedColumn<double>(
-    'unit_price',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    saleId,
-    productId,
-    qty,
-    unitPrice,
-    createdAt,
-    deletedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'sale_items';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<SaleItem> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('sale_id')) {
-      context.handle(
-        _saleIdMeta,
-        saleId.isAcceptableOrUnknown(data['sale_id']!, _saleIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_saleIdMeta);
-    }
-    if (data.containsKey('product_id')) {
-      context.handle(
-        _productIdMeta,
-        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_productIdMeta);
-    }
-    if (data.containsKey('qty')) {
-      context.handle(
-        _qtyMeta,
-        qty.isAcceptableOrUnknown(data['qty']!, _qtyMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_qtyMeta);
-    }
-    if (data.containsKey('unit_price')) {
-      context.handle(
-        _unitPriceMeta,
-        unitPrice.isAcceptableOrUnknown(data['unit_price']!, _unitPriceMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_unitPriceMeta);
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  SaleItem map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SaleItem(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      saleId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}sale_id'],
-      )!,
-      productId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}product_id'],
-      )!,
-      qty: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}qty'],
-      )!,
-      unitPrice: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}unit_price'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-    );
-  }
-
-  @override
-  $SaleItemsTable createAlias(String alias) {
-    return $SaleItemsTable(attachedDatabase, alias);
-  }
-}
-
-class SaleItem extends DataClass implements Insertable<SaleItem> {
-  final int id;
-  final int saleId;
-  final int productId;
-  final double qty;
-  final double unitPrice;
-  final DateTime? createdAt;
-  final DateTime? deletedAt;
-  const SaleItem({
-    required this.id,
-    required this.saleId,
-    required this.productId,
-    required this.qty,
-    required this.unitPrice,
-    this.createdAt,
-    this.deletedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['sale_id'] = Variable<int>(saleId);
-    map['product_id'] = Variable<int>(productId);
-    map['qty'] = Variable<double>(qty);
-    map['unit_price'] = Variable<double>(unitPrice);
-    if (!nullToAbsent || createdAt != null) {
-      map['created_at'] = Variable<DateTime>(createdAt);
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    return map;
-  }
-
-  SaleItemsCompanion toCompanion(bool nullToAbsent) {
-    return SaleItemsCompanion(
-      id: Value(id),
-      saleId: Value(saleId),
-      productId: Value(productId),
-      qty: Value(qty),
-      unitPrice: Value(unitPrice),
-      createdAt: createdAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(createdAt),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-    );
-  }
-
-  factory SaleItem.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SaleItem(
-      id: serializer.fromJson<int>(json['id']),
-      saleId: serializer.fromJson<int>(json['saleId']),
-      productId: serializer.fromJson<int>(json['productId']),
-      qty: serializer.fromJson<double>(json['qty']),
-      unitPrice: serializer.fromJson<double>(json['unitPrice']),
-      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'saleId': serializer.toJson<int>(saleId),
-      'productId': serializer.toJson<int>(productId),
-      'qty': serializer.toJson<double>(qty),
-      'unitPrice': serializer.toJson<double>(unitPrice),
-      'createdAt': serializer.toJson<DateTime?>(createdAt),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-    };
-  }
-
-  SaleItem copyWith({
-    int? id,
-    int? saleId,
-    int? productId,
-    double? qty,
-    double? unitPrice,
-    Value<DateTime?> createdAt = const Value.absent(),
-    Value<DateTime?> deletedAt = const Value.absent(),
-  }) => SaleItem(
-    id: id ?? this.id,
-    saleId: saleId ?? this.saleId,
-    productId: productId ?? this.productId,
-    qty: qty ?? this.qty,
-    unitPrice: unitPrice ?? this.unitPrice,
-    createdAt: createdAt.present ? createdAt.value : this.createdAt,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-  );
-  SaleItem copyWithCompanion(SaleItemsCompanion data) {
-    return SaleItem(
-      id: data.id.present ? data.id.value : this.id,
-      saleId: data.saleId.present ? data.saleId.value : this.saleId,
-      productId: data.productId.present ? data.productId.value : this.productId,
-      qty: data.qty.present ? data.qty.value : this.qty,
-      unitPrice: data.unitPrice.present ? data.unitPrice.value : this.unitPrice,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SaleItem(')
-          ..write('id: $id, ')
-          ..write('saleId: $saleId, ')
-          ..write('productId: $productId, ')
-          ..write('qty: $qty, ')
-          ..write('unitPrice: $unitPrice, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('deletedAt: $deletedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, saleId, productId, qty, unitPrice, createdAt, deletedAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is SaleItem &&
-          other.id == this.id &&
-          other.saleId == this.saleId &&
-          other.productId == this.productId &&
-          other.qty == this.qty &&
-          other.unitPrice == this.unitPrice &&
-          other.createdAt == this.createdAt &&
-          other.deletedAt == this.deletedAt);
-}
-
-class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
-  final Value<int> id;
-  final Value<int> saleId;
-  final Value<int> productId;
-  final Value<double> qty;
-  final Value<double> unitPrice;
-  final Value<DateTime?> createdAt;
-  final Value<DateTime?> deletedAt;
-  const SaleItemsCompanion({
-    this.id = const Value.absent(),
-    this.saleId = const Value.absent(),
-    this.productId = const Value.absent(),
-    this.qty = const Value.absent(),
-    this.unitPrice = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-  });
-  SaleItemsCompanion.insert({
-    this.id = const Value.absent(),
-    required int saleId,
-    required int productId,
-    required double qty,
-    required double unitPrice,
-    this.createdAt = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-  }) : saleId = Value(saleId),
-       productId = Value(productId),
-       qty = Value(qty),
-       unitPrice = Value(unitPrice);
-  static Insertable<SaleItem> custom({
-    Expression<int>? id,
-    Expression<int>? saleId,
-    Expression<int>? productId,
-    Expression<double>? qty,
-    Expression<double>? unitPrice,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? deletedAt,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (saleId != null) 'sale_id': saleId,
-      if (productId != null) 'product_id': productId,
-      if (qty != null) 'qty': qty,
-      if (unitPrice != null) 'unit_price': unitPrice,
-      if (createdAt != null) 'created_at': createdAt,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-    });
-  }
-
-  SaleItemsCompanion copyWith({
-    Value<int>? id,
-    Value<int>? saleId,
-    Value<int>? productId,
-    Value<double>? qty,
-    Value<double>? unitPrice,
-    Value<DateTime?>? createdAt,
-    Value<DateTime?>? deletedAt,
-  }) {
-    return SaleItemsCompanion(
-      id: id ?? this.id,
-      saleId: saleId ?? this.saleId,
-      productId: productId ?? this.productId,
-      qty: qty ?? this.qty,
-      unitPrice: unitPrice ?? this.unitPrice,
-      createdAt: createdAt ?? this.createdAt,
-      deletedAt: deletedAt ?? this.deletedAt,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (saleId.present) {
-      map['sale_id'] = Variable<int>(saleId.value);
-    }
-    if (productId.present) {
-      map['product_id'] = Variable<int>(productId.value);
-    }
-    if (qty.present) {
-      map['qty'] = Variable<double>(qty.value);
-    }
-    if (unitPrice.present) {
-      map['unit_price'] = Variable<double>(unitPrice.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SaleItemsCompanion(')
-          ..write('id: $id, ')
-          ..write('saleId: $saleId, ')
-          ..write('productId: $productId, ')
-          ..write('qty: $qty, ')
-          ..write('unitPrice: $unitPrice, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('deletedAt: $deletedAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $CustomersTable extends Customers
     with TableInfo<$CustomersTable, Customer> {
   @override
@@ -2298,6 +1542,887 @@ class UtangEntriesCompanion extends UpdateCompanion<UtangEntry> {
           ..write('dueDate: $dueDate, ')
           ..write('itemName: $itemName, ')
           ..write('note: $note, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SalesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalAmountMeta = const VerificationMeta(
+    'totalAmount',
+  );
+  @override
+  late final GeneratedColumn<double> totalAmount = GeneratedColumn<double>(
+    'total_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _customerIdMeta = const VerificationMeta(
+    'customerId',
+  );
+  @override
+  late final GeneratedColumn<int> customerId = GeneratedColumn<int>(
+    'customer_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES customers (id)',
+    ),
+  );
+  static const VerificationMeta _sourceUtangEntryIdMeta =
+      const VerificationMeta('sourceUtangEntryId');
+  @override
+  late final GeneratedColumn<int> sourceUtangEntryId = GeneratedColumn<int>(
+    'source_utang_entry_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES utang_entries (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    totalAmount,
+    customerId,
+    sourceUtangEntryId,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sales';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Sale> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('total_amount')) {
+      context.handle(
+        _totalAmountMeta,
+        totalAmount.isAcceptableOrUnknown(
+          data['total_amount']!,
+          _totalAmountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalAmountMeta);
+    }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+        _customerIdMeta,
+        customerId.isAcceptableOrUnknown(data['customer_id']!, _customerIdMeta),
+      );
+    }
+    if (data.containsKey('source_utang_entry_id')) {
+      context.handle(
+        _sourceUtangEntryIdMeta,
+        sourceUtangEntryId.isAcceptableOrUnknown(
+          data['source_utang_entry_id']!,
+          _sourceUtangEntryIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Sale map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Sale(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      totalAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_amount'],
+      )!,
+      customerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}customer_id'],
+      ),
+      sourceUtangEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_utang_entry_id'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $SalesTable createAlias(String alias) {
+    return $SalesTable(attachedDatabase, alias);
+  }
+}
+
+class Sale extends DataClass implements Insertable<Sale> {
+  final int id;
+  final DateTime createdAt;
+  final double totalAmount;
+  final int? customerId;
+
+  /// When set, this [Sale] mirrors an [UtangEntries] payment row (cash collected on account).
+  final int? sourceUtangEntryId;
+  final DateTime? deletedAt;
+  const Sale({
+    required this.id,
+    required this.createdAt,
+    required this.totalAmount,
+    this.customerId,
+    this.sourceUtangEntryId,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['total_amount'] = Variable<double>(totalAmount);
+    if (!nullToAbsent || customerId != null) {
+      map['customer_id'] = Variable<int>(customerId);
+    }
+    if (!nullToAbsent || sourceUtangEntryId != null) {
+      map['source_utang_entry_id'] = Variable<int>(sourceUtangEntryId);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  SalesCompanion toCompanion(bool nullToAbsent) {
+    return SalesCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      totalAmount: Value(totalAmount),
+      customerId: customerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerId),
+      sourceUtangEntryId: sourceUtangEntryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceUtangEntryId),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory Sale.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Sale(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      totalAmount: serializer.fromJson<double>(json['totalAmount']),
+      customerId: serializer.fromJson<int?>(json['customerId']),
+      sourceUtangEntryId: serializer.fromJson<int?>(json['sourceUtangEntryId']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'totalAmount': serializer.toJson<double>(totalAmount),
+      'customerId': serializer.toJson<int?>(customerId),
+      'sourceUtangEntryId': serializer.toJson<int?>(sourceUtangEntryId),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  Sale copyWith({
+    int? id,
+    DateTime? createdAt,
+    double? totalAmount,
+    Value<int?> customerId = const Value.absent(),
+    Value<int?> sourceUtangEntryId = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => Sale(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    totalAmount: totalAmount ?? this.totalAmount,
+    customerId: customerId.present ? customerId.value : this.customerId,
+    sourceUtangEntryId: sourceUtangEntryId.present
+        ? sourceUtangEntryId.value
+        : this.sourceUtangEntryId,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  Sale copyWithCompanion(SalesCompanion data) {
+    return Sale(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      totalAmount: data.totalAmount.present
+          ? data.totalAmount.value
+          : this.totalAmount,
+      customerId: data.customerId.present
+          ? data.customerId.value
+          : this.customerId,
+      sourceUtangEntryId: data.sourceUtangEntryId.present
+          ? data.sourceUtangEntryId.value
+          : this.sourceUtangEntryId,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Sale(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('customerId: $customerId, ')
+          ..write('sourceUtangEntryId: $sourceUtangEntryId, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    totalAmount,
+    customerId,
+    sourceUtangEntryId,
+    deletedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Sale &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.totalAmount == this.totalAmount &&
+          other.customerId == this.customerId &&
+          other.sourceUtangEntryId == this.sourceUtangEntryId &&
+          other.deletedAt == this.deletedAt);
+}
+
+class SalesCompanion extends UpdateCompanion<Sale> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<double> totalAmount;
+  final Value<int?> customerId;
+  final Value<int?> sourceUtangEntryId;
+  final Value<DateTime?> deletedAt;
+  const SalesCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.totalAmount = const Value.absent(),
+    this.customerId = const Value.absent(),
+    this.sourceUtangEntryId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  SalesCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime createdAt,
+    required double totalAmount,
+    this.customerId = const Value.absent(),
+    this.sourceUtangEntryId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : createdAt = Value(createdAt),
+       totalAmount = Value(totalAmount);
+  static Insertable<Sale> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<double>? totalAmount,
+    Expression<int>? customerId,
+    Expression<int>? sourceUtangEntryId,
+    Expression<DateTime>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (totalAmount != null) 'total_amount': totalAmount,
+      if (customerId != null) 'customer_id': customerId,
+      if (sourceUtangEntryId != null)
+        'source_utang_entry_id': sourceUtangEntryId,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  SalesCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? createdAt,
+    Value<double>? totalAmount,
+    Value<int?>? customerId,
+    Value<int?>? sourceUtangEntryId,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return SalesCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      totalAmount: totalAmount ?? this.totalAmount,
+      customerId: customerId ?? this.customerId,
+      sourceUtangEntryId: sourceUtangEntryId ?? this.sourceUtangEntryId,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (totalAmount.present) {
+      map['total_amount'] = Variable<double>(totalAmount.value);
+    }
+    if (customerId.present) {
+      map['customer_id'] = Variable<int>(customerId.value);
+    }
+    if (sourceUtangEntryId.present) {
+      map['source_utang_entry_id'] = Variable<int>(sourceUtangEntryId.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SalesCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('customerId: $customerId, ')
+          ..write('sourceUtangEntryId: $sourceUtangEntryId, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SaleItemsTable extends SaleItems
+    with TableInfo<$SaleItemsTable, SaleItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SaleItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _saleIdMeta = const VerificationMeta('saleId');
+  @override
+  late final GeneratedColumn<int> saleId = GeneratedColumn<int>(
+    'sale_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES sales (id)',
+    ),
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES products (id)',
+    ),
+  );
+  static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
+  @override
+  late final GeneratedColumn<double> qty = GeneratedColumn<double>(
+    'qty',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitPriceMeta = const VerificationMeta(
+    'unitPrice',
+  );
+  @override
+  late final GeneratedColumn<double> unitPrice = GeneratedColumn<double>(
+    'unit_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    saleId,
+    productId,
+    qty,
+    unitPrice,
+    createdAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sale_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SaleItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('sale_id')) {
+      context.handle(
+        _saleIdMeta,
+        saleId.isAcceptableOrUnknown(data['sale_id']!, _saleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_saleIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('qty')) {
+      context.handle(
+        _qtyMeta,
+        qty.isAcceptableOrUnknown(data['qty']!, _qtyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_qtyMeta);
+    }
+    if (data.containsKey('unit_price')) {
+      context.handle(
+        _unitPriceMeta,
+        unitPrice.isAcceptableOrUnknown(data['unit_price']!, _unitPriceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitPriceMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SaleItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SaleItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      saleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sale_id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}product_id'],
+      )!,
+      qty: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}qty'],
+      )!,
+      unitPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_price'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $SaleItemsTable createAlias(String alias) {
+    return $SaleItemsTable(attachedDatabase, alias);
+  }
+}
+
+class SaleItem extends DataClass implements Insertable<SaleItem> {
+  final int id;
+  final int saleId;
+  final int productId;
+  final double qty;
+  final double unitPrice;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
+  const SaleItem({
+    required this.id,
+    required this.saleId,
+    required this.productId,
+    required this.qty,
+    required this.unitPrice,
+    this.createdAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['sale_id'] = Variable<int>(saleId);
+    map['product_id'] = Variable<int>(productId);
+    map['qty'] = Variable<double>(qty);
+    map['unit_price'] = Variable<double>(unitPrice);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  SaleItemsCompanion toCompanion(bool nullToAbsent) {
+    return SaleItemsCompanion(
+      id: Value(id),
+      saleId: Value(saleId),
+      productId: Value(productId),
+      qty: Value(qty),
+      unitPrice: Value(unitPrice),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory SaleItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SaleItem(
+      id: serializer.fromJson<int>(json['id']),
+      saleId: serializer.fromJson<int>(json['saleId']),
+      productId: serializer.fromJson<int>(json['productId']),
+      qty: serializer.fromJson<double>(json['qty']),
+      unitPrice: serializer.fromJson<double>(json['unitPrice']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'saleId': serializer.toJson<int>(saleId),
+      'productId': serializer.toJson<int>(productId),
+      'qty': serializer.toJson<double>(qty),
+      'unitPrice': serializer.toJson<double>(unitPrice),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  SaleItem copyWith({
+    int? id,
+    int? saleId,
+    int? productId,
+    double? qty,
+    double? unitPrice,
+    Value<DateTime?> createdAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => SaleItem(
+    id: id ?? this.id,
+    saleId: saleId ?? this.saleId,
+    productId: productId ?? this.productId,
+    qty: qty ?? this.qty,
+    unitPrice: unitPrice ?? this.unitPrice,
+    createdAt: createdAt.present ? createdAt.value : this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  SaleItem copyWithCompanion(SaleItemsCompanion data) {
+    return SaleItem(
+      id: data.id.present ? data.id.value : this.id,
+      saleId: data.saleId.present ? data.saleId.value : this.saleId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      qty: data.qty.present ? data.qty.value : this.qty,
+      unitPrice: data.unitPrice.present ? data.unitPrice.value : this.unitPrice,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SaleItem(')
+          ..write('id: $id, ')
+          ..write('saleId: $saleId, ')
+          ..write('productId: $productId, ')
+          ..write('qty: $qty, ')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, saleId, productId, qty, unitPrice, createdAt, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SaleItem &&
+          other.id == this.id &&
+          other.saleId == this.saleId &&
+          other.productId == this.productId &&
+          other.qty == this.qty &&
+          other.unitPrice == this.unitPrice &&
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
+  final Value<int> id;
+  final Value<int> saleId;
+  final Value<int> productId;
+  final Value<double> qty;
+  final Value<double> unitPrice;
+  final Value<DateTime?> createdAt;
+  final Value<DateTime?> deletedAt;
+  const SaleItemsCompanion({
+    this.id = const Value.absent(),
+    this.saleId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.qty = const Value.absent(),
+    this.unitPrice = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  SaleItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required int saleId,
+    required int productId,
+    required double qty,
+    required double unitPrice,
+    this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : saleId = Value(saleId),
+       productId = Value(productId),
+       qty = Value(qty),
+       unitPrice = Value(unitPrice);
+  static Insertable<SaleItem> custom({
+    Expression<int>? id,
+    Expression<int>? saleId,
+    Expression<int>? productId,
+    Expression<double>? qty,
+    Expression<double>? unitPrice,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (saleId != null) 'sale_id': saleId,
+      if (productId != null) 'product_id': productId,
+      if (qty != null) 'qty': qty,
+      if (unitPrice != null) 'unit_price': unitPrice,
+      if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  SaleItemsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? saleId,
+    Value<int>? productId,
+    Value<double>? qty,
+    Value<double>? unitPrice,
+    Value<DateTime?>? createdAt,
+    Value<DateTime?>? deletedAt,
+  }) {
+    return SaleItemsCompanion(
+      id: id ?? this.id,
+      saleId: saleId ?? this.saleId,
+      productId: productId ?? this.productId,
+      qty: qty ?? this.qty,
+      unitPrice: unitPrice ?? this.unitPrice,
+      createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (saleId.present) {
+      map['sale_id'] = Variable<int>(saleId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<int>(productId.value);
+    }
+    if (qty.present) {
+      map['qty'] = Variable<double>(qty.value);
+    }
+    if (unitPrice.present) {
+      map['unit_price'] = Variable<double>(unitPrice.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SaleItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('saleId: $saleId, ')
+          ..write('productId: $productId, ')
+          ..write('qty: $qty, ')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
@@ -4989,10 +5114,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ProductsTable products = $ProductsTable(this);
-  late final $SalesTable sales = $SalesTable(this);
-  late final $SaleItemsTable saleItems = $SaleItemsTable(this);
   late final $CustomersTable customers = $CustomersTable(this);
   late final $UtangEntriesTable utangEntries = $UtangEntriesTable(this);
+  late final $SalesTable sales = $SalesTable(this);
+  late final $SaleItemsTable saleItems = $SaleItemsTable(this);
   late final $UtangEntryItemsTable utangEntryItems = $UtangEntryItemsTable(
     this,
   );
@@ -5010,10 +5135,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     products,
-    sales,
-    saleItems,
     customers,
     utangEntries,
+    sales,
+    saleItems,
     utangEntryItems,
     expenseCategories,
     unitMeasurements,
@@ -5023,6 +5148,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'utang_entries',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('sales', kind: UpdateKind.delete)],
+    ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'utang_entries',
@@ -5572,11 +5704,982 @@ typedef $$ProductsTableProcessedTableManager =
       Product,
       PrefetchHooks Function({bool saleItemsRefs, bool utangEntryItemsRefs})
     >;
+typedef $$CustomersTableCreateCompanionBuilder =
+    CustomersCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+typedef $$CustomersTableUpdateCompanionBuilder =
+    CustomersCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<DateTime?> createdAt,
+      Value<DateTime?> deletedAt,
+    });
+
+final class $$CustomersTableReferences
+    extends BaseReferences<_$AppDatabase, $CustomersTable, Customer> {
+  $$CustomersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$UtangEntriesTable, List<UtangEntry>>
+  _utangEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.utangEntries,
+    aliasName: $_aliasNameGenerator(
+      db.customers.id,
+      db.utangEntries.customerId,
+    ),
+  );
+
+  $$UtangEntriesTableProcessedTableManager get utangEntriesRefs {
+    final manager = $$UtangEntriesTableTableManager(
+      $_db,
+      $_db.utangEntries,
+    ).filter((f) => f.customerId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_utangEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$SalesTable, List<Sale>> _salesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.sales,
+    aliasName: $_aliasNameGenerator(db.customers.id, db.sales.customerId),
+  );
+
+  $$SalesTableProcessedTableManager get salesRefs {
+    final manager = $$SalesTableTableManager(
+      $_db,
+      $_db.sales,
+    ).filter((f) => f.customerId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_salesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CustomersTableFilterComposer
+    extends Composer<_$AppDatabase, $CustomersTable> {
+  $$CustomersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> utangEntriesRefs(
+    Expression<bool> Function($$UtangEntriesTableFilterComposer f) f,
+  ) {
+    final $$UtangEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.customerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> salesRefs(
+    Expression<bool> Function($$SalesTableFilterComposer f) f,
+  ) {
+    final $$SalesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.customerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableFilterComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CustomersTableOrderingComposer
+    extends Composer<_$AppDatabase, $CustomersTable> {
+  $$CustomersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CustomersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CustomersTable> {
+  $$CustomersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  Expression<T> utangEntriesRefs<T extends Object>(
+    Expression<T> Function($$UtangEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$UtangEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.customerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> salesRefs<T extends Object>(
+    Expression<T> Function($$SalesTableAnnotationComposer a) f,
+  ) {
+    final $$SalesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.customerId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CustomersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CustomersTable,
+          Customer,
+          $$CustomersTableFilterComposer,
+          $$CustomersTableOrderingComposer,
+          $$CustomersTableAnnotationComposer,
+          $$CustomersTableCreateCompanionBuilder,
+          $$CustomersTableUpdateCompanionBuilder,
+          (Customer, $$CustomersTableReferences),
+          Customer,
+          PrefetchHooks Function({bool utangEntriesRefs, bool salesRefs})
+        > {
+  $$CustomersTableTableManager(_$AppDatabase db, $CustomersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CustomersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => CustomersCompanion(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<DateTime?> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => CustomersCompanion.insert(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CustomersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({utangEntriesRefs = false, salesRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (utangEntriesRefs) db.utangEntries,
+                    if (salesRefs) db.sales,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (utangEntriesRefs)
+                        await $_getPrefetchedData<
+                          Customer,
+                          $CustomersTable,
+                          UtangEntry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CustomersTableReferences
+                              ._utangEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CustomersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).utangEntriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.customerId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (salesRefs)
+                        await $_getPrefetchedData<
+                          Customer,
+                          $CustomersTable,
+                          Sale
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CustomersTableReferences
+                              ._salesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CustomersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).salesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.customerId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$CustomersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CustomersTable,
+      Customer,
+      $$CustomersTableFilterComposer,
+      $$CustomersTableOrderingComposer,
+      $$CustomersTableAnnotationComposer,
+      $$CustomersTableCreateCompanionBuilder,
+      $$CustomersTableUpdateCompanionBuilder,
+      (Customer, $$CustomersTableReferences),
+      Customer,
+      PrefetchHooks Function({bool utangEntriesRefs, bool salesRefs})
+    >;
+typedef $$UtangEntriesTableCreateCompanionBuilder =
+    UtangEntriesCompanion Function({
+      Value<int> id,
+      required int customerId,
+      required double amount,
+      Value<bool> isPayment,
+      required DateTime createdAt,
+      Value<DateTime?> dueDate,
+      Value<String?> itemName,
+      Value<String?> note,
+      Value<DateTime?> deletedAt,
+    });
+typedef $$UtangEntriesTableUpdateCompanionBuilder =
+    UtangEntriesCompanion Function({
+      Value<int> id,
+      Value<int> customerId,
+      Value<double> amount,
+      Value<bool> isPayment,
+      Value<DateTime> createdAt,
+      Value<DateTime?> dueDate,
+      Value<String?> itemName,
+      Value<String?> note,
+      Value<DateTime?> deletedAt,
+    });
+
+final class $$UtangEntriesTableReferences
+    extends BaseReferences<_$AppDatabase, $UtangEntriesTable, UtangEntry> {
+  $$UtangEntriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CustomersTable _customerIdTable(_$AppDatabase db) =>
+      db.customers.createAlias(
+        $_aliasNameGenerator(db.utangEntries.customerId, db.customers.id),
+      );
+
+  $$CustomersTableProcessedTableManager get customerId {
+    final $_column = $_itemColumn<int>('customer_id')!;
+
+    final manager = $$CustomersTableTableManager(
+      $_db,
+      $_db.customers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_customerIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$SalesTable, List<Sale>> _salesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.sales,
+    aliasName: $_aliasNameGenerator(
+      db.utangEntries.id,
+      db.sales.sourceUtangEntryId,
+    ),
+  );
+
+  $$SalesTableProcessedTableManager get salesRefs {
+    final manager = $$SalesTableTableManager($_db, $_db.sales).filter(
+      (f) => f.sourceUtangEntryId.id.sqlEquals($_itemColumn<int>('id')!),
+    );
+
+    final cache = $_typedResult.readTableOrNull(_salesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$UtangEntryItemsTable, List<UtangEntryItem>>
+  _utangEntryItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.utangEntryItems,
+    aliasName: $_aliasNameGenerator(
+      db.utangEntries.id,
+      db.utangEntryItems.utangEntryId,
+    ),
+  );
+
+  $$UtangEntryItemsTableProcessedTableManager get utangEntryItemsRefs {
+    final manager = $$UtangEntryItemsTableTableManager(
+      $_db,
+      $_db.utangEntryItems,
+    ).filter((f) => f.utangEntryId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _utangEntryItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$UtangEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $UtangEntriesTable> {
+  $$UtangEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPayment => $composableBuilder(
+    column: $table.isPayment,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemName => $composableBuilder(
+    column: $table.itemName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CustomersTableFilterComposer get customerId {
+    final $$CustomersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.customerId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableFilterComposer(
+            $db: $db,
+            $table: $db.customers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> salesRefs(
+    Expression<bool> Function($$SalesTableFilterComposer f) f,
+  ) {
+    final $$SalesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.sourceUtangEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableFilterComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> utangEntryItemsRefs(
+    Expression<bool> Function($$UtangEntryItemsTableFilterComposer f) f,
+  ) {
+    final $$UtangEntryItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntryItems,
+      getReferencedColumn: (t) => t.utangEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntryItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.utangEntryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$UtangEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $UtangEntriesTable> {
+  $$UtangEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPayment => $composableBuilder(
+    column: $table.isPayment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get itemName => $composableBuilder(
+    column: $table.itemName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CustomersTableOrderingComposer get customerId {
+    final $$CustomersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.customerId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableOrderingComposer(
+            $db: $db,
+            $table: $db.customers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$UtangEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UtangEntriesTable> {
+  $$UtangEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPayment =>
+      $composableBuilder(column: $table.isPayment, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<String> get itemName =>
+      $composableBuilder(column: $table.itemName, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  $$CustomersTableAnnotationComposer get customerId {
+    final $$CustomersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.customerId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.customers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> salesRefs<T extends Object>(
+    Expression<T> Function($$SalesTableAnnotationComposer a) f,
+  ) {
+    final $$SalesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.sourceUtangEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> utangEntryItemsRefs<T extends Object>(
+    Expression<T> Function($$UtangEntryItemsTableAnnotationComposer a) f,
+  ) {
+    final $$UtangEntryItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.utangEntryItems,
+      getReferencedColumn: (t) => t.utangEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntryItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.utangEntryItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$UtangEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UtangEntriesTable,
+          UtangEntry,
+          $$UtangEntriesTableFilterComposer,
+          $$UtangEntriesTableOrderingComposer,
+          $$UtangEntriesTableAnnotationComposer,
+          $$UtangEntriesTableCreateCompanionBuilder,
+          $$UtangEntriesTableUpdateCompanionBuilder,
+          (UtangEntry, $$UtangEntriesTableReferences),
+          UtangEntry,
+          PrefetchHooks Function({
+            bool customerId,
+            bool salesRefs,
+            bool utangEntryItemsRefs,
+          })
+        > {
+  $$UtangEntriesTableTableManager(_$AppDatabase db, $UtangEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UtangEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UtangEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UtangEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> customerId = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<bool> isPayment = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<String?> itemName = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => UtangEntriesCompanion(
+                id: id,
+                customerId: customerId,
+                amount: amount,
+                isPayment: isPayment,
+                createdAt: createdAt,
+                dueDate: dueDate,
+                itemName: itemName,
+                note: note,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int customerId,
+                required double amount,
+                Value<bool> isPayment = const Value.absent(),
+                required DateTime createdAt,
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<String?> itemName = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+              }) => UtangEntriesCompanion.insert(
+                id: id,
+                customerId: customerId,
+                amount: amount,
+                isPayment: isPayment,
+                createdAt: createdAt,
+                dueDate: dueDate,
+                itemName: itemName,
+                note: note,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$UtangEntriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                customerId = false,
+                salesRefs = false,
+                utangEntryItemsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (salesRefs) db.sales,
+                    if (utangEntryItemsRefs) db.utangEntryItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (customerId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.customerId,
+                                    referencedTable:
+                                        $$UtangEntriesTableReferences
+                                            ._customerIdTable(db),
+                                    referencedColumn:
+                                        $$UtangEntriesTableReferences
+                                            ._customerIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (salesRefs)
+                        await $_getPrefetchedData<
+                          UtangEntry,
+                          $UtangEntriesTable,
+                          Sale
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UtangEntriesTableReferences
+                              ._salesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UtangEntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).salesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceUtangEntryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (utangEntryItemsRefs)
+                        await $_getPrefetchedData<
+                          UtangEntry,
+                          $UtangEntriesTable,
+                          UtangEntryItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$UtangEntriesTableReferences
+                              ._utangEntryItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UtangEntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).utangEntryItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.utangEntryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$UtangEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UtangEntriesTable,
+      UtangEntry,
+      $$UtangEntriesTableFilterComposer,
+      $$UtangEntriesTableOrderingComposer,
+      $$UtangEntriesTableAnnotationComposer,
+      $$UtangEntriesTableCreateCompanionBuilder,
+      $$UtangEntriesTableUpdateCompanionBuilder,
+      (UtangEntry, $$UtangEntriesTableReferences),
+      UtangEntry,
+      PrefetchHooks Function({
+        bool customerId,
+        bool salesRefs,
+        bool utangEntryItemsRefs,
+      })
+    >;
 typedef $$SalesTableCreateCompanionBuilder =
     SalesCompanion Function({
       Value<int> id,
       required DateTime createdAt,
       required double totalAmount,
+      Value<int?> customerId,
+      Value<int?> sourceUtangEntryId,
       Value<DateTime?> deletedAt,
     });
 typedef $$SalesTableUpdateCompanionBuilder =
@@ -5584,12 +6687,50 @@ typedef $$SalesTableUpdateCompanionBuilder =
       Value<int> id,
       Value<DateTime> createdAt,
       Value<double> totalAmount,
+      Value<int?> customerId,
+      Value<int?> sourceUtangEntryId,
       Value<DateTime?> deletedAt,
     });
 
 final class $$SalesTableReferences
     extends BaseReferences<_$AppDatabase, $SalesTable, Sale> {
   $$SalesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CustomersTable _customerIdTable(_$AppDatabase db) => db.customers
+      .createAlias($_aliasNameGenerator(db.sales.customerId, db.customers.id));
+
+  $$CustomersTableProcessedTableManager? get customerId {
+    final $_column = $_itemColumn<int>('customer_id');
+    if ($_column == null) return null;
+    final manager = $$CustomersTableTableManager(
+      $_db,
+      $_db.customers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_customerIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $UtangEntriesTable _sourceUtangEntryIdTable(_$AppDatabase db) =>
+      db.utangEntries.createAlias(
+        $_aliasNameGenerator(db.sales.sourceUtangEntryId, db.utangEntries.id),
+      );
+
+  $$UtangEntriesTableProcessedTableManager? get sourceUtangEntryId {
+    final $_column = $_itemColumn<int>('source_utang_entry_id');
+    if ($_column == null) return null;
+    final manager = $$UtangEntriesTableTableManager(
+      $_db,
+      $_db.utangEntries,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sourceUtangEntryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
   static MultiTypedResultKey<$SaleItemsTable, List<SaleItem>>
   _saleItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
@@ -5637,6 +6778,52 @@ class $$SalesTableFilterComposer extends Composer<_$AppDatabase, $SalesTable> {
     column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$CustomersTableFilterComposer get customerId {
+    final $$CustomersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.customerId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableFilterComposer(
+            $db: $db,
+            $table: $db.customers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UtangEntriesTableFilterComposer get sourceUtangEntryId {
+    final $$UtangEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceUtangEntryId,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<bool> saleItemsRefs(
     Expression<bool> Function($$SaleItemsTableFilterComposer f) f,
@@ -5692,6 +6879,52 @@ class $$SalesTableOrderingComposer
     column: $table.deletedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$CustomersTableOrderingComposer get customerId {
+    final $$CustomersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.customerId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableOrderingComposer(
+            $db: $db,
+            $table: $db.customers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UtangEntriesTableOrderingComposer get sourceUtangEntryId {
+    final $$UtangEntriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceUtangEntryId,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$SalesTableAnnotationComposer
@@ -5716,6 +6949,52 @@ class $$SalesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  $$CustomersTableAnnotationComposer get customerId {
+    final $$CustomersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.customerId,
+      referencedTable: $db.customers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.customers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UtangEntriesTableAnnotationComposer get sourceUtangEntryId {
+    final $$UtangEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceUtangEntryId,
+      referencedTable: $db.utangEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UtangEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.utangEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<T> saleItemsRefs<T extends Object>(
     Expression<T> Function($$SaleItemsTableAnnotationComposer a) f,
@@ -5756,7 +7035,11 @@ class $$SalesTableTableManager
           $$SalesTableUpdateCompanionBuilder,
           (Sale, $$SalesTableReferences),
           Sale,
-          PrefetchHooks Function({bool saleItemsRefs})
+          PrefetchHooks Function({
+            bool customerId,
+            bool sourceUtangEntryId,
+            bool saleItemsRefs,
+          })
         > {
   $$SalesTableTableManager(_$AppDatabase db, $SalesTable table)
     : super(
@@ -5774,11 +7057,15 @@ class $$SalesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
+                Value<int?> customerId = const Value.absent(),
+                Value<int?> sourceUtangEntryId = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
               }) => SalesCompanion(
                 id: id,
                 createdAt: createdAt,
                 totalAmount: totalAmount,
+                customerId: customerId,
+                sourceUtangEntryId: sourceUtangEntryId,
                 deletedAt: deletedAt,
               ),
           createCompanionCallback:
@@ -5786,11 +7073,15 @@ class $$SalesTableTableManager
                 Value<int> id = const Value.absent(),
                 required DateTime createdAt,
                 required double totalAmount,
+                Value<int?> customerId = const Value.absent(),
+                Value<int?> sourceUtangEntryId = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
               }) => SalesCompanion.insert(
                 id: id,
                 createdAt: createdAt,
                 totalAmount: totalAmount,
+                customerId: customerId,
+                sourceUtangEntryId: sourceUtangEntryId,
                 deletedAt: deletedAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -5799,28 +7090,83 @@ class $$SalesTableTableManager
                     (e.readTable(table), $$SalesTableReferences(db, table, e)),
               )
               .toList(),
-          prefetchHooksCallback: ({saleItemsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (saleItemsRefs) db.saleItems],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (saleItemsRefs)
-                    await $_getPrefetchedData<Sale, $SalesTable, SaleItem>(
-                      currentTable: table,
-                      referencedTable: $$SalesTableReferences
-                          ._saleItemsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$SalesTableReferences(db, table, p0).saleItemsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.saleId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({
+                customerId = false,
+                sourceUtangEntryId = false,
+                saleItemsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [if (saleItemsRefs) db.saleItems],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (customerId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.customerId,
+                                    referencedTable: $$SalesTableReferences
+                                        ._customerIdTable(db),
+                                    referencedColumn: $$SalesTableReferences
+                                        ._customerIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (sourceUtangEntryId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sourceUtangEntryId,
+                                    referencedTable: $$SalesTableReferences
+                                        ._sourceUtangEntryIdTable(db),
+                                    referencedColumn: $$SalesTableReferences
+                                        ._sourceUtangEntryIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (saleItemsRefs)
+                        await $_getPrefetchedData<Sale, $SalesTable, SaleItem>(
+                          currentTable: table,
+                          referencedTable: $$SalesTableReferences
+                              ._saleItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SalesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).saleItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.saleId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -5837,7 +7183,11 @@ typedef $$SalesTableProcessedTableManager =
       $$SalesTableUpdateCompanionBuilder,
       (Sale, $$SalesTableReferences),
       Sale,
-      PrefetchHooks Function({bool saleItemsRefs})
+      PrefetchHooks Function({
+        bool customerId,
+        bool sourceUtangEntryId,
+        bool saleItemsRefs,
+      })
     >;
 typedef $$SaleItemsTableCreateCompanionBuilder =
     SaleItemsCompanion Function({
@@ -6276,774 +7626,6 @@ typedef $$SaleItemsTableProcessedTableManager =
       (SaleItem, $$SaleItemsTableReferences),
       SaleItem,
       PrefetchHooks Function({bool saleId, bool productId})
-    >;
-typedef $$CustomersTableCreateCompanionBuilder =
-    CustomersCompanion Function({
-      Value<int> id,
-      required String name,
-      Value<DateTime?> createdAt,
-      Value<DateTime?> deletedAt,
-    });
-typedef $$CustomersTableUpdateCompanionBuilder =
-    CustomersCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<DateTime?> createdAt,
-      Value<DateTime?> deletedAt,
-    });
-
-final class $$CustomersTableReferences
-    extends BaseReferences<_$AppDatabase, $CustomersTable, Customer> {
-  $$CustomersTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static MultiTypedResultKey<$UtangEntriesTable, List<UtangEntry>>
-  _utangEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.utangEntries,
-    aliasName: $_aliasNameGenerator(
-      db.customers.id,
-      db.utangEntries.customerId,
-    ),
-  );
-
-  $$UtangEntriesTableProcessedTableManager get utangEntriesRefs {
-    final manager = $$UtangEntriesTableTableManager(
-      $_db,
-      $_db.utangEntries,
-    ).filter((f) => f.customerId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_utangEntriesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-}
-
-class $$CustomersTableFilterComposer
-    extends Composer<_$AppDatabase, $CustomersTable> {
-  $$CustomersTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  Expression<bool> utangEntriesRefs(
-    Expression<bool> Function($$UtangEntriesTableFilterComposer f) f,
-  ) {
-    final $$UtangEntriesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.utangEntries,
-      getReferencedColumn: (t) => t.customerId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UtangEntriesTableFilterComposer(
-            $db: $db,
-            $table: $db.utangEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$CustomersTableOrderingComposer
-    extends Composer<_$AppDatabase, $CustomersTable> {
-  $$CustomersTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$CustomersTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CustomersTable> {
-  $$CustomersTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  Expression<T> utangEntriesRefs<T extends Object>(
-    Expression<T> Function($$UtangEntriesTableAnnotationComposer a) f,
-  ) {
-    final $$UtangEntriesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.utangEntries,
-      getReferencedColumn: (t) => t.customerId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UtangEntriesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.utangEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$CustomersTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $CustomersTable,
-          Customer,
-          $$CustomersTableFilterComposer,
-          $$CustomersTableOrderingComposer,
-          $$CustomersTableAnnotationComposer,
-          $$CustomersTableCreateCompanionBuilder,
-          $$CustomersTableUpdateCompanionBuilder,
-          (Customer, $$CustomersTableReferences),
-          Customer,
-          PrefetchHooks Function({bool utangEntriesRefs})
-        > {
-  $$CustomersTableTableManager(_$AppDatabase db, $CustomersTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$CustomersTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$CustomersTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$CustomersTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<DateTime?> createdAt = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-              }) => CustomersCompanion(
-                id: id,
-                name: name,
-                createdAt: createdAt,
-                deletedAt: deletedAt,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String name,
-                Value<DateTime?> createdAt = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-              }) => CustomersCompanion.insert(
-                id: id,
-                name: name,
-                createdAt: createdAt,
-                deletedAt: deletedAt,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$CustomersTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({utangEntriesRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (utangEntriesRefs) db.utangEntries],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (utangEntriesRefs)
-                    await $_getPrefetchedData<
-                      Customer,
-                      $CustomersTable,
-                      UtangEntry
-                    >(
-                      currentTable: table,
-                      referencedTable: $$CustomersTableReferences
-                          ._utangEntriesRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$CustomersTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).utangEntriesRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.customerId == item.id),
-                      typedResults: items,
-                    ),
-                ];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$CustomersTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $CustomersTable,
-      Customer,
-      $$CustomersTableFilterComposer,
-      $$CustomersTableOrderingComposer,
-      $$CustomersTableAnnotationComposer,
-      $$CustomersTableCreateCompanionBuilder,
-      $$CustomersTableUpdateCompanionBuilder,
-      (Customer, $$CustomersTableReferences),
-      Customer,
-      PrefetchHooks Function({bool utangEntriesRefs})
-    >;
-typedef $$UtangEntriesTableCreateCompanionBuilder =
-    UtangEntriesCompanion Function({
-      Value<int> id,
-      required int customerId,
-      required double amount,
-      Value<bool> isPayment,
-      required DateTime createdAt,
-      Value<DateTime?> dueDate,
-      Value<String?> itemName,
-      Value<String?> note,
-      Value<DateTime?> deletedAt,
-    });
-typedef $$UtangEntriesTableUpdateCompanionBuilder =
-    UtangEntriesCompanion Function({
-      Value<int> id,
-      Value<int> customerId,
-      Value<double> amount,
-      Value<bool> isPayment,
-      Value<DateTime> createdAt,
-      Value<DateTime?> dueDate,
-      Value<String?> itemName,
-      Value<String?> note,
-      Value<DateTime?> deletedAt,
-    });
-
-final class $$UtangEntriesTableReferences
-    extends BaseReferences<_$AppDatabase, $UtangEntriesTable, UtangEntry> {
-  $$UtangEntriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $CustomersTable _customerIdTable(_$AppDatabase db) =>
-      db.customers.createAlias(
-        $_aliasNameGenerator(db.utangEntries.customerId, db.customers.id),
-      );
-
-  $$CustomersTableProcessedTableManager get customerId {
-    final $_column = $_itemColumn<int>('customer_id')!;
-
-    final manager = $$CustomersTableTableManager(
-      $_db,
-      $_db.customers,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_customerIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static MultiTypedResultKey<$UtangEntryItemsTable, List<UtangEntryItem>>
-  _utangEntryItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.utangEntryItems,
-    aliasName: $_aliasNameGenerator(
-      db.utangEntries.id,
-      db.utangEntryItems.utangEntryId,
-    ),
-  );
-
-  $$UtangEntryItemsTableProcessedTableManager get utangEntryItemsRefs {
-    final manager = $$UtangEntryItemsTableTableManager(
-      $_db,
-      $_db.utangEntryItems,
-    ).filter((f) => f.utangEntryId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _utangEntryItemsRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-}
-
-class $$UtangEntriesTableFilterComposer
-    extends Composer<_$AppDatabase, $UtangEntriesTable> {
-  $$UtangEntriesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isPayment => $composableBuilder(
-    column: $table.isPayment,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get dueDate => $composableBuilder(
-    column: $table.dueDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get itemName => $composableBuilder(
-    column: $table.itemName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$CustomersTableFilterComposer get customerId {
-    final $$CustomersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.customerId,
-      referencedTable: $db.customers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CustomersTableFilterComposer(
-            $db: $db,
-            $table: $db.customers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  Expression<bool> utangEntryItemsRefs(
-    Expression<bool> Function($$UtangEntryItemsTableFilterComposer f) f,
-  ) {
-    final $$UtangEntryItemsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.utangEntryItems,
-      getReferencedColumn: (t) => t.utangEntryId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UtangEntryItemsTableFilterComposer(
-            $db: $db,
-            $table: $db.utangEntryItems,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$UtangEntriesTableOrderingComposer
-    extends Composer<_$AppDatabase, $UtangEntriesTable> {
-  $$UtangEntriesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isPayment => $composableBuilder(
-    column: $table.isPayment,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
-    column: $table.dueDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get itemName => $composableBuilder(
-    column: $table.itemName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$CustomersTableOrderingComposer get customerId {
-    final $$CustomersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.customerId,
-      referencedTable: $db.customers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CustomersTableOrderingComposer(
-            $db: $db,
-            $table: $db.customers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$UtangEntriesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $UtangEntriesTable> {
-  $$UtangEntriesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
-  GeneratedColumn<bool> get isPayment =>
-      $composableBuilder(column: $table.isPayment, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get dueDate =>
-      $composableBuilder(column: $table.dueDate, builder: (column) => column);
-
-  GeneratedColumn<String> get itemName =>
-      $composableBuilder(column: $table.itemName, builder: (column) => column);
-
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  $$CustomersTableAnnotationComposer get customerId {
-    final $$CustomersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.customerId,
-      referencedTable: $db.customers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CustomersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.customers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  Expression<T> utangEntryItemsRefs<T extends Object>(
-    Expression<T> Function($$UtangEntryItemsTableAnnotationComposer a) f,
-  ) {
-    final $$UtangEntryItemsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.utangEntryItems,
-      getReferencedColumn: (t) => t.utangEntryId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$UtangEntryItemsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.utangEntryItems,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$UtangEntriesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $UtangEntriesTable,
-          UtangEntry,
-          $$UtangEntriesTableFilterComposer,
-          $$UtangEntriesTableOrderingComposer,
-          $$UtangEntriesTableAnnotationComposer,
-          $$UtangEntriesTableCreateCompanionBuilder,
-          $$UtangEntriesTableUpdateCompanionBuilder,
-          (UtangEntry, $$UtangEntriesTableReferences),
-          UtangEntry,
-          PrefetchHooks Function({bool customerId, bool utangEntryItemsRefs})
-        > {
-  $$UtangEntriesTableTableManager(_$AppDatabase db, $UtangEntriesTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$UtangEntriesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$UtangEntriesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$UtangEntriesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<int> customerId = const Value.absent(),
-                Value<double> amount = const Value.absent(),
-                Value<bool> isPayment = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime?> dueDate = const Value.absent(),
-                Value<String?> itemName = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-              }) => UtangEntriesCompanion(
-                id: id,
-                customerId: customerId,
-                amount: amount,
-                isPayment: isPayment,
-                createdAt: createdAt,
-                dueDate: dueDate,
-                itemName: itemName,
-                note: note,
-                deletedAt: deletedAt,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required int customerId,
-                required double amount,
-                Value<bool> isPayment = const Value.absent(),
-                required DateTime createdAt,
-                Value<DateTime?> dueDate = const Value.absent(),
-                Value<String?> itemName = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-              }) => UtangEntriesCompanion.insert(
-                id: id,
-                customerId: customerId,
-                amount: amount,
-                isPayment: isPayment,
-                createdAt: createdAt,
-                dueDate: dueDate,
-                itemName: itemName,
-                note: note,
-                deletedAt: deletedAt,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$UtangEntriesTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback:
-              ({customerId = false, utangEntryItemsRefs = false}) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [
-                    if (utangEntryItemsRefs) db.utangEntryItems,
-                  ],
-                  addJoins:
-                      <
-                        T extends TableManagerState<
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic
-                        >
-                      >(state) {
-                        if (customerId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.customerId,
-                                    referencedTable:
-                                        $$UtangEntriesTableReferences
-                                            ._customerIdTable(db),
-                                    referencedColumn:
-                                        $$UtangEntriesTableReferences
-                                            ._customerIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
-                        }
-
-                        return state;
-                      },
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (utangEntryItemsRefs)
-                        await $_getPrefetchedData<
-                          UtangEntry,
-                          $UtangEntriesTable,
-                          UtangEntryItem
-                        >(
-                          currentTable: table,
-                          referencedTable: $$UtangEntriesTableReferences
-                              ._utangEntryItemsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$UtangEntriesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).utangEntryItemsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.utangEntryId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                    ];
-                  },
-                );
-              },
-        ),
-      );
-}
-
-typedef $$UtangEntriesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $UtangEntriesTable,
-      UtangEntry,
-      $$UtangEntriesTableFilterComposer,
-      $$UtangEntriesTableOrderingComposer,
-      $$UtangEntriesTableAnnotationComposer,
-      $$UtangEntriesTableCreateCompanionBuilder,
-      $$UtangEntriesTableUpdateCompanionBuilder,
-      (UtangEntry, $$UtangEntriesTableReferences),
-      UtangEntry,
-      PrefetchHooks Function({bool customerId, bool utangEntryItemsRefs})
     >;
 typedef $$UtangEntryItemsTableCreateCompanionBuilder =
     UtangEntryItemsCompanion Function({
@@ -9121,14 +9703,14 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$ProductsTableTableManager get products =>
       $$ProductsTableTableManager(_db, _db.products);
-  $$SalesTableTableManager get sales =>
-      $$SalesTableTableManager(_db, _db.sales);
-  $$SaleItemsTableTableManager get saleItems =>
-      $$SaleItemsTableTableManager(_db, _db.saleItems);
   $$CustomersTableTableManager get customers =>
       $$CustomersTableTableManager(_db, _db.customers);
   $$UtangEntriesTableTableManager get utangEntries =>
       $$UtangEntriesTableTableManager(_db, _db.utangEntries);
+  $$SalesTableTableManager get sales =>
+      $$SalesTableTableManager(_db, _db.sales);
+  $$SaleItemsTableTableManager get saleItems =>
+      $$SaleItemsTableTableManager(_db, _db.saleItems);
   $$UtangEntryItemsTableTableManager get utangEntryItems =>
       $$UtangEntryItemsTableTableManager(_db, _db.utangEntryItems);
   $$ExpenseCategoriesTableTableManager get expenseCategories =>

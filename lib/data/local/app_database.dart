@@ -23,6 +23,13 @@ class Sales extends Table {
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get createdAt => dateTime()();
   RealColumn get totalAmount => real()();
+  IntColumn get customerId => integer().nullable().references(Customers, #id)();
+  /// When set, this [Sale] mirrors an [UtangEntries] payment row (cash collected on account).
+  IntColumn get sourceUtangEntryId => integer().nullable().references(
+        UtangEntries,
+        #id,
+        onDelete: KeyAction.cascade,
+      )();
   DateTimeColumn get deletedAt => dateTime().nullable()();
 }
 
@@ -161,6 +168,46 @@ class UtangEntryItemDetail {
   final String unitType;
 }
 
+class SaleReceiptLine {
+  SaleReceiptLine({
+    required this.productName,
+    required this.qty,
+    required this.unitPrice,
+    required this.lineTotal,
+    required this.unitType,
+  });
+
+  final String productName;
+  final double qty;
+  final double unitPrice;
+  final double lineTotal;
+  final String unitType;
+}
+
+class SaleReceiptDetail {
+  SaleReceiptDetail({
+    required this.sale,
+    required this.customerName,
+    required this.lines,
+  });
+
+  final Sale sale;
+  final String customerName;
+  final List<SaleReceiptLine> lines;
+}
+
+class UtangReceiptDetail {
+  UtangReceiptDetail({
+    required this.entry,
+    required this.customerName,
+    required this.lines,
+  });
+
+  final UtangEntry entry;
+  final String customerName;
+  final List<UtangEntryItemDetail> lines;
+}
+
 @DriftDatabase(
   tables: [
     Products,
@@ -178,6 +225,7 @@ class UtangEntryItemDetail {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.test(QueryExecutor executor) : super(executor);
 
   static const List<String> _defaultExpenseCategories = [
     'Pagkain',
@@ -193,7 +241,7 @@ class AppDatabase extends _$AppDatabase {
   static const List<String> _defaultUnitMeasurements = ['kg', 'meters', 'pcs'];
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -327,6 +375,40 @@ class AppDatabase extends _$AppDatabase {
           'ALTER TABLE grocery_items ADD COLUMN grocery_list_id INTEGER',
         );
       }
+      if (from < 11) {
+        await customStatement(
+          'ALTER TABLE sales ADD COLUMN customer_id INTEGER',
+        );
+      }
+      if (from < 12) {
+        await customStatement(
+          'ALTER TABLE sales ADD COLUMN source_utang_entry_id INTEGER '
+          'REFERENCES utang_entries (id) ON DELETE CASCADE',
+        );
+        await customStatement(
+          "INSERT INTO sales (created_at, total_amount, customer_id, source_utang_entry_id, deleted_at) "
+          "SELECT u.created_at, u.amount, u.customer_id, u.id, NULL "
+          'FROM utang_entries u '
+          "WHERE u.is_payment = 1 AND u.deleted_at IS NULL "
+          'AND NOT EXISTS ('
+          '  SELECT 1 FROM sales s WHERE s.source_utang_entry_id = u.id'
+          ')',
+        );
+      }
+      if (from < 13) {
+        await customStatement(
+          "DELETE FROM sales WHERE id NOT IN ("
+          "SELECT MIN(id) FROM sales "
+          "WHERE source_utang_entry_id IS NOT NULL "
+          "GROUP BY source_utang_entry_id"
+          ") AND source_utang_entry_id IS NOT NULL",
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS sales_source_utang_entry_id_uidx '
+          'ON sales (source_utang_entry_id) '
+          'WHERE source_utang_entry_id IS NOT NULL',
+        );
+      }
     },
     beforeOpen: (details) async {
       final hasDueDate = await customSelect(
@@ -441,11 +523,12 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Sale>> watchSales() =>
       (select(sales)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
 
-  Future<void> createSale({
+  Future<int> createSale({
     required int productId,
     required double quantity,
+    required int customerId,
   }) async {
-    await transaction(() async {
+    return transaction(() async {
       final product = await (select(
         products,
       )..where((p) => p.id.equals(productId))).getSingle();
@@ -458,7 +541,11 @@ class AppDatabase extends _$AppDatabase {
 
       final total = quantity * product.price;
       final saleId = await into(sales).insert(
-        SalesCompanion.insert(createdAt: DateTime.now(), totalAmount: total),
+        SalesCompanion.insert(
+          createdAt: DateTime.now(),
+          totalAmount: total,
+          customerId: Value(customerId),
+        ),
       );
       await into(saleItems).insert(
         SaleItemsCompanion.insert(
@@ -472,6 +559,7 @@ class AppDatabase extends _$AppDatabase {
         'UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?',
         [quantity, productId],
       );
+      return saleId;
     });
   }
 
@@ -479,6 +567,7 @@ class AppDatabase extends _$AppDatabase {
     required int saleId,
     required int productId,
     required double quantity,
+    required int customerId,
   }) async {
     await transaction(() async {
       final existingItems = await (select(
@@ -500,7 +589,10 @@ class AppDatabase extends _$AppDatabase {
 
       final total = quantity * product.price;
       await (update(sales)..where((s) => s.id.equals(saleId))).write(
-        SalesCompanion(totalAmount: Value(total)),
+        SalesCompanion(
+          totalAmount: Value(total),
+          customerId: Value(customerId),
+        ),
       );
       await (delete(saleItems)..where((i) => i.saleId.equals(saleId))).go();
       await into(saleItems).insert(
@@ -520,6 +612,17 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteSaleAndRestoreStock(int saleId) async {
     await transaction(() async {
+      final sale = await (select(sales)..where((s) => s.id.equals(saleId)))
+          .getSingleOrNull();
+      if (sale == null) return;
+
+      if (sale.sourceUtangEntryId != null) {
+        await (delete(utangEntries)
+              ..where((u) => u.id.equals(sale.sourceUtangEntryId!)))
+            .go();
+        return;
+      }
+
       final items = await (select(
         saleItems,
       )..where((i) => i.saleId.equals(saleId))).get();
@@ -536,6 +639,58 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<SaleItem>> getSaleItems(int saleId) {
     return (select(saleItems)..where((i) => i.saleId.equals(saleId))).get();
+  }
+
+  Future<SaleReceiptDetail> getSaleReceipt(int saleId) async {
+    final sale = await (select(sales)
+          ..where((s) => s.id.equals(saleId)))
+        .getSingle();
+    final customer = sale.customerId == null
+        ? null
+        : await (select(customers)
+              ..where((c) => c.id.equals(sale.customerId!)))
+            .getSingleOrNull();
+
+    if (sale.sourceUtangEntryId != null) {
+      return SaleReceiptDetail(
+        sale: sale,
+        customerName: customer?.name ?? 'Unknown customer',
+        lines: [
+          SaleReceiptLine(
+            productName: 'Bayad sa utang (account payment)',
+            qty: 1,
+            unitPrice: sale.totalAmount,
+            lineTotal: sale.totalAmount,
+            unitType: 'pcs',
+          ),
+        ],
+      );
+    }
+
+    final q = select(saleItems).join([
+      leftOuterJoin(products, products.id.equalsExp(saleItems.productId)),
+    ])..where(saleItems.saleId.equals(saleId));
+    final rows = await q.get();
+    final lines = rows
+        .map(
+          (row) {
+            final item = row.readTable(saleItems);
+            final product = row.readTableOrNull(products);
+            return SaleReceiptLine(
+              productName: product?.name ?? 'N/A',
+              qty: item.qty,
+              unitPrice: item.unitPrice,
+              lineTotal: item.qty * item.unitPrice,
+              unitType: product?.unitType ?? 'pcs',
+            );
+          },
+        )
+        .toList();
+    return SaleReceiptDetail(
+      sale: sale,
+      customerName: customer?.name ?? 'Unknown customer',
+      lines: lines,
+    );
   }
 
   Future<int> addCustomer(String name) {
@@ -608,7 +763,7 @@ class AppDatabase extends _$AppDatabase {
     DateTime? dueDate,
     String? itemName,
     String? note,
-  }) {
+  }) async {
     if (!isPayment && dueDate != null) {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
@@ -617,6 +772,36 @@ class AppDatabase extends _$AppDatabase {
         throw Exception('Due date dapat today o future lang.');
       }
     }
+    if (amount <= 0) {
+      throw Exception('Amount dapat mas mataas sa zero.');
+    }
+
+    if (isPayment) {
+      return transaction(() async {
+        final now = DateTime.now();
+        final entryId = await into(utangEntries).insert(
+          UtangEntriesCompanion.insert(
+            customerId: customerId,
+            amount: amount,
+            isPayment: const Value(true),
+            createdAt: now,
+            dueDate: const Value.absent(),
+            itemName: Value(itemName),
+            note: Value(note),
+          ),
+        );
+        await into(sales).insert(
+          SalesCompanion.insert(
+            createdAt: now,
+            totalAmount: amount,
+            customerId: Value(customerId),
+            sourceUtangEntryId: Value(entryId),
+          ),
+        );
+        return entryId;
+      });
+    }
+
     return into(utangEntries).insert(
       UtangEntriesCompanion.insert(
         customerId: customerId,
@@ -739,7 +924,7 @@ class AppDatabase extends _$AppDatabase {
     DateTime? dueDate,
     String? itemName,
     String? note,
-  }) {
+  }) async {
     if (!isPayment && dueDate != null) {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
@@ -748,15 +933,63 @@ class AppDatabase extends _$AppDatabase {
         throw Exception('Due date dapat today o future lang.');
       }
     }
-    return (update(utangEntries)..where((u) => u.id.equals(entryId))).write(
-      UtangEntriesCompanion(
-        amount: Value(amount),
-        isPayment: Value(isPayment),
-        dueDate: Value(dueDate),
-        itemName: Value(itemName),
-        note: Value(note),
-      ),
-    );
+    if (amount <= 0) {
+      throw Exception('Amount dapat mas mataas sa zero.');
+    }
+
+    await transaction(() async {
+      final prev = await (select(utangEntries)
+            ..where((u) => u.id.equals(entryId)))
+          .getSingleOrNull();
+      if (prev == null) return;
+
+      if (prev.isPayment != isPayment) {
+        throw StateError(
+          'Hindi puwedeng palitan ang Utang papuntang Bayad (o baligtad) sa edit. '
+          'Magdagdag ng hiwalay na entry para sa bayad.',
+        );
+      }
+
+      await (update(utangEntries)..where((u) => u.id.equals(entryId))).write(
+        UtangEntriesCompanion(
+          amount: Value(amount),
+          isPayment: Value(isPayment),
+          dueDate: Value(isPayment ? null : dueDate),
+          itemName: Value(itemName),
+          note: Value(note),
+        ),
+      );
+
+      if (isPayment) {
+        final linked = await (select(sales)
+              ..where((s) => s.sourceUtangEntryId.equals(entryId))
+              ..orderBy([(s) => OrderingTerm.asc(s.id)]))
+            .get();
+        for (var i = 1; i < linked.length; i++) {
+          await (delete(sales)..where((s) => s.id.equals(linked[i].id))).go();
+        }
+        final sale = linked.isNotEmpty ? linked.first : null;
+        if (sale != null) {
+          await (update(sales)..where((s) => s.id.equals(sale.id))).write(
+            SalesCompanion(
+              totalAmount: Value(amount),
+              customerId: Value(prev.customerId),
+            ),
+          );
+        } else {
+          await into(sales).insert(
+            SalesCompanion.insert(
+              createdAt: prev.createdAt,
+              totalAmount: amount,
+              customerId: Value(prev.customerId),
+              sourceUtangEntryId: Value(entryId),
+            ),
+          );
+        }
+      } else {
+        await (delete(sales)..where((s) => s.sourceUtangEntryId.equals(entryId))).go();
+      }
+    });
   }
 
   Future<void> deleteUtangEntry(int entryId) async {
@@ -799,6 +1032,38 @@ class AppDatabase extends _$AppDatabase {
             ),
           )
           .toList(),
+    );
+  }
+
+  Future<UtangReceiptDetail> getUtangReceipt(int entryId) async {
+    final entry = await (select(utangEntries)
+          ..where((u) => u.id.equals(entryId)))
+        .getSingle();
+    if (entry.isPayment) {
+      throw Exception('Receipt not available for payment entries.');
+    }
+    final customer = await (select(customers)
+          ..where((c) => c.id.equals(entry.customerId)))
+        .getSingleOrNull();
+    final q = select(utangEntryItems).join([
+      leftOuterJoin(products, products.id.equalsExp(utangEntryItems.productId)),
+    ])..where(utangEntryItems.utangEntryId.equals(entryId));
+    final rows = await q.get();
+    final lines = rows
+        .map(
+          (row) => UtangEntryItemDetail(
+            productName: row.readTableOrNull(products)?.name ?? 'N/A',
+            qty: row.readTable(utangEntryItems).qty,
+            unitPrice: row.readTable(utangEntryItems).unitPrice,
+            lineTotal: row.readTable(utangEntryItems).lineTotal,
+            unitType: row.readTableOrNull(products)?.unitType ?? 'pcs',
+          ),
+        )
+        .toList();
+    return UtangReceiptDetail(
+      entry: entry,
+      customerName: customer?.name ?? 'Unknown customer',
+      lines: lines,
     );
   }
 
@@ -1143,6 +1408,16 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
       }
+      for (final row in (payload['customers'] as List<dynamic>? ?? const [])) {
+        final data = row as Map<String, dynamic>;
+        await safeInsert(
+          customers,
+          CustomersCompanion(
+            id: Value(data['id'] as int),
+            name: Value(data['name'] as String),
+          ),
+        );
+      }
       for (final row in (payload['sales'] as List<dynamic>? ?? const [])) {
         final data = row as Map<String, dynamic>;
         await safeInsert(
@@ -1151,6 +1426,7 @@ class AppDatabase extends _$AppDatabase {
             id: Value(data['id'] as int),
             createdAt: Value(DateTime.parse(data['created_at'] as String)),
             totalAmount: Value((data['total_amount'] as num).toDouble()),
+            customerId: Value(data['customer_id'] as int?),
           ),
         );
       }
@@ -1164,16 +1440,6 @@ class AppDatabase extends _$AppDatabase {
             productId: Value(data['product_id'] as int),
             qty: Value((data['qty'] as num).toDouble()),
             unitPrice: Value((data['unit_price'] as num).toDouble()),
-          ),
-        );
-      }
-      for (final row in (payload['customers'] as List<dynamic>? ?? const [])) {
-        final data = row as Map<String, dynamic>;
-        await safeInsert(
-          customers,
-          CustomersCompanion(
-            id: Value(data['id'] as int),
-            name: Value(data['name'] as String),
           ),
         );
       }
