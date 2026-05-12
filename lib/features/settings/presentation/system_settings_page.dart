@@ -26,34 +26,35 @@ class SystemSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text(AppCopy.settingsSystemSection)),
+      appBar: AppBar(title: Text(copy.settingsSystemSection)),
       body: ListView(
         padding: const EdgeInsets.all(8),
         children: [
           ListTile(
             leading: const Icon(Icons.brightness_6_outlined),
-            title: const Text(AppCopy.themeMenuTitle),
+            title: Text(copy.themeMenuTitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => showThemeModePickerSheet(context: context, controller: themeController),
           ),
           ListenableBuilder(
             listenable: localeController,
             builder: (context, _) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const ListTile(
-                    leading: Icon(Icons.language_outlined),
-                    title: Text(AppCopy.settingsLanguage),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: SegmentedButton<Locale>(
-                      segments: const [
-                        ButtonSegment(value: Locale('fil'), label: Text('Filipino')),
-                        ButtonSegment(value: Locale('en'), label: Text('English')),
-                      ],
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListTile(
+                        leading: Icon(Icons.language_outlined),
+                        title: Text(copy.settingsLanguage),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: SegmentedButton<Locale>(
+                          segments: [
+                            ButtonSegment(value: const Locale('fil'), label: Text('Filipino')),
+                            ButtonSegment(value: const Locale('en'), label: Text('English')),
+                          ],
                       selected: {localeController.locale},
                       onSelectionChanged: (s) => localeController.setLocale(s.first),
                     ),
@@ -65,9 +66,9 @@ class SystemSettingsPage extends StatelessWidget {
           ListenableBuilder(
             listenable: currencyController,
             builder: (context, _) {
-              return ListTile(
-                leading: const Icon(Icons.payments_outlined),
-                title: const Text(AppCopy.settingsCurrency),
+                return ListTile(
+                  leading: const Icon(Icons.payments_outlined),
+                  title: Text(copy.settingsCurrency),
                 subtitle: Text(currencyController.code),
                 trailing: DropdownButton<String>(
                   value: _currencies.contains(currencyController.code)
