@@ -25,13 +25,14 @@ class SettingsHubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text(AppCopy.settingsTitle)),
+      appBar: AppBar(title: Text(copy.settingsTitle)),
       body: ListView(
         children: [
           ListTile(
             leading: const Icon(Icons.notifications_outlined),
-            title: const Text(AppCopy.settingsNotificationsSection),
+            title: Text(copy.settingsNotificationsSection),
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
@@ -42,7 +43,7 @@ class SettingsHubPage extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.person_outline),
-            title: const Text(AppCopy.settingsProfileSection),
+            title: Text(copy.settingsProfileSection),
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(builder: (_) => const ProfileSettingsPage()),
@@ -51,7 +52,7 @@ class SettingsHubPage extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.tune_outlined),
-            title: const Text(AppCopy.settingsSystemSection),
+            title: Text(copy.settingsSystemSection),
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
