@@ -1,10 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/resources/app_copy.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/validators/input_validators.dart';
+import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
+import '../../../features/receipts/application/receipt_pdf_builder.dart';
+import '../../../shared/widgets/receipt_sheet.dart';
+import '../../reports/presentation/report_export_stub.dart'
+    if (dart.library.io) '../../reports/presentation/report_export_io.dart' as report_export;
 
 class SalesPage extends StatefulWidget {
   const SalesPage({required this.repo, super.key});
@@ -49,10 +55,10 @@ class _SalesPageState extends State<SalesPage> {
                     color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: StreamBuilder<List<dynamic>>(
+                  child: StreamBuilder<List<Sale>>(
                     stream: widget.repo.watchSales(),
                     builder: (context, snapshot) {
-                      final sales = snapshot.data ?? [];
+                      final sales = snapshot.data ?? const <Sale>[];
                       if (sales.isEmpty) {
                         return Center(
                           child: Text(
@@ -66,13 +72,18 @@ class _SalesPageState extends State<SalesPage> {
                         itemCount: sales.length,
                         itemBuilder: (context, index) {
                           final item = sales[index];
+                          final isUtangPayment = item.sourceUtangEntryId != null;
                           return Padding(
                             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                             child: Dismissible(
                               key: ValueKey('sale-${item.id}'),
                               direction: DismissDirection.endToStart,
                               confirmDismiss: (_) => _confirmDelete(
-                                copy.isEnglish ? 'Delete sale #${item.id}?' : 'Burahin ang benta #${item.id}?',
+                                isUtangPayment
+                                    ? copy.saleUtangPaymentDeleteConfirm(item.id)
+                                    : (copy.isEnglish
+                                        ? 'Delete sale #${item.id}?'
+                                        : 'Burahin ang benta #${item.id}?'),
                               ),
                               onDismissed: (_) =>
                                   widget.repo.deleteSaleAndRestoreStock(item.id),
@@ -94,13 +105,33 @@ class _SalesPageState extends State<SalesPage> {
                                   side: BorderSide(color: scheme.outlineVariant),
                                 ),
                                 child: ListTile(
-                                  onTap: () => _showSaleDialog(existingSale: item),
-                                   title: Text(copy.isEnglish ? 'Sale #${item.id}' : 'Benta #${item.id}'),
+                                  onTap: isUtangPayment
+                                      ? () {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(copy.saleUtangPaymentEditHint)),
+                                          );
+                                        }
+                                      : () => _showSaleDialog(existingSale: item),
+                                   title: Text(
+                                     isUtangPayment
+                                         ? copy.saleUtangPaymentTitle
+                                         : (copy.isEnglish ? 'Sale #${item.id}' : 'Benta #${item.id}'),
+                                   ),
                                    subtitle: Text(
                                      '${copy.isEnglish ? 'Transaction' : 'Transaksyon'} (PH UTC+8): ${formatPhilippineDateTime(item.createdAt)}',
                                      style: Theme.of(context).textTheme.bodySmall,
                                    ),
-                                  trailing: Text(formatCurrency(item.totalAmount)),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(formatCurrency(item.totalAmount)),
+                                      IconButton(
+                                        icon: const Icon(Icons.receipt_outlined),
+                                        tooltip: copy.saleReceiptTitle,
+                                        onPressed: () => _showSaleReceipt(item.id),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -120,12 +151,22 @@ class _SalesPageState extends State<SalesPage> {
 
   Future<void> _showSaleDialog({dynamic existingSale}) async {
     final copy = AppCopy.of(context);
+    final customers = await widget.repo.watchCustomers().first;
+    if (customers.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copy.utangNoCustomers)),
+      );
+      return;
+    }
     final formKey = GlobalKey<FormState>();
     final qtyCtrl = TextEditingController(text: '1');
     int? selectedProductId;
     int? priorProductId;
     var priorQty = 0.0;
+    int? selectedCustomerId;
     if (existingSale != null) {
+      selectedCustomerId = existingSale.customerId;
       final items = await widget.repo.getSaleItems(existingSale.id);
       if (items.isNotEmpty) {
         selectedProductId = items.first.productId;
@@ -158,12 +199,34 @@ class _SalesPageState extends State<SalesPage> {
                   }
                 }
               }
-              return Form(
-                key: formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+              return SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DropdownButtonFormField<int>(
+                      initialValue: selectedCustomerId,
+                      decoration: InputDecoration(
+                        labelText: copy.receiptCustomerLabel,
+                      ),
+                      items: customers
+                          .map(
+                            (c) => DropdownMenuItem(
+                              value: c.id,
+                              child: Text(c.name),
+                            ),
+                          )
+                          .toList(),
+                      validator: (v) =>
+                          v == null ? (copy.isEnglish ? 'Customer is required.' : 'Customer ay required.') : null,
+                      onChanged: (value) => setState(() => selectedCustomerId = value),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<int>(
                       initialValue: selectedProductId,
                        hint: Text(copy.isEnglish ? 'Choose a product' : 'Pumili ng produkto'),
@@ -224,7 +287,9 @@ class _SalesPageState extends State<SalesPage> {
                         return null;
                       },
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
@@ -243,16 +308,19 @@ class _SalesPageState extends State<SalesPage> {
                 );
                 if (!formKey.currentState!.validate()) return;
                 final quantity = double.parse(qtyCtrl.text);
+                if (selectedCustomerId == null) return;
                 if (existingSale == null) {
                   await widget.repo.createSale(
                     productId: product.id,
                     quantity: quantity,
+                    customerId: selectedCustomerId!,
                   );
                 } else {
                   await widget.repo.updateSale(
                     saleId: existingSale.id,
                     productId: product.id,
                     quantity: quantity,
+                    customerId: selectedCustomerId!,
                   );
                 }
                 if (context.mounted) Navigator.pop(context);
@@ -263,6 +331,86 @@ class _SalesPageState extends State<SalesPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showSaleReceipt(int saleId) async {
+    final copy = AppCopy.of(context);
+    final receipt = await widget.repo.getSaleReceipt(saleId);
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: ReceiptSheet(
+            model: ReceiptViewModel(
+              title: copy.saleReceiptTitle,
+              customerName: receipt.customerName,
+              createdAt: receipt.sale.createdAt,
+              totalAmount: receipt.sale.totalAmount,
+              lines: receipt.lines
+                  .map(
+                    (line) => ReceiptLineItem(
+                      productName: line.productName,
+                      qtyLabel: line.qty.toStringAsFixed(2),
+                      unitType: line.unitType,
+                      unitPriceLabel: formatCurrency(line.unitPrice),
+                      lineTotalLabel: formatCurrency(line.lineTotal),
+                    ),
+                  )
+                  .toList(),
+            ),
+            onExportPngBytes: kIsWeb
+                ? null
+                : (bytes) => _writeSaleReceiptPng(bytes, copy),
+            onExportPdf: () => _exportSalePdf(receipt, copy),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _writeSaleReceiptPng(Uint8List bytes, AppCopy copy) async {
+    final path = await report_export.writeReportPngBytes(bytes);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(copy.reportPngSaved(path))),
+    );
+  }
+
+  Future<void> _exportSalePdf(SaleReceiptDetail receipt, AppCopy copy) async {
+    try {
+      final bytes = await ReceiptPdfBuilder.buildSaleReceiptBytes(
+        title: copy.saleReceiptTitle,
+        receipt: receipt,
+        currencyCode: 'PHP',
+        labelCustomer: copy.receiptCustomerLabel,
+        labelTotal: copy.receiptTotalLabel,
+        labelTransaction: copy.receiptTransactionLabel,
+        labelDueDate: copy.receiptDueDateLabel,
+        colItem: copy.receiptColItem,
+        colQty: copy.receiptColQty,
+        colUnitPrice: copy.receiptColUnitPrice,
+        colLineTotal: copy.receiptColLineTotal,
+      );
+      if (kIsWeb) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(copy.reportPdfDownloadSoon(bytes.length))),
+        );
+        return;
+      }
+      final path = await report_export.writeReportPdfBytes(bytes);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copy.reportPdfSaved(path))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copy.reportExportError('$e'))),
+      );
+    }
   }
 
   Future<bool?> _confirmDelete(String message) {
