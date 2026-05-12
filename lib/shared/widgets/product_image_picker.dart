@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../core/resources/app_copy.dart';
+
 class ProductImagePicker extends StatelessWidget {
   const ProductImagePicker({
     required this.imagePath,
@@ -63,21 +65,20 @@ class ProductImagePicker extends StatelessWidget {
   }
 
   Widget _placeholder(BuildContext context) {
+    final copy = AppCopy.of(context);
     final cs = Theme.of(context).colorScheme;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(Icons.add_photo_alternate_outlined, size: 32, color: cs.onSurfaceVariant),
         const SizedBox(height: 6),
-        Text(
-          'Mag-upload ng larawan',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-        ),
+        Text(copy.uploadImage, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
       ],
     );
   }
 
   Future<void> _showOptions(BuildContext context) async {
+    final copy = AppCopy.of(context);
     await showModalBottomSheet<void>(
       context: context,
       builder: (_) => SafeArea(
@@ -87,7 +88,7 @@ class ProductImagePicker extends StatelessWidget {
             const SizedBox(height: 8),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Kamera'),
+              title: Text(copy.camera),
               onTap: () {
                 Navigator.pop(context);
                 _pick(context, ImageSource.camera);
@@ -95,7 +96,7 @@ class ProductImagePicker extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Gallery'),
+              title: Text(copy.gallery),
               onTap: () {
                 Navigator.pop(context);
                 _pick(context, ImageSource.gallery);
@@ -104,7 +105,7 @@ class ProductImagePicker extends StatelessWidget {
             if (imagePath != null && imagePath!.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.delete_outline),
-                title: const Text('Alisin ang larawan'),
+                title: Text(copy.removeImage),
                 onTap: () {
                   Navigator.pop(context);
                   onChanged(null);
@@ -118,14 +119,15 @@ class ProductImagePicker extends StatelessWidget {
   }
 
   Future<void> _pick(BuildContext context, ImageSource source) async {
+    final copy = AppCopy.of(context);
     if (!kIsWeb && source == ImageSource.camera) {
       final status = await Permission.camera.request();
       if (!status.isGranted) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Kailangan ng pahintulot sa kamera.'),
-              action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
+              content: Text(copy.cameraPermissionRequired),
+              action: SnackBarAction(label: copy.settingsAction, onPressed: openAppSettings),
             ),
           );
         }
@@ -173,7 +175,7 @@ class ProductImagePreview extends StatelessWidget {
         return Image.memory(
           bytes,
           fit: fit,
-          errorBuilder: (_, __, ___) => placeholder,
+          errorBuilder: (context, error, stackTrace) => placeholder,
         );
       } catch (_) {
         return placeholder;
@@ -186,7 +188,7 @@ class ProductImagePreview extends StatelessWidget {
       return Image.network(
         value,
         fit: fit,
-        errorBuilder: (_, __, ___) => placeholder,
+        errorBuilder: (context, error, stackTrace) => placeholder,
       );
     }
 
