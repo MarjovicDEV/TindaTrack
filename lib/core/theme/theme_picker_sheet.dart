@@ -14,29 +14,30 @@ Future<void> showThemeModePickerSheet({
       return AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
+          final copy = AppCopy.of(context);
           final current = controller.themeMode;
 
           return SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const ListTile(title: Text(AppCopy.themeMenuTitle)),
+                ListTile(title: Text(copy.themeSheetTitle)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                   child: SegmentedButton<ThemeMode>(
                     showSelectedIcon: false,
-                    segments: const [
+                    segments: [
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.system,
-                        label: Text(AppCopy.themeSystem),
+                        label: Text(copy.themeSystem),
                       ),
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.dark,
-                        label: Text(AppCopy.themeDark),
+                        label: Text(copy.themeDark),
                       ),
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.light,
-                        label: Text(AppCopy.themeLight),
+                        label: Text(copy.themeLight),
                       ),
                     ],
                     selected: {current},
