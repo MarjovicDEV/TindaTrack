@@ -8,23 +8,47 @@ class HistoryRepository {
 
   final AppDatabase _db;
 
-  Future<List<HistoryItem>> recent({int perSource = 80, int limit = 100}) async {
+  Future<List<HistoryItem>> recent({
+    int perSource = 80,
+    int limit = 100,
+    DateTime? rangeFrom,
+    DateTime? rangeTo,
+  }) async {
+    final scoped = rangeFrom != null || rangeTo != null;
+    final cap = scoped ? 500 : perSource;
+    final maxOut = scoped ? 500 : limit;
+
+    final from = rangeFrom ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final to = rangeTo ?? DateTime(2100);
+
     final sales = await (_db.select(_db.sales)
-          ..where((t) => t.deletedAt.isNull())
+          ..where((t) {
+            var w = t.deletedAt.isNull();
+            if (scoped) w = w & t.createdAt.isBetweenValues(from, to);
+            return w;
+          })
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
-          ..limit(perSource))
+          ..limit(cap))
         .get();
 
     final expenses = await (_db.select(_db.expenses)
-          ..where((t) => t.deletedAt.isNull())
+          ..where((t) {
+            var w = t.deletedAt.isNull();
+            if (scoped) w = w & t.createdAt.isBetweenValues(from, to);
+            return w;
+          })
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
-          ..limit(perSource))
+          ..limit(cap))
         .get();
 
     final utangRows = await (_db.select(_db.utangEntries)
-          ..where((t) => t.deletedAt.isNull())
+          ..where((t) {
+            var w = t.deletedAt.isNull();
+            if (scoped) w = w & t.createdAt.isBetweenValues(from, to);
+            return w;
+          })
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
-          ..limit(perSource))
+          ..limit(cap))
         .get();
 
     final customers = await _db.select(_db.customers).get();
@@ -75,8 +99,8 @@ class HistoryRepository {
     }
 
     items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    if (items.length > limit) {
-      return items.sublist(0, limit);
+    if (items.length > maxOut) {
+      return items.sublist(0, maxOut);
     }
     return items;
   }
