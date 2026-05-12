@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/resources/app_copy.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/validators/input_validators.dart';
 import '../../../data/local/app_database.dart';
@@ -26,17 +27,18 @@ class _InventoryPageState extends State<InventoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final width = MediaQuery.sizeOf(context).width;
     return Column(
       children: [
         Row(
           children: [
-            Text('Imbentaryo', style: Theme.of(context).textTheme.titleLarge),
+            Text(copy.inventoryTitle, style: Theme.of(context).textTheme.titleLarge),
             const Spacer(),
             FilledButton.icon(
               onPressed: () => _showProductDialog(),
               icon: const Icon(Icons.add),
-              label: const Text('Magdagdag'),
+              label: Text(copy.inventoryAdd),
             ),
           ],
         ),
@@ -47,7 +49,7 @@ class _InventoryPageState extends State<InventoryPage> {
             builder: (context, snapshot) {
               final items = snapshot.data ?? [];
               if (items.isEmpty) {
-                return const Center(child: Text('Wala pang produkto.'));
+                return Center(child: Text(copy.inventoryNoProducts));
               }
               return GridView.builder(
                 padding: const EdgeInsets.all(AppSpacing.xs),
@@ -73,7 +75,7 @@ class _InventoryPageState extends State<InventoryPage> {
                         );
                       }
                     },
-                    onConfirmDelete: () => _confirmDelete('Burahin ang "${item.name}"?'),
+                    onConfirmDelete: () => _confirmDelete(copy, 'Burahin ang "${item.name}"?'),
                   );
                 },
               );
@@ -85,6 +87,7 @@ class _InventoryPageState extends State<InventoryPage> {
   }
 
   Future<void> _showProductDialog({Product? product}) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final brandCtrl = TextEditingController();
@@ -113,7 +116,7 @@ class _InventoryPageState extends State<InventoryPage> {
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text(
-            product == null ? 'Magdagdag ng produkto' : 'I-update ang produkto',
+            product == null ? 'Add product' : 'Update product',
           ),
           content: SingleChildScrollView(
             child: StreamBuilder(
@@ -137,26 +140,26 @@ class _InventoryPageState extends State<InventoryPage> {
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: brandCtrl,
-                        decoration: const InputDecoration(labelText: 'Brand name'),
-                        validator: (v) => InputValidators.validateName(v ?? '', field: 'Brand'),
+                        decoration: InputDecoration(labelText: copy.inventoryBrandName),
+                        validator: (v) => InputValidators.validateName(v ?? '', field: copy.inventoryBrandName),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Pangalan ng produkto'),
+                        decoration: InputDecoration(labelText: copy.inventoryProductName),
                         validator: (v) => InputValidators.validateName(v ?? ''),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: netWeightCtrl,
-                        decoration: const InputDecoration(labelText: 'Net weight / kapasidad'),
+                        decoration: InputDecoration(labelText: copy.inventoryNetWeight),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: 'Net weight'),
+                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: copy.inventoryNetWeight),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
                         initialValue: netWeightUnit,
-                        decoration: const InputDecoration(labelText: 'Net weight unit'),
+                        decoration: InputDecoration(labelText: copy.inventoryNetWeightUnit),
                         items: const [
                           DropdownMenuItem(value: 'g', child: Text('g')),
                           DropdownMenuItem(value: 'kg', child: Text('kg')),
@@ -168,35 +171,35 @@ class _InventoryPageState extends State<InventoryPage> {
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: priceCtrl,
-                        decoration: const InputDecoration(labelText: 'Presyo'),
+                        decoration: InputDecoration(labelText: copy.inventoryPrice),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: 'Presyo'),
+                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: copy.inventoryPrice),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: stockCtrl,
-                        decoration: const InputDecoration(labelText: 'Stock'),
+                        decoration: InputDecoration(labelText: copy.inventoryStock),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         validator: (v) => selectedUnit == 'pcs'
-                            ? InputValidators.validateWholePositive(v ?? '', field: 'Stock')
-                            : InputValidators.validateDecimalPositive(v ?? '', field: 'Stock'),
+                            ? InputValidators.validateWholePositive(v ?? '', field: copy.inventoryStock)
+                            : InputValidators.validateDecimalPositive(v ?? '', field: copy.inventoryStock),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
                         initialValue: selectedUnit,
-                        decoration: const InputDecoration(labelText: 'Unit of Measure'),
+                        decoration: InputDecoration(labelText: copy.inventoryUnitOfMeasure),
                         items: unitNames
                             .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
                             .toList(),
-                        validator: (v) => v == null || v.isEmpty ? 'Unit ay required.' : null,
+                        validator: (v) => v == null || v.isEmpty ? copy.inventoryUnitRequired : null,
                         onChanged: (v) => setState(() => unitType = v ?? selectedUnit),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: thresholdCtrl,
-                        decoration: const InputDecoration(labelText: 'Babala sa mababang stock'),
+                        decoration: InputDecoration(labelText: copy.inventoryLowStockAlert),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: 'Low stock'),
+                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: copy.inventoryLowStockAlert),
                       ),
                     ],
                   ),
@@ -205,7 +208,7 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.inventoryCancel)),
             FilledButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
@@ -243,7 +246,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('I-save'),
+              child: Text(copy.inventorySave),
             ),
           ],
         ),
@@ -251,18 +254,18 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-  Future<bool?> _confirmDelete(String message) {
+  Future<bool?> _confirmDelete(AppCopy copy, String message) {
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Kumpirmahin ang delete'),
+        title: Text(copy.inventoryConfirmDeleteTitle),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hindi')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(copy.inventoryDeleteNo)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(copy.inventoryDeleteYes),
           ),
         ],
       ),
@@ -298,6 +301,7 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final cs = Theme.of(context).colorScheme;
     final low = item.stockQty <= item.lowStockThreshold;
     final hasImage = item.imagePath != null && item.imagePath!.isNotEmpty;
@@ -354,7 +358,7 @@ class _ProductCard extends StatelessWidget {
                         if (low) Icon(Icons.warning_amber_outlined, size: 12, color: cs.error),
                         Expanded(
                           child: Text(
-                            'Stock: ${item.stockQty.toStringAsFixed(2)} ${item.unitType}',
+                            '${copy.inventoryStockPrefix} ${item.stockQty.toStringAsFixed(2)} ${item.unitType}',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: low ? cs.error : cs.onSurfaceVariant,
                                 ),
@@ -377,12 +381,12 @@ class _ProductCard extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     onPressed: onTap,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'I-edit',
+                    tooltip: copy.inventoryEdit,
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Burahin',
+                    tooltip: copy.inventoryDelete,
                     onPressed: () async {
                       final confirmed = await onConfirmDelete();
                       if (confirmed == true) await onDelete();
@@ -414,4 +418,3 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
-
