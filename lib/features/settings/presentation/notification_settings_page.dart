@@ -40,12 +40,13 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text(AppCopy.notificationSettingsTitle)),
+      appBar: AppBar(title: Text(copy.notificationSettingsTitle)),
       body: ListView(
         children: [
           SwitchListTile(
-            title: const Text(AppCopy.notificationLowStock),
+            title: Text(copy.notificationLowStock),
             value: _lowStock,
             onChanged: (v) async {
               if (v) await _ensureNotificationPermission();
@@ -55,7 +56,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             },
           ),
           SwitchListTile(
-            title: const Text(AppCopy.notificationGroceryReminder),
+            title: Text(copy.notificationGroceryReminder),
             value: _grocery,
             onChanged: (v) async {
               if (v) await _ensureNotificationPermission();
