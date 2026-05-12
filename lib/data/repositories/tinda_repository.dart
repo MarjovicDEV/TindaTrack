@@ -80,16 +80,31 @@ class TindaRepository {
 
   Future<void> deleteProduct(int id) => db.deleteProduct(id);
 
-  Future<void> createSale({required int productId, required double quantity}) =>
-      db.createSale(productId: productId, quantity: quantity);
+  Future<int> createSale({
+    required int productId,
+    required double quantity,
+    required int customerId,
+  }) => db.createSale(
+        productId: productId,
+        quantity: quantity,
+        customerId: customerId,
+      );
   Future<void> updateSale({
     required int saleId,
     required int productId,
     required double quantity,
-  }) => db.updateSale(saleId: saleId, productId: productId, quantity: quantity);
+    required int customerId,
+  }) => db.updateSale(
+        saleId: saleId,
+        productId: productId,
+        quantity: quantity,
+        customerId: customerId,
+      );
   Future<void> deleteSaleAndRestoreStock(int saleId) =>
       db.deleteSaleAndRestoreStock(saleId);
   Future<List<SaleItem>> getSaleItems(int saleId) => db.getSaleItems(saleId);
+  Future<SaleReceiptDetail> getSaleReceipt(int saleId) =>
+      db.getSaleReceipt(saleId);
   Future<int> addCustomer(String name) => db.addCustomer(name);
   Future<void> updateCustomer(int id, String name) =>
       db.updateCustomer(id, name);
@@ -135,6 +150,8 @@ class TindaRepository {
     itemName: itemName,
     note: note,
   );
+  Future<UtangReceiptDetail> getUtangReceipt(int entryId) =>
+      db.getUtangReceipt(entryId);
   Future<void> deleteUtangEntry(int entryId) => db.deleteUtangEntry(entryId);
   Future<int> addExpenseCategory(String name) => db.addExpenseCategory(name);
 
