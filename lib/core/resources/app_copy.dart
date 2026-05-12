@@ -41,6 +41,8 @@ class AppCopy {
   String get settingsCurrency => _t('Currency', 'Salapi');
   String get settingsOwnerName => _t('Owner name', 'Pangalan ng may-ari');
   String get settingsStoreName => _t('Store name', 'Pangalan ng tindahan');
+  String get settingsProfileSave => _t('Save profile', 'I-save ang profile');
+  String get settingsProfileSaved => _t('Profile saved.', 'Na-save ang profile.');
   String get settingsEmailSoon => _t('Email (coming soon)', 'Email (malapit na)');
   String get settingsLocation => _t('Location', 'Lokasyon');
   String get settingsSearchLocation => _t('Search (OpenStreetMap)', 'Hanapin (OpenStreetMap)');
@@ -48,6 +50,10 @@ class AppCopy {
 
   String get historyTitle => _t('History', 'Kasaysayan');
   String get historyEmpty => _t('No history records yet.', 'Walang tala sa kasaysayan.');
+  String get historyEmptyInRange =>
+      _t('No history in this date range.', 'Walang tala sa petsang ito.');
+  String get historyFilterByDate => _t('Filter by date', 'Salain ayon sa petsa');
+  String get historyClearDateFilter => _t('Clear filter', 'Alisin ang salain');
 
   String get homeChartSalesVsExpenses => _t('Sales vs expenses (pie)', 'Benta vs gastos (pie)');
   String get homeChartBarSalesExpenses => _t('Sales and expenses (bar)', 'Benta at gastos (bar)');
@@ -59,7 +65,7 @@ class AppCopy {
   String get netProfit => _t('Net Profit', 'Netong Kita');
   String get lowStockAlerts => _t('Low Stock', 'Mababang Stock');
 
-  String get exportPng => _t('Export PNG', 'I-export PNG');
+  String get exportPng => _t('Export JPG', 'I-export JPG');
   String get exportPdf => _t('Export PDF', 'I-export PDF');
   String get exportJson => _t('Export JSON', 'I-export JSON');
   String get importJson => _t('Import JSON', 'I-import JSON');
@@ -77,6 +83,14 @@ class AppCopy {
   String get reportFilterMonthly => _t('Monthly', 'Buwanan');
   String get noDataRange => _t('No data in the selected range.', 'Walang datos sa napiling saklaw.');
   String get reportRangeLabel => _t('Range (PH UTC+8):', 'Saklaw (PH UTC+8):');
+  String get reportExportSubtitle =>
+      _t('Performance summary', 'Buod ng performance');
+  String get reportExportPeriodLabel => _t('Range type', 'Uri ng saklaw');
+  String get reportExportRecordsLabel => _t('Records', 'Mga tala');
+  String reportExportRecordsValue(int sales, int expenses) => _t(
+        '$sales sales · $expenses expenses',
+        '$sales benta · $expenses gastos',
+      );
 
   String get notificationSettingsTitle => _t('Notification settings', 'Mga abiso');
   String get notificationLowStock => _t('Low stock alert', 'Babala sa mababang stock');
@@ -156,6 +170,19 @@ class AppCopy {
   String get utangSaveCustomer => _t('Save customer', 'I-save ang customer');
   String get utangAddEntryTitle => _t('Add debt entry', 'Magdagdag ng utang entry');
   String get utangPayment => _t('Payment', 'Bayad');
+  String get utangNoDebtToPay => _t(
+        'This customer has no outstanding debt to pay.',
+        'Walang utang na babayaran ang customer na ito.',
+      );
+  String utangPaymentExceedsBalance(String maxAmount) => _t(
+        'Payment cannot exceed what they owe. Maximum: $maxAmount',
+        'Hindi puwedeng lumabis sa utang. Pinakamataas: $maxAmount',
+      );
+  String get utangPaymentMaxLabel => _t('Balance owed:', 'Balanse na utang:');
+  String get utangEntryTypeLockedHint => _t(
+        'Type cannot be changed here. To record a payment, use Add entry → Payment.',
+        'Hindi mababago ang uri dito. Para magbayad, gumamit ng Magdagdag → Bayad.',
+      );
   String get utangNewDebt => _t('New debt', 'Bagong Utang');
   String get utangPaymentSubtitle => _t('Reduces the balance', 'Bawas sa balanse');
   String get utangDebtSubtitle => _t('Adds to the balance', 'Dagdag sa balanse');
@@ -192,10 +219,36 @@ class AppCopy {
   String get searchNoResults => _t('No results.', 'Walang resulta.');
   String get pickLocationTitle => _t('Choose a location', 'Pumili ng lokasyon');
 
-  String get reportsPngUnavailable => _t('PNG export is available only on desktop/mobile for now.', 'Ang PNG export ay desktop/mobile app lamang sa ngayon.');
+  String get saleReceiptTitle => _t('Sale receipt', 'Resibo ng benta');
+  String get saleUtangPaymentTitle => _t('Utang payment', 'Bayad sa utang');
+  String get saleUtangPaymentEditHint => _t(
+        'Change or remove this payment under Debt (Utang) for this customer.',
+        'Baguhin o tanggalin ang bayad sa Utang ng customer na ito.',
+      );
+  String saleUtangPaymentDeleteConfirm(int id) => _t(
+        'Remove payment #$id? This also deletes the matching Utang entry.',
+        'Tanggalin ang bayad #$id? Mabubura rin ang Utang entry.',
+      );
+  String get utangReceiptTitle => _t('Utang receipt', 'Resibo ng utang');
+  String get receiptCustomerLabel => _t('Customer', 'Customer');
+  String get receiptTotalLabel => _t('Total', 'Kabuuan');
+  String get receiptTransactionLabel => _t('Transaction', 'Transaksyon');
+  String get receiptDueDateLabel => _t('Due date', 'Due date');
+  String get receiptColItem => _t('ITEM', 'ITEM');
+  String get receiptColQty => _t('QTY', 'DAMI');
+  String get receiptColUnitPrice => _t('UNIT', 'UNIT');
+  String get receiptColLineTotal => _t('AMOUNT', 'HALAGA');
+
+  String get reportsPngUnavailable => _t(
+        'Saving captured images (JPG) from this screen needs the mobile or desktop app, not web.',
+        'Ang pag-save ng JPG mula sa screen na ito ay mobile/desktop app lamang, hindi web.',
+      );
   String get reportsNoExportView => _t('Nothing to export.', 'Walang ma-export na view.');
-  String reportPngSaved(String path) => _t('Saved PNG: $path', 'Na-save ang PNG: $path');
-  String reportPdfSaved(String path) => _t('Saved PDF: $path', 'Na-save ang PDF: $path');
+  String reportPngSaved(String path) => _t(
+        'Saved JPG export. $path — When gallery works: Photos → Albums → TindaTrack. If you see a file path, open it in Files / Documents.',
+        'Na-save ang JPG. $path — Kung gumagana ang gallery: Photos → Albums → TindaTrack. Kung file path, buksan sa Files / Documents.',
+      );
+  String reportPdfSaved(String path) => _t('Saved PDF — open in Files: $path', 'Na-save ang PDF — buksan sa Files: $path');
   String reportPdfDownloadSoon(int bytesLength) => _t('PDF ($bytesLength bytes) — download support coming soon.', 'PDF ($bytesLength bytes) — i-download support sa susunod.');
   String reportExportError(String error) => error;
 
