@@ -73,17 +73,7 @@ Used for recording credit purchases.
 
 ---
 
-## 4. Payment Module
-Used for updating payments made by customers.
-
-### Payment Details
-- Amount Paid
-- Remaining Balance
-- Payment Date
-
----
-
-## 5. Inventory Module
+## 4. Inventory Module
 Used for managing store products and stocks.
 
 ### Inventory Details
