@@ -39,6 +39,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final fullW = constraints.maxWidth;
@@ -72,27 +73,25 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(AppCopy.navHome, style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(AppCopy.summaryTitle, style: Theme.of(context).textTheme.titleMedium),
+                    Text(copy.navHome, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      AppCopy.homeNetPeriodLabel,
+                      copy.homeNetPeriodLabel,
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     SegmentedButton<_HomeNetPeriod>(
-                      segments: const [
-                        ButtonSegment(value: _HomeNetPeriod.daily, label: Text(AppCopy.reportFilterDaily)),
-                        ButtonSegment(value: _HomeNetPeriod.weekly, label: Text(AppCopy.reportFilterWeekly)),
-                        ButtonSegment(value: _HomeNetPeriod.monthly, label: Text(AppCopy.reportFilterMonthly)),
+                      segments: [
+                        ButtonSegment(value: _HomeNetPeriod.daily, label: Text(copy.reportFilterDaily)),
+                        ButtonSegment(value: _HomeNetPeriod.weekly, label: Text(copy.reportFilterWeekly)),
+                        ButtonSegment(value: _HomeNetPeriod.monthly, label: Text(copy.reportFilterMonthly)),
                       ],
                       selected: {_period},
                       onSelectionChanged: (s) => setState(() => _period = s.first),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Saklaw (PH UTC+8): ${formatPhilippineDateTime(range.from)} - ${formatPhilippineDateTime(range.to)}',
+                      '${copy.reportRangeLabel} ${formatPhilippineDateTime(range.from)} - ${formatPhilippineDateTime(range.to)}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -116,24 +115,24 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
 
                                 final leftCards = <Widget>[
                                   SummaryCard(
-                                    label: AppCopy.totalSales,
+                                    label: copy.totalSales,
                                     value: formatCurrency(sales, currencyCode: widget.currencyCode),
                                     icon: Icons.payments_outlined,
                                   ),
                                   SummaryCard(
-                                    label: AppCopy.netProfit,
+                                    label: copy.netProfit,
                                     value: formatCurrency(net, currencyCode: widget.currencyCode),
                                     icon: Icons.trending_up_outlined,
                                   ),
                                 ];
                                 final rightCards = <Widget>[
                                   SummaryCard(
-                                    label: AppCopy.totalExpenses,
+                                    label: copy.totalExpenses,
                                     value: formatCurrency(expenses, currencyCode: widget.currencyCode),
                                     icon: Icons.receipt_outlined,
                                   ),
                                   SummaryCard(
-                                    label: AppCopy.lowStockAlerts,
+                                    label: copy.lowStockAlerts,
                                     value: '$low',
                                     icon: Icons.inventory_2_outlined,
                                   ),
@@ -172,7 +171,7 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              AppCopy.homeChartBarSalesExpenses,
+                                              copy.homeChartBarSalesExpenses,
                                               style: Theme.of(context).textTheme.titleSmall,
                                             ),
                                             const SizedBox(height: AppSpacing.sm),
@@ -192,11 +191,11 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                                               children: [
                                                 _LegendChip(
                                                   color: scheme.primary,
-                                                  label: AppCopy.totalSales,
+                                                  label: copy.totalSales,
                                                 ),
                                                 _LegendChip(
                                                   color: scheme.tertiary,
-                                                  label: AppCopy.totalExpenses,
+                                                  label: copy.totalExpenses,
                                                 ),
                                               ],
                                             ),
@@ -205,42 +204,44 @@ class _HomeOverviewPageState extends State<HomeOverviewPage> {
                                       ),
                                     ),
                                     const SizedBox(height: AppSpacing.sm),
-                                    Card(
-                                      child: Padding(
-                                        padding: AppSpacing.card,
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              AppCopy.homeChartSalesVsExpenses,
-                                              style: Theme.of(context).textTheme.titleSmall,
-                                            ),
-                                            const SizedBox(height: AppSpacing.sm),
-                                            SizedBox(
-                                              height: math.min(220, fullW * 0.55),
-                                              child: _SalesExpensesPie(
-                                                sales: sales,
-                                                expenses: expenses,
-                                                scheme: scheme,
+                                    SizedBox(
+                                      height: 280,
+                                      child: Card(
+                                        child: Padding(
+                                          padding: AppSpacing.card,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                copy.homeChartSalesVsExpenses,
+                                                style: Theme.of(context).textTheme.titleSmall,
                                               ),
-                                            ),
-                                            const SizedBox(height: AppSpacing.sm),
-                                            Wrap(
-                                              spacing: 16,
-                                              runSpacing: 8,
-                                              alignment: WrapAlignment.center,
-                                              children: [
-                                                _LegendChip(
-                                                  color: scheme.primary,
-                                                  label: AppCopy.totalSales,
+                                              const SizedBox(height: AppSpacing.sm),
+                                              Expanded(
+                                                child: _SalesExpensesPie(
+                                                  sales: sales,
+                                                  expenses: expenses,
+                                                  scheme: scheme,
                                                 ),
-                                                _LegendChip(
-                                                  color: scheme.tertiary,
-                                                  label: AppCopy.totalExpenses,
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                              ),
+                                              const SizedBox(height: AppSpacing.sm),
+                                              Wrap(
+                                                spacing: 16,
+                                                runSpacing: 8,
+                                                alignment: WrapAlignment.center,
+                                                children: [
+                                                  _LegendChip(
+                                                    color: scheme.primary,
+                                                    label: copy.totalSales,
+                                                  ),
+                                                  _LegendChip(
+                                                    color: scheme.tertiary,
+                                                    label: copy.totalExpenses,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -295,8 +296,9 @@ class _SalesExpensesBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     if (sales <= 0 && expenses <= 0) {
-      return const Center(child: Text(AppCopy.noDataRange));
+      return Center(child: Text(copy.noDataRange));
     }
 
     final maxY = math.max(math.max(sales, expenses) * 1.15, 1.0);
@@ -356,13 +358,13 @@ class _SalesExpensesBar extends StatelessWidget {
                 if (i == 0) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(AppCopy.totalSales, style: bodySmall, textAlign: TextAlign.center),
+                    child: Text(copy.totalSales, style: bodySmall, textAlign: TextAlign.center),
                   );
                 }
                 if (i == 1) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(AppCopy.totalExpenses, style: bodySmall, textAlign: TextAlign.center),
+                    child: Text(copy.totalExpenses, style: bodySmall, textAlign: TextAlign.center),
                   );
                 }
                 return const SizedBox.shrink();
@@ -388,22 +390,23 @@ class _SalesExpensesPie extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final total = sales + expenses;
     if (total <= 0) {
-      return const Center(child: Text(AppCopy.noDataRange));
+      return Center(child: Text(copy.noDataRange));
     }
 
     final sections = <PieChartSectionData>[];
     if (sales > 0) {
       sections.add(
-        PieChartSectionData(
-          color: scheme.primary,
-          value: sales,
-          title: '${(100 * sales / total).round()}%',
-          radius: 72,
-          titleStyle: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          PieChartSectionData(
+            color: scheme.primary,
+            value: sales,
+            title: '${(100 * sales / total).round()}%',
+            radius: 56,
+            titleStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
         ),
@@ -411,27 +414,27 @@ class _SalesExpensesPie extends StatelessWidget {
     }
     if (expenses > 0) {
       sections.add(
-        PieChartSectionData(
-          color: scheme.tertiary,
-          value: expenses,
-          title: '${(100 * expenses / total).round()}%',
-          radius: 72,
-          titleStyle: TextStyle(
-            color: scheme.onTertiary,
-            fontWeight: FontWeight.bold,
+          PieChartSectionData(
+            color: scheme.tertiary,
+            value: expenses,
+            title: '${(100 * expenses / total).round()}%',
+            radius: 56,
+            titleStyle: TextStyle(
+              color: scheme.onTertiary,
+              fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
         ),
       );
     }
     if (sections.isEmpty) {
-      return const Center(child: Text(AppCopy.noDataRange));
+      return Center(child: Text(copy.noDataRange));
     }
 
     return PieChart(
       PieChartData(
         sectionsSpace: 2,
-        centerSpaceRadius: 40,
+        centerSpaceRadius: 28,
         sections: sections,
       ),
     );
