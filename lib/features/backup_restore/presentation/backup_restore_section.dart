@@ -26,17 +26,16 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Card(
       child: Padding(
         padding: AppSpacing.card,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppCopy.backupRestoreTitle, style: Theme.of(context).textTheme.titleMedium),
+            Text(copy.backupRestoreTitle, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Pumili ng export/import type. May preview at babala bago i-restore.',
-            ),
+            Text(copy.backupRestoreDescription),
             const SizedBox(height: AppSpacing.sm),
             Wrap(
               spacing: AppSpacing.sm,
@@ -44,19 +43,19 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
               children: [
                 OutlinedButton(
                   onPressed: _exportJson,
-                  child: Text(AppCopy.exportJson),
+                  child: Text(copy.exportJson),
                 ),
                 OutlinedButton(
                   onPressed: _importJsonDialog,
-                  child: Text(AppCopy.importJson),
+                  child: Text(copy.importJson),
                 ),
                 OutlinedButton(
                   onPressed: kIsWeb ? null : _exportDb,
-                  child: Text(AppCopy.exportDb),
+                  child: Text(copy.exportDb),
                 ),
                 OutlinedButton(
                   onPressed: kIsWeb ? null : _importDbDialog,
-                  child: Text(AppCopy.importDb),
+                  child: Text(copy.importDb),
                 ),
               ],
             ),
@@ -72,7 +71,7 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Na-export ang JSON backup: $path')));
+      ).showSnackBar(SnackBar(content: Text(AppCopy.of(context).backupJsonSaved(path))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -85,7 +84,7 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Na-export ang DB backup: $path')));
+      ).showSnackBar(SnackBar(content: Text(AppCopy.of(context).backupDbSaved(path))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -99,7 +98,7 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
       await _backupService.importPickedJson(replaceAll: mode);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mode ? 'Na-restore (replace).' : 'Na-restore (merge).')),
+        SnackBar(content: Text(mode ? AppCopy.of(context).backupReplaceDone : AppCopy.of(context).backupMergeDone)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -110,7 +109,7 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
   Future<void> _importDbDialog() async {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('DB import/export ay hindi supported sa web. JSON ang gamitin.')),
+        SnackBar(content: Text(AppCopy.of(context).backupDbUnsupportedWeb)),
       );
       return;
     }
@@ -121,7 +120,7 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
       await _backupService.importDatabaseFile(replaceAll: mode);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Na-import ang DB file. I-restart ang app kung kailangan.')),
+        SnackBar(content: Text(AppCopy.of(context).backupDbImportRestart)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -130,19 +129,20 @@ class _BackupRestoreSectionState extends State<BackupRestoreSection> {
   }
 
   Future<bool?> _askMode() {
+    final copy = AppCopy.of(context);
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Piliin ang restore mode'),
-        content: const Text('Babala: Ang "Palitan lahat" ay bubura ng kasalukuyang records.'),
+        title: Text(AppCopy.of(context).backupRestoreModeTitle),
+        content: Text(AppCopy.of(context).backupReplaceWarning),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(AppCopy.mergeMode),
+            child: Text(copy.mergeMode),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(AppCopy.replaceMode),
+            child: Text(copy.replaceMode),
           ),
         ],
       ),
