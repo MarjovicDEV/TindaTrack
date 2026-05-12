@@ -19,15 +19,16 @@ class _StockHubPageState extends State<StockHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: SegmentedButton<int>(
-            segments: const [
-              ButtonSegment<int>(value: 0, label: Text(AppCopy.navInventory)),
-              ButtonSegment<int>(value: 1, label: Text(AppCopy.navGrocery)),
+            segments: [
+              ButtonSegment<int>(value: 0, label: Text(copy.navInventory)),
+              ButtonSegment<int>(value: 1, label: Text(copy.navGrocery)),
             ],
             selected: {_segment},
             onSelectionChanged: (s) => setState(() => _segment = s.first),
