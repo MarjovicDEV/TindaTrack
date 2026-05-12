@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/resources/app_copy.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/validators/input_validators.dart';
@@ -43,6 +44,7 @@ class _GroceryPageState extends State<GroceryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -58,17 +60,17 @@ class _GroceryPageState extends State<GroceryPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Listahan ng Bilihin', style: theme.textTheme.titleLarge),
+                    Text(copy.groceryTitle, style: theme.textTheme.titleLarge),
                     const SizedBox(height: 2),
                     Text(
-                      'Pumili ng schedule sa ibaba, tapos magdagdag ng item.',
+                      copy.grocerySubtitle,
                       style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                tooltip: 'Gumawa ng schedule',
+                tooltip: copy.groceryCreateScheduleTooltip,
                 onPressed: _showListDialog,
                 icon: const Icon(Icons.add_circle_outline),
               ),
@@ -89,10 +91,10 @@ class _GroceryPageState extends State<GroceryPage> {
                     children: [
                       Icon(Icons.event_available_outlined, size: 48, color: cs.onSurfaceVariant),
                       const SizedBox(height: AppSpacing.sm),
-                      Text('Wala pang grocery schedule.', style: theme.textTheme.titleSmall),
+                      Text(copy.groceryNoSchedule, style: theme.textTheme.titleSmall),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Una pili ang petsa, oras, at mall para makagawa ng list.',
+                        copy.groceryNoScheduleDescription,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                       ),
@@ -100,7 +102,7 @@ class _GroceryPageState extends State<GroceryPage> {
                       FilledButton.icon(
                         onPressed: _showListDialog,
                         icon: const Icon(Icons.playlist_add),
-                        label: const Text('Gumawa ng schedule'),
+                        label: Text(copy.groceryCreateSchedule),
                       ),
                     ],
                   ),
@@ -215,7 +217,7 @@ class _GroceryPageState extends State<GroceryPage> {
                                         onPressed: () =>
                                             _showItemDialog(groceryListId: selected.id),
                                         icon: const Icon(Icons.add),
-                                        label: const Text('Magdagdag ng item'),
+                          label: Text(copy.groceryAddItem),
                                       ),
                                     ],
                                   );
@@ -227,7 +229,7 @@ class _GroceryPageState extends State<GroceryPage> {
                                         onPressed: () =>
                                             _showItemDialog(groceryListId: selected.id),
                                         icon: const Icon(Icons.add),
-                                        label: const Text('Magdagdag ng item'),
+                                          label: Text(copy.groceryAddItem),
                                       ),
                                     ),
                                   ],
@@ -256,13 +258,13 @@ class _GroceryPageState extends State<GroceryPage> {
                         Icon(Icons.touch_app_outlined, size: 56, color: cs.onSurfaceVariant),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          'Pumili muna ng schedule',
+                          copy.groceryPickSchedule,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleSmall,
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'I-tap ang chip sa itaas para makita at magdagdag ng grocery list.',
+                          copy.groceryPickScheduleDescription,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                         ),
@@ -299,7 +301,7 @@ class _GroceryPageState extends State<GroceryPage> {
                                   onPressed: () =>
                                       _showItemDialog(groceryListId: _selectedListId!),
                                   icon: const Icon(Icons.add),
-                                  label: const Text('Magdagdag ng unang item'),
+                          label: Text(copy.groceryAddFirstItem),
                                 ),
                               ],
                             ),
@@ -332,7 +334,7 @@ class _GroceryPageState extends State<GroceryPage> {
                           ),
                           onToggle: (v) => widget.repo.toggleGrocery(item.id, v),
                           onDelete: () => widget.repo.deleteGroceryItem(item.id),
-                          onConfirmDelete: () => _confirmDelete('Burahin ang "${item.name}"?'),
+                          onConfirmDelete: () => _confirmDelete(copy, 'Burahin ang "${item.name}"?'),
                         );
                       },
                     );
@@ -344,6 +346,7 @@ class _GroceryPageState extends State<GroceryPage> {
   }
 
   Future<void> _showListDialog() async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     DateTime? pickedDate = DateTime.now();
     TimeOfDay? pickedTime = TimeOfDay.now();
@@ -353,7 +356,7 @@ class _GroceryPageState extends State<GroceryPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Gumawa ng Grocery Schedule'),
+          title: Text(copy.groceryCreateScheduleDialogTitle),
           content: Form(
             key: formKey,
             child: Column(
@@ -361,9 +364,9 @@ class _GroceryPageState extends State<GroceryPage> {
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Date'),
+                  title: Text(copy.dateLabel),
                   subtitle: Text(
-                    pickedDate == null ? 'Pumili ng date' : formatLongDate(pickedDate!),
+                    pickedDate == null ? copy.pickDate : formatLongDate(pickedDate!),
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.calendar_month_outlined),
@@ -383,9 +386,9 @@ class _GroceryPageState extends State<GroceryPage> {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Time'),
+                  title: Text(copy.timeLabel),
                   subtitle: Text(
-                    pickedTime == null ? 'Pumili ng oras' : pickedTime!.format(context),
+                    pickedTime == null ? copy.pickTime : pickedTime!.format(context),
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.access_time),
@@ -402,7 +405,7 @@ class _GroceryPageState extends State<GroceryPage> {
                 ),
                 DropdownButtonFormField<String>(
                   initialValue: mall,
-                  decoration: const InputDecoration(labelText: 'Mall / Location'),
+                  decoration: InputDecoration(labelText: copy.mallLocationLabel),
                   items: _mallOptions
                       .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                       .toList(),
@@ -412,7 +415,7 @@ class _GroceryPageState extends State<GroceryPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.groceryCancel)),
             FilledButton(
               onPressed: () async {
                 if (pickedDate == null || pickedTime == null) return;
@@ -424,11 +427,11 @@ class _GroceryPageState extends State<GroceryPage> {
                   pickedTime!.minute,
                 );
                 final id = await widget.repo.addGroceryList(startAt: startAt, mallName: mall);
-                if (!mounted) return;
+                if (!context.mounted) return;
                 setState(() => _selectedListId = id);
                 Navigator.pop(context);
               },
-              child: const Text('I-save'),
+              child: Text(copy.grocerySave),
             ),
           ],
         ),
@@ -440,6 +443,7 @@ class _GroceryPageState extends State<GroceryPage> {
     required int groceryListId,
     GroceryItem? existing,
   }) async {
+    final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController();
     final brandCtrl = TextEditingController();
@@ -463,7 +467,7 @@ class _GroceryPageState extends State<GroceryPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existing == null ? 'Magdagdag ng item' : 'I-update ang item'),
+          title: Text(existing == null ? copy.groceryAddItem : copy.groceryAddItem),
           content: SingleChildScrollView(
             child: StreamBuilder(
               stream: widget.repo.watchUnitMeasurements(),
@@ -486,26 +490,26 @@ class _GroceryPageState extends State<GroceryPage> {
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: brandCtrl,
-                        decoration: const InputDecoration(labelText: 'Brand name'),
-                        validator: (v) => InputValidators.validateName(v ?? '', field: 'Brand'),
+                        decoration: InputDecoration(labelText: copy.inventoryBrandName),
+                        validator: (v) => InputValidators.validateName(v ?? '', field: copy.inventoryBrandName),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Pangalan ng item'),
-                        validator: (v) => InputValidators.validateName(v ?? '', field: 'Name'),
+                        decoration: InputDecoration(labelText: copy.inventoryProductName),
+                        validator: (v) => InputValidators.validateName(v ?? '', field: copy.inventoryProductName),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       TextFormField(
                         controller: netWeightCtrl,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Net weight / kapasidad'),
-                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: 'Net weight'),
+                        decoration: InputDecoration(labelText: copy.inventoryNetWeight),
+                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: copy.inventoryNetWeight),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
                         initialValue: netWeightUnit,
-                        decoration: const InputDecoration(labelText: 'Net weight unit'),
+                        decoration: InputDecoration(labelText: copy.inventoryNetWeightUnit),
                         items: const [
                           DropdownMenuItem(value: 'g', child: Text('g')),
                           DropdownMenuItem(value: 'kg', child: Text('kg')),
@@ -518,14 +522,14 @@ class _GroceryPageState extends State<GroceryPage> {
                       TextFormField(
                         controller: qtyCtrl,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Dami'),
-                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: 'Quantity'),
+                        decoration: InputDecoration(labelText: copy.utangQty),
+                        validator: (v) => InputValidators.validateDecimalPositive(v ?? '', field: copy.utangQty),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
                         initialValue: selectedUnit,
-                        decoration: const InputDecoration(labelText: 'Unit'),
-                        validator: (v) => v == null || v.isEmpty ? 'Unit ay required.' : null,
+                        decoration: InputDecoration(labelText: copy.inventoryUnitOfMeasure),
+                        validator: (v) => v == null || v.isEmpty ? copy.inventoryUnitRequired : null,
                         items: unitNames
                             .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
                             .toList(),
@@ -538,7 +542,7 @@ class _GroceryPageState extends State<GroceryPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kanselahin')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(copy.groceryCancel)),
             FilledButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
@@ -573,7 +577,7 @@ class _GroceryPageState extends State<GroceryPage> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('I-save'),
+              child: Text(copy.grocerySave),
             ),
           ],
         ),
@@ -581,18 +585,18 @@ class _GroceryPageState extends State<GroceryPage> {
     );
   }
 
-  Future<bool?> _confirmDelete(String message) {
+  Future<bool?> _confirmDelete(AppCopy copy, String message) {
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Kumpirmahin ang delete'),
+        title: Text(copy.groceryConfirmDeleteTitle),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hindi')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(copy.groceryDeleteNo)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(copy.groceryDeleteYes),
           ),
         ],
       ),
@@ -631,6 +635,7 @@ class _GroceryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final cs = Theme.of(context).colorScheme;
     final hasImage = item.imagePath != null && item.imagePath!.isNotEmpty;
 
@@ -676,7 +681,7 @@ class _GroceryCard extends StatelessWidget {
                         shape: const CircleBorder(),
                         clipBehavior: Clip.antiAlias,
                         child: IconButton(
-                          tooltip: item.isDone ? 'Mark as hindi pa' : 'Mark as nakuha na',
+                          tooltip: item.isDone ? 'Mark as not done' : 'Mark as done',
                           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                           padding: EdgeInsets.zero,
                           iconSize: 22,
@@ -715,7 +720,7 @@ class _GroceryCard extends StatelessWidget {
                       ),
                     const Spacer(),
                     Text(
-                      'Qty: ${item.qty.toStringAsFixed(2)} ${item.unitType}',
+                      '${copy.utangQty}: ${item.qty.toStringAsFixed(2)} ${item.unitType}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.primary),
                     ),
                     if (item.plannedDate != null)
@@ -738,12 +743,12 @@ class _GroceryCard extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined, size: 20),
                     onPressed: onEdit,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'I-edit',
+                    tooltip: copy.inventoryEdit,
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, size: 20, color: cs.error),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Burahin',
+                    tooltip: copy.inventoryDelete,
                     onPressed: () async {
                       final confirmed = await onConfirmDelete();
                       if (confirmed == true) onDelete();
