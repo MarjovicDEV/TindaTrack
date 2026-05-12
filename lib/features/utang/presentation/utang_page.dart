@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/resources/app_copy.dart';
@@ -6,6 +7,10 @@ import '../../../core/validators/input_validators.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/local/app_database.dart';
 import '../../../data/repositories/tinda_repository.dart';
+import '../../../features/receipts/application/receipt_pdf_builder.dart';
+import '../../../shared/widgets/receipt_sheet.dart';
+import '../../reports/presentation/report_export_stub.dart'
+    if (dart.library.io) '../../reports/presentation/report_export_io.dart' as report_export;
 
 class UtangPage extends StatefulWidget {
   const UtangPage({required this.repo, super.key});
@@ -76,7 +81,7 @@ class _UtangPageState extends State<UtangPage> {
                           crossAxisCount: _crossAxisCount(width),
                           crossAxisSpacing: AppSpacing.sm,
                           mainAxisSpacing: AppSpacing.sm,
-                          childAspectRatio: 0.9,
+                          childAspectRatio: 0.62,
                         ),
                         itemCount: customers.length,
                         itemBuilder: (_, index) {
@@ -85,7 +90,7 @@ class _UtangPageState extends State<UtangPage> {
                             customer: customer,
                             onTap: () => _showEntries(customer.customerId, customer.name),
                             onEdit: () => _showEditCustomer(customer.customerId, customer.name),
-                            onAddEntry: () => _showAddEntry(context, customer.customerId),
+                            onAddEntry: () => _showAddEntry(context, customer.customerId, customer.balance),
                             onDelete: () => widget.repo.deleteCustomer(customer.customerId),
                             onConfirmDelete: () => _confirmDelete(
                               copy.isEnglish ? 'Delete ${customer.name}?' : 'Burahin si ${customer.name}?',
@@ -111,8 +116,7 @@ class _UtangPageState extends State<UtangPage> {
     final qtyCtrls = <int, TextEditingController>{};
     final selected = <int>{};
     DateTime? dueDate = DateTime.now();
-    final rootContext = context;
-    await showDialog<void>(
+    final newEntryId = await showDialog<int>(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
@@ -322,12 +326,14 @@ class _UtangPageState extends State<UtangPage> {
                 }
                 try {
                   final customerId = await widget.repo.addCustomer(nameCtrl.text.trim());
-                  await widget.repo.addUtangWithItems(
+                  final entryId = await widget.repo.addUtangWithItems(
                     customerId: customerId,
                     lines: lines,
                     dueDate: dueDate,
                     note: copy.utangInitialDebtNote,
                   );
+                  if (!context.mounted) return;
+                  Navigator.pop(context, entryId);
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(
@@ -335,9 +341,6 @@ class _UtangPageState extends State<UtangPage> {
                     ).showSnackBar(SnackBar(content: Text('${copy.utangSaveFailedPrefix} $e')));
                   return;
                 }
-                if (!mounted) return;
-                // ignore: use_build_context_synchronously
-                Navigator.pop(rootContext);
               },
               child: Text(copy.utangSaveCustomer),
             ),
@@ -348,9 +351,27 @@ class _UtangPageState extends State<UtangPage> {
     for (final ctrl in qtyCtrls.values) {
       ctrl.dispose();
     }
+    if (newEntryId != null && mounted) {
+      await _showUtangReceipt(newEntryId);
+    }
   }
 
-  Future<void> _showAddEntry(BuildContext context, int customerId) async {
+  String? _validatePaymentAmount(
+    AppCopy copy,
+    String? raw,
+    double maxAllowed,
+  ) {
+    final base = InputValidators.validateDecimalPositive(raw ?? '', field: copy.utangAmount);
+    if (base != null) return base;
+    if (maxAllowed <= 0) return copy.utangNoDebtToPay;
+    final amount = double.parse(raw!.trim());
+    if (amount > maxAllowed + 1e-9) {
+      return copy.utangPaymentExceedsBalance(formatCurrency(maxAllowed));
+    }
+    return null;
+  }
+
+  Future<void> _showAddEntry(BuildContext context, int customerId, double customerBalance) async {
     final copy = AppCopy.of(context);
     final formKey = GlobalKey<FormState>();
     final amountCtrl = TextEditingController();
@@ -360,7 +381,7 @@ class _UtangPageState extends State<UtangPage> {
     var isPayment = false;
     DateTime? dueDate = DateTime.now();
 
-    await showDialog<void>(
+    final entryIdResult = await showDialog<int?>(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
@@ -393,18 +414,25 @@ class _UtangPageState extends State<UtangPage> {
                              isPayment ? copy.utangPaymentSubtitle : copy.utangDebtSubtitle,
                            ),
                           value: isPayment,
-                          onChanged: (v) => setState(() => isPayment = v),
+                          onChanged: (v) {
+                            setState(() => isPayment = v);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              formKey.currentState?.validate();
+                            });
+                          },
                         ),
                         const SizedBox(height: AppSpacing.md),
                         if (isPayment)
                           TextFormField(
                             controller: amountCtrl,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                             decoration: InputDecoration(labelText: copy.utangAmount),
-                             validator: (v) => InputValidators.validateDecimalPositive(
-                              v ?? '',
-                              field: copy.utangAmount,
+                            decoration: InputDecoration(
+                              labelText: copy.utangAmount,
+                              helperText: customerBalance > 0
+                                  ? '${copy.utangPaymentMaxLabel} ${formatCurrency(customerBalance)}'
+                                  : copy.utangNoDebtToPay,
                             ),
+                            validator: (v) => _validatePaymentAmount(copy, v, customerBalance),
                           ),
                         if (!isPayment) ...[
                           FormField<Set<int>>(
@@ -618,24 +646,20 @@ class _UtangPageState extends State<UtangPage> {
                   return;
                 }
                 try {
-                  await widget.repo.addUtangWithItems(
+                  final newId = await widget.repo.addUtangWithItems(
                     customerId: customerId,
                     lines: lines,
                     dueDate: dueDate,
                     note: noteCtrl.text.trim().isEmpty ? 'Utang recorded' : noteCtrl.text.trim(),
                   );
+                  if (!context.mounted) return;
+                  Navigator.pop(context, newId);
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(SnackBar(content: Text('Hindi na-save: $e')));
                   return;
-                }
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Na-save ang utang entry')),
-                  );
                 }
               },
               child: const Text('I-save ang entry'),
@@ -646,6 +670,9 @@ class _UtangPageState extends State<UtangPage> {
     );
     for (final ctrl in qtyCtrls.values) {
       ctrl.dispose();
+    }
+    if (entryIdResult != null && mounted) {
+      await _showUtangReceipt(entryIdResult);
     }
   }
 
@@ -726,9 +753,12 @@ class _UtangPageState extends State<UtangPage> {
                           ),
                           child: Card(
                             child: ListTile(
+                              isThreeLine: true,
                               onTap: () => _showEntryDetailModal(e),
                               title: Text(
                                 e.itemName ?? (e.isPayment ? copy.utangPayment : copy.utangNewDebt),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               subtitle: Text(
                                 '${copy.utangTransactionLabel} ${formatPhilippineDateTime(e.createdAt)}'
@@ -738,15 +768,38 @@ class _UtangPageState extends State<UtangPage> {
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('${e.isPayment ? '-' : '+'}${formatCurrency(e.amount)}'),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit_outlined),
-                                    onPressed: () => _showEditEntry(e),
-                                  ),
-                                ],
+                              trailing: SizedBox(
+                                width: e.isPayment ? 118 : 158,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        '${e.isPayment ? '-' : '+'}${formatCurrency(e.amount)}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.end,
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                    if (!e.isPayment)
+                                      IconButton(
+                                        icon: const Icon(Icons.receipt_outlined),
+                                        tooltip: copy.utangReceiptTitle,
+                                        onPressed: () => _showUtangReceipt(e.id),
+                                        visualDensity: VisualDensity.compact,
+                                        constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined),
+                                      onPressed: () => _showEditEntry(e),
+                                      visualDensity: VisualDensity.compact,
+                                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -763,13 +816,23 @@ class _UtangPageState extends State<UtangPage> {
     );
   }
 
-  Future<void> _showEditEntry(dynamic entry) async {
+  Future<void> _showEditEntry(UtangEntry entry) async {
     final copy = AppCopy.of(context);
+    final balances = await widget.repo.watchCustomerBalances().first;
+    var openingBalance = 0.0;
+    for (final c in balances) {
+      if (c.customerId == entry.customerId) {
+        openingBalance = c.balance;
+        break;
+      }
+    }
+
+    if (!mounted) return;
+
     final formKey = GlobalKey<FormState>();
     final amountCtrl = TextEditingController(text: entry.amount.toString());
     final itemCtrl = TextEditingController(text: entry.itemName ?? '');
     final noteCtrl = TextEditingController(text: entry.note ?? '');
-    var isPayment = entry.isPayment;
     DateTime? dueDate = entry.dueDate;
 
     await showDialog<void>(
@@ -786,15 +849,31 @@ class _UtangPageState extends State<UtangPage> {
                 TextFormField(
                   controller: amountCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(labelText: copy.utangAmount),
-                  validator: (v) =>
-                      InputValidators.validateDecimalPositive(v ?? '', field: copy.utangAmount),
+                  decoration: InputDecoration(
+                    labelText: copy.utangAmount,
+                    helperText: entry.isPayment
+                        ? (() {
+                            final maxPay = openingBalance + entry.amount;
+                            if (maxPay <= 0) return copy.utangNoDebtToPay;
+                            return '${copy.utangPaymentMaxLabel} ${formatCurrency(maxPay)}';
+                          })()
+                        : null,
+                  ),
+                  validator: (v) {
+                    if (!entry.isPayment) {
+                      return InputValidators.validateDecimalPositive(v ?? '', field: copy.utangAmount);
+                    }
+                    final maxPay = openingBalance + entry.amount;
+                    return _validatePaymentAmount(copy, v, maxPay);
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: itemCtrl,
                   decoration: InputDecoration(labelText: copy.utangItemProduct),
-                  validator: (v) => InputValidators.validateName(v ?? '', field: copy.utangItemProduct),
+                  validator: (v) => entry.isPayment
+                      ? null
+                      : InputValidators.validateName(v ?? '', field: copy.utangItemProduct),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
@@ -802,24 +881,24 @@ class _UtangPageState extends State<UtangPage> {
                   decoration: InputDecoration(labelText: copy.utangNote),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                FormField<DateTime>(
-                  initialValue: dueDate,
-                  validator: (_) {
-                    if (isPayment) return null;
-                    if (dueDate == null) return copy.utangDueDateRequired;
-                    final now = DateTime.now();
-                    final today = DateTime(now.year, now.month, now.day);
-                    final selected = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
-                    if (selected.isBefore(today)) {
-                      return 'Due date dapat today o future lang.';
-                    }
-                    return null;
-                  },
-                  builder: (field) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
+                if (!entry.isPayment)
+                  FormField<DateTime>(
+                    initialValue: dueDate,
+                    validator: (_) {
+                      if (dueDate == null) return copy.utangDueDateRequired;
+                      final now = DateTime.now();
+                      final today = DateTime(now.year, now.month, now.day);
+                      final selected = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+                      if (selected.isBefore(today)) {
+                        return 'Due date dapat today o future lang.';
+                      }
+                      return null;
+                    },
+                    builder: (field) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
                                 title: Text(copy.utangDueDateLabel),
                                 subtitle: Text(
                                   dueDate == null ? copy.utangPickDueDate : formatLongDate(dueDate!),
@@ -851,11 +930,16 @@ class _UtangPageState extends State<UtangPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                SwitchListTile(
-                  title: Text(isPayment ? copy.utangPayment : copy.utangNewDebt),
-                  value: isPayment,
-                  onChanged: (v) => setState(() => isPayment = v),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    entry.isPayment ? Icons.payments_outlined : Icons.receipt_long_outlined,
+                  ),
+                  title: Text(entry.isPayment ? copy.utangPayment : copy.utangNewDebt),
+                  subtitle: Text(
+                    copy.utangEntryTypeLockedHint,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ),
               ],
             ),
@@ -865,14 +949,24 @@ class _UtangPageState extends State<UtangPage> {
             FilledButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
-                await widget.repo.updateUtangEntry(
-                  entryId: entry.id,
-                  amount: double.parse(amountCtrl.text),
-                  isPayment: isPayment,
-                  dueDate: isPayment ? null : dueDate,
-                  itemName: itemCtrl.text.trim().isEmpty ? null : itemCtrl.text.trim(),
-                  note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
-                );
+                try {
+                  await widget.repo.updateUtangEntry(
+                    entryId: entry.id,
+                    amount: double.parse(amountCtrl.text),
+                    isPayment: entry.isPayment,
+                    dueDate: entry.isPayment ? null : dueDate,
+                    itemName: itemCtrl.text.trim().isEmpty ? null : itemCtrl.text.trim(),
+                    note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
+                  );
+                } on StateError catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                  return;
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                  return;
+                }
                 if (context.mounted) Navigator.pop(context);
               },
               child: Text(copy.utangSaveEntry),
@@ -895,7 +989,26 @@ class _UtangPageState extends State<UtangPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(copy.utangDetailTitle, style: Theme.of(context).textTheme.titleMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      copy.utangDetailTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (!entry.isPayment)
+                    IconButton(
+                      icon: const Icon(Icons.receipt_outlined),
+                      tooltip: copy.utangReceiptTitle,
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await Future<void>.delayed(Duration.zero);
+                        if (mounted) await _showUtangReceipt(entry.id);
+                      },
+                    ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 '${entry.isPayment ? copy.utangPayment : copy.utangNewDebt} • ${formatCurrency(entry.amount)}',
@@ -948,6 +1061,87 @@ class _UtangPageState extends State<UtangPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showUtangReceipt(int entryId) async {
+    final copy = AppCopy.of(context);
+    final receipt = await widget.repo.getUtangReceipt(entryId);
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: ReceiptSheet(
+            model: ReceiptViewModel(
+              title: copy.utangReceiptTitle,
+              customerName: receipt.customerName,
+              createdAt: receipt.entry.createdAt,
+              dueDate: receipt.entry.dueDate,
+              totalAmount: receipt.entry.amount,
+              lines: receipt.lines
+                  .map(
+                    (line) => ReceiptLineItem(
+                      productName: line.productName,
+                      qtyLabel: line.qty.toStringAsFixed(2),
+                      unitType: line.unitType,
+                      unitPriceLabel: formatCurrency(line.unitPrice),
+                      lineTotalLabel: formatCurrency(line.lineTotal),
+                    ),
+                  )
+                  .toList(),
+            ),
+            onExportPngBytes: kIsWeb
+                ? null
+                : (bytes) => _writeUtangReceiptPng(bytes, copy),
+            onExportPdf: () => _exportUtangPdf(receipt, copy),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _writeUtangReceiptPng(Uint8List bytes, AppCopy copy) async {
+    final path = await report_export.writeReportPngBytes(bytes);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(copy.reportPngSaved(path))),
+    );
+  }
+
+  Future<void> _exportUtangPdf(UtangReceiptDetail receipt, AppCopy copy) async {
+    try {
+      final bytes = await ReceiptPdfBuilder.buildUtangReceiptBytes(
+        title: copy.utangReceiptTitle,
+        receipt: receipt,
+        currencyCode: 'PHP',
+        labelCustomer: copy.receiptCustomerLabel,
+        labelTotal: copy.receiptTotalLabel,
+        labelTransaction: copy.receiptTransactionLabel,
+        labelDueDate: copy.receiptDueDateLabel,
+        colItem: copy.receiptColItem,
+        colQty: copy.receiptColQty,
+        colUnitPrice: copy.receiptColUnitPrice,
+        colLineTotal: copy.receiptColLineTotal,
+      );
+      if (kIsWeb) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(copy.reportPdfDownloadSoon(bytes.length))),
+        );
+        return;
+      }
+      final path = await report_export.writeReportPdfBytes(bytes);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copy.reportPdfSaved(path))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copy.reportExportError('$e'))),
+      );
+    }
   }
 
   Future<bool?> _confirmDelete(String message) {
@@ -1014,13 +1208,13 @@ class _CustomerCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              height: 90,
+              height: 76,
               color: color,
               child: Center(
                 child: Text(
                   customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
                   style: const TextStyle(
-                    fontSize: 44,
+                    fontSize: 40,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -1032,6 +1226,7 @@ class _CustomerCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       customer.name,
@@ -1039,24 +1234,30 @@ class _CustomerCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
-                    Text(
-                      copy.utangBalance,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    Text(
-                      formatCurrency(customer.balance),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: hasDebt ? cs.error : cs.primary,
-                            fontWeight: FontWeight.w700,
+                    const SizedBox(height: 6),
+                    Text.rich(
+                      TextSpan(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        children: [
+                          TextSpan(text: '${copy.utangBalance} '),
+                          TextSpan(
+                            text: formatCurrency(customer.balance),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: hasDebt ? cs.error : cs.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(right: 4, bottom: 2),
+              padding: const EdgeInsets.only(right: 2, bottom: 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -1064,17 +1265,32 @@ class _CustomerCard extends StatelessWidget {
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: onAddEntry,
                     visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(36, 36),
+                      padding: const EdgeInsets.all(4),
+                    ),
                     tooltip: copy.utangAddDebtTooltip,
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     onPressed: onEdit,
                     visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(36, 36),
+                      padding: const EdgeInsets.all(4),
+                    ),
                     tooltip: copy.utangEdit,
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
                     visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(36, 36),
+                      padding: const EdgeInsets.all(4),
+                    ),
                     tooltip: copy.utangDelete,
                     onPressed: () async {
                       final confirmed = await onConfirmDelete();
